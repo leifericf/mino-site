@@ -36,7 +36,14 @@
         [:div.card-desc
          "Connect your editor to mino via nREPL. Setup guides for "
          "Conjure, vim-fireplace, CIDER, Calva, and Cursive. "
-         "Protocol reference for tools developers."]]]
+         "Protocol reference for tools developers."]]
+
+       [:a.card {:href "/documentation/testing/"}
+        [:div.card-title "Testing"]
+        [:div.card-desc
+         "Write and run tests in mino itself using "
+         [:code "deftest"] ", " [:code "is"] ", and " [:code "testing"]
+         ". Built-in test runner with CI-friendly exit codes."]]]
 
       [:h2 "Additional resources"]
       [:ul

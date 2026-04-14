@@ -1,108 +1,70 @@
 (ns mino-site.parse.smoke
-  "Parse tests/smoke.sh for usage examples.
+  "Parse mino test files for usage examples.
 
-  Extracts run \"description\" 'input' 'expected' triples into
-  structured example data, grouped by version/section comments."
+  Extracts (is (= expected actual)) assertions from *_test.mino files
+  into structured example data for the language reference page."
   (:require
+    [clojure.java.io :as io]
     [clojure.string :as str]))
 
-(defn- parse-run-calls
-  "Extract run and run_err calls from smoke.sh.
-  Returns [{:desc \"...\" :input \"...\" :expected \"...\" :kind :run|:run-err}]."
+(defn- read-mino-forms
+  "Read all top-level s-expressions from a mino source string.
+  Uses Clojure's reader which can parse the common subset."
   [text]
-  (let [lines (str/split-lines text)]
-    (loop [lines lines
-           section nil
-           examples []]
-      (if (empty? lines)
-        examples
-        (let [line (first lines)
-              rest-lines (rest lines)]
-          (cond
-            ;; Section comment: # v0.X — description
-            (re-find #"^#\s*v[\d.]+" line)
-            (let [m (re-find #"^#\s*(v[\d.]+)\s*(?:—|--|-)\s*(.+)" line)]
-              (recur rest-lines
-                     (if m
-                       {:version (second m) :label (nth m 2)}
-                       section)
-                     examples))
+  (let [;; Strip mino-specific syntax that breaks Clojure's reader:
+        ;; - @expr (deref) is fine in Clojure
+        ;; - #{ } (sets) are fine in Clojure
+        ;; The main issue is (require "...") which is a valid form.
+        rdr (java.io.PushbackReader. (java.io.StringReader. text))]
+    (loop [forms []]
+      (let [form (try (read {:eof ::eof :read-cond :allow} rdr)
+                      (catch Exception _ ::skip))]
+        (cond
+          (= form ::eof) forms
+          (= form ::skip) (recur forms)
+          :else (recur (conj forms form)))))))
 
-            ;; Section comment: # description
-            (and (str/starts-with? line "# ")
-                 (not (str/starts-with? line "#!")))
-            (recur rest-lines
-                   {:version nil :label (str/trim (subs line 2))}
-                   examples)
+(defn- extract-assertions
+  "Walk a form tree and extract (is (= expected actual)) assertions.
+  Returns [{:input actual-str :expected expected-str :description desc}]."
+  [forms test-name]
+  (cond
+    (not (sequential? forms)) []
+    (and (seq forms) (= 'is (first forms)))
+    (let [expr (second forms)]
+      (if (and (sequential? expr) (= '= (first expr)) (>= (count expr) 3))
+        (let [expected (pr-str (nth expr 1))
+              actual   (pr-str (nth expr 2))]
+          [{:description (str test-name)
+            :input actual
+            :expected expected
+            :kind :run
+            :section nil}])
+        []))
+    :else (mapcat #(extract-assertions % test-name) forms)))
 
-            ;; Single-line run call: run "desc" 'input' 'expected'
-            (re-find #"^run\s+\"" line)
-            (let [;; Collect continuation lines (ending with ')
-                  all-lines (loop [ls (cons line rest-lines) collected []]
-                              (let [l (first ls)]
-                                (if (nil? l)
-                                  collected
-                                  (let [joined (str/join "\n" (conj collected l))]
-                                    ;; Count unescaped single quotes
-                                    (if (>= (count (re-seq #"'" joined)) 4)
-                                      (conj collected l)
-                                      (recur (rest ls) (conj collected l)))))))
-                  full (str/join "\n" all-lines)
-                  ;; Parse: run "desc" 'input' 'expected'
-                  m (re-find #"(?s)^run\s+\"([^\"]+)\"\s+'([^']*)'\s+'([^']*)'" full)]
-              (if m
-                (recur (drop (dec (count all-lines)) rest-lines)
-                       section
-                       (conj examples
-                             {:description (nth m 1)
-                              :input (nth m 2)
-                              :expected (nth m 3)
-                              :kind :run
-                              :section section}))
-                ;; Try multi-line input/expected with shell line continuation
-                (let [m2 (re-find #"(?s)^run\s+\"([^\"]+)\"\s+\"([^\"]*)\"\s+'([^']*)'" full)]
-                  (recur (drop (dec (count all-lines)) rest-lines)
-                         section
-                         (if m2
-                           (conj examples
-                                 {:description (nth m2 1)
-                                  :input (nth m2 2)
-                                  :expected (nth m2 3)
-                                  :kind :run
-                                  :section section})
-                           examples)))))
-
-            ;; run_err call
-            (re-find #"^run_err\s+\"" line)
-            (let [all-lines (loop [ls (cons line rest-lines) collected []]
-                              (let [l (first ls)]
-                                (if (nil? l)
-                                  collected
-                                  (let [joined (str/join "\n" (conj collected l))]
-                                    (if (>= (count (re-seq #"'" joined)) 4)
-                                      (conj collected l)
-                                      (recur (rest ls) (conj collected l)))))))
-                  full (str/join "\n" all-lines)
-                  m (re-find #"(?s)^run_err\s+\"([^\"]+)\"\s+'([^']*)'\s+'([^']*)'" full)]
-              (recur (drop (dec (count all-lines)) rest-lines)
-                     section
-                     (if m
-                       (conj examples
-                             {:description (nth m 1)
-                              :input (nth m 2)
-                              :expected (nth m 3)
-                              :kind :run-err
-                              :section section})
-                       examples)))
-
-            ;; Anything else
-            :else
-            (recur rest-lines section examples)))))))
+(defn- parse-test-file
+  "Parse a single *_test.mino file and return extracted examples."
+  [text]
+  (let [forms (read-mino-forms text)]
+    (mapcat
+      (fn [form]
+        (when (and (sequential? form) (= 'deftest (first form)))
+          (let [test-name (str (second form))
+                body (drop 2 form)]
+            (mapcat #(extract-assertions % test-name) body))))
+      forms)))
 
 ;; --- Public API ---
 
 (defn parse
-  "Parse tests/smoke.sh and return structured usage examples.
+  "Parse mino test files and return structured usage examples.
+  `path` is the root of the mino project (directory containing tests/).
   Returns {:examples [{:description, :input, :expected, :kind, :section}]}."
   [path]
-  {:examples (parse-run-calls (slurp path))})
+  (let [test-dir (io/file (str path "/tests"))
+        test-files (when (.isDirectory test-dir)
+                     (->> (.listFiles test-dir)
+                          (filter #(str/ends-with? (.getName %) "_test.mino"))
+                          (sort-by #(.getName %))))]
+    {:examples (vec (mapcat #(parse-test-file (slurp %)) test-files))}))

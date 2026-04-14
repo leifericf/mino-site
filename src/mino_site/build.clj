@@ -21,7 +21,8 @@
     [mino-site.content.language :as language]
     [mino-site.content.cookbook-page :as cookbook-page]
     [mino-site.content.not-found :as not-found]
-    [mino-site.content.tooling :as tooling]))
+    [mino-site.content.tooling :as tooling]
+    [mino-site.content.testing :as testing]))
 
 (defn pages
   "Returns a Stasis page map: {path -> (fn [ctx] html-string)}.
@@ -31,7 +32,7 @@
   (let [api-data     (parse.header/parse (str mino-root "/mino.h"))
         builtin-data (parse.builtins/parse (str mino-root "/mino.c"))
         cookbook-data (parse.cookbook/parse mino-root)
-        smoke-data   (parse.smoke/parse (str mino-root "/tests/smoke.sh"))]
+        smoke-data   (parse.smoke/parse mino-root)]
     {"/index.html"
      (fn [ctx]
        (render/html-page {:active-page :home}
@@ -95,6 +96,13 @@
                           :description "nREPL server for mino: connect any editor, evaluate code interactively, build tools with the standard protocol."
                           :active-page :documentation}
          (tooling/tooling-page)))
+
+     "/documentation/testing/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Testing"
+                          :description "Write and run tests in mino using deftest, is, and testing. Built-in test runner with CI-friendly exit codes."
+                          :active-page :documentation}
+         (testing/testing-page)))
 
      "/changelog/index.html"
      (fn [ctx]
