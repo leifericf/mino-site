@@ -1,20 +1,30 @@
 (ns mino-site.content.changelog
   "Changelog page content.
 
-  For now, reads CHANGELOG.md and renders it as a simple pre-formatted
-  block. Phase 3 will replace this with a proper markdown-to-hiccup
-  parser that structures entries by version."
+  Reads CHANGELOG.md and converts it to Hiccup with inline formatting."
   (:require
     [clojure.java.io :as io]
     [clojure.string :as str]
-    [hiccup2.core :as h]))
+    [hiccup2.core :as h]
+    [hiccup.util :as hu]))
+
+;; --- Inline markdown formatting ---
+
+(defn- format-inline
+  "Converts inline markdown (bold, code, links) to an HTML string.
+  Returns a raw HTML string suitable for hu/raw-string."
+  [text]
+  (-> text
+      (str/replace #"`([^`]+)`" "<code>$1</code>")
+      (str/replace #"\*\*([^*]+)\*\*" "<strong>$1</strong>")
+      (str/replace #"\[([^\]]+)\]\(([^)]+)\)" "<a href=\"$2\">$1</a>")))
 
 ;; --- Simple markdown-to-hiccup converter ---
 
 (defn- parse-changelog
   "Converts a Keep a Changelog markdown file into Hiccup.
   Handles ## headings, ### subheadings, bullet lists, inline code,
-  and bold text. Good enough for the well-structured CHANGELOG.md."
+  and bold text."
   [md-text]
   (let [lines (str/split-lines md-text)]
     (loop [lines lines
@@ -45,8 +55,7 @@
 
             ;; Bullet list item
             (str/starts-with? line "- ")
-            (let [;; Collect consecutive bullet lines (including continuation)
-                  [items remaining]
+            (let [[items remaining]
                   (loop [ls (cons line rest-lines)
                          items []]
                     (let [l (first ls)]
@@ -64,7 +73,9 @@
               (recur remaining
                      (conj result
                            (into [:ul]
-                                 (map (fn [item] [:li item]) items)))))
+                                 (map (fn [item]
+                                        [:li (hu/raw-string (format-inline item))])
+                                      items)))))
 
             ;; Blank line or other text
             (str/blank? line)
@@ -73,7 +84,7 @@
             ;; Plain paragraph
             :else
             (recur rest-lines
-                   (conj result [:p line]))))))))
+                   (conj result [:p (hu/raw-string (format-inline line))]))))))))
 
 (defn changelog-page
   "Generates the Changelog page HTML body."

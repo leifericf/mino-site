@@ -249,6 +249,12 @@
    [".docs-sidebar a:hover" {:color (:text colors)}]
    [".docs-sidebar a.active" {:color       (:heading colors)
                                :font-weight "500"}]
+   [:.sidebar-header {:font-size     "0.75rem"
+                      :font-weight   "600"
+                      :text-transform "uppercase"
+                      :letter-spacing "0.05em"
+                      :color         (:text-muted colors)
+                      :margin-bottom "0.75rem"}]
    [:.docs-content {:flex      "1"
                     :min-width "0"}]])
 
@@ -273,6 +279,153 @@
    [:.hl-comment {:color  (:code-comment colors)
                   :font-style "italic"}]
    [:.hl-type    {:color (:code-type colors)}]])
+
+;; --- Declaration entries (API + Language reference) ---
+
+(def decl-styles
+  [[:.decl {:padding-bottom "1.5rem"
+            :margin-bottom  "1.5rem"
+            :border-bottom  (str "1px solid " (:border colors))}]
+   [".api-section .decl:last-child" {:border-bottom "none"
+                                      :margin-bottom 0}]
+   [:.decl-name {:font-size     "1rem"
+                 :font-weight   "600"
+                 :margin-bottom "0.5rem"
+                 :display       "flex"
+                 :align-items   "baseline"
+                 :gap           "0.5rem"
+                 :flex-wrap     "wrap"}]
+   [".decl-name code" {:font-size   "0.9375rem"
+                       :font-weight "600"
+                       :background  "none"
+                       :padding     0
+                       :color       (:heading colors)}]
+   [:.decl-badge {:font-size     "0.7rem"
+                  :font-weight   "500"
+                  :color         (:text-muted colors)
+                  :background    (:bg-subtle colors)
+                  :padding       "0.1rem 0.4rem"
+                  :border-radius "3px"
+                  :text-transform "uppercase"
+                  :letter-spacing "0.03em"}]
+   [:.decl-meta {:font-size "0.8rem"
+                 :color     (:text-muted colors)}]
+   [:.decl-doc {:color       (:text colors)
+                :font-size   "0.9rem"
+                :line-height "1.7"
+                :margin-top  "0.5rem"}]
+   [".decl pre" {:margin-top "0.5rem"
+                 :margin-left 0
+                 :margin-right 0
+                 :max-width "100%"}]
+   ;; Section headings
+   [:.api-section {:margin-bottom "2rem"}]
+   [".api-section > h2" {:padding-bottom "0.5rem"
+                          :border-bottom  (str "2px solid " (:border colors))
+                          :margin-bottom  "1.5rem"}]])
+
+;; --- Enum and struct tables ---
+
+(def table-styles
+  [[:table {:width         "100%"
+            :border-collapse "collapse"
+            :font-size    "0.85rem"
+            :margin-top   "0.5rem"
+            :margin-bottom "0.5rem"}]
+   [:th {:text-align    "left"
+         :padding       "0.5rem 0.75rem"
+         :font-weight   "600"
+         :color         (:text-muted colors)
+         :font-size     "0.75rem"
+         :text-transform "uppercase"
+         :letter-spacing "0.04em"
+         :border-bottom (str "2px solid " (:border colors))}]
+   [:td {:padding       "0.4rem 0.75rem"
+         :border-bottom (str "1px solid " (:border colors))
+         :vertical-align "top"}]
+   ["td code" {:font-size "0.8rem"}]
+   ["tr:last-child td" {:border-bottom "none"}]])
+
+;; --- Filter bar ---
+
+(def filter-styles
+  [[:.filter-bar {:margin-bottom "1.5rem"}]
+   [:.filter-bar>input {:width         "100%"
+                        :padding       "0.6rem 1rem"
+                        :font-family   font-mono
+                        :font-size     "0.85rem"
+                        :border        (str "1px solid " (:border colors))
+                        :border-radius "6px"
+                        :background    (:bg colors)
+                        :color         (:text colors)
+                        :outline       "none"}]
+   [".filter-bar input:focus" {:border-color (:link colors)
+                                :box-shadow   (str "0 0 0 2px " (:link colors) "20")}]])
+
+;; --- Examples (Language reference) ---
+
+(def example-styles
+  [[:.examples {:margin-top "0.5rem"}]
+   [:.example {:margin-bottom "0.5rem"}]
+   [".example pre" {:margin-bottom "0.25rem"
+                    :padding       "0.75rem 1rem"
+                    :font-size     "0.8125rem"
+                    :max-width     "100%"
+                    :margin-left   0
+                    :margin-right  0}]
+   [:.example-result {:display     "flex"
+                      :align-items "baseline"
+                      :gap         "0.5rem"
+                      :padding     "0.25rem 1rem"
+                      :font-family font-mono
+                      :font-size   "0.8125rem"
+                      :color       (:text-muted colors)}]
+   [:.example-arrow {:color (:text-muted colors)}]
+   [".example-result code" {:background "none"
+                            :padding    0
+                            :color      (:code-string colors)}]])
+
+;; --- Stdlib source toggle ---
+
+(def stdlib-styles
+  [[:.stdlib-source {:margin-top "0.5rem"}]
+   [".stdlib-source summary" {:font-size  "0.8rem"
+                               :color      (:text-muted colors)
+                               :cursor     "pointer"}]
+   [".stdlib-source summary:hover" {:color (:text colors)}]
+   [".stdlib-source pre" {:margin-top  "0.5rem"
+                          :max-width   "100%"
+                          :margin-left 0
+                          :margin-right 0}]])
+
+;; --- Cookbook entries ---
+
+(def cookbook-styles
+  [[:.cookbook-entry {:margin-bottom "3rem"
+                     :padding-bottom "2rem"
+                     :border-bottom (str "1px solid " (:border colors))}]
+   [".cookbook-entry:last-child" {:border-bottom "none"}]
+   [:.cookbook-desc {:color       (:text colors)
+                    :font-size   "0.95rem"
+                    :line-height "1.7"}]
+   [:.cookbook-demonstrates {:font-size     "0.85rem"
+                            :color         (:text-muted colors)
+                            :margin-bottom "0.5rem"}]
+   [:.cookbook-build {:font-size     "0.85rem"
+                     :color         (:text-muted colors)
+                     :margin-bottom "1rem"}]
+   [".cookbook-build code" {:font-size "0.8rem"}]
+   [".cookbook-source summary" {:font-size  "0.85rem"
+                                :color      (:text-muted colors)
+                                :cursor     "pointer"
+                                :margin-bottom "0.5rem"}]
+   [".cookbook-source summary:hover" {:color (:text colors)}]
+   [".cookbook-source pre" {:margin-top "0.5rem"
+                            :max-height "600px"
+                            :overflow-y "auto"
+                            :max-width  "100%"
+                            :margin-left 0
+                            :margin-right 0}]])
 
 ;; --- Responsive ---
 
@@ -307,4 +460,10 @@
             card-styles
             sidebar-styles
             code-styles
+            decl-styles
+            table-styles
+            filter-styles
+            example-styles
+            stdlib-styles
+            cookbook-styles
             responsive-styles)))

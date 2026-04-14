@@ -72,5 +72,31 @@
     if (lang === 'c') el.innerHTML = hlC(el.textContent);
     else if (lang === 'mino') el.innerHTML = hlMino(el.textContent);
   });
+
+  // Filter declarations on reference pages
+  function setupFilter(inputId) {
+    var input = document.getElementById(inputId);
+    if (!input) return;
+    var decls = document.querySelectorAll('.decl');
+    var sections = document.querySelectorAll('.api-section');
+    input.addEventListener('input', function() {
+      var q = input.value.toLowerCase().trim();
+      decls.forEach(function(el) {
+        var name = (el.getAttribute('data-name') || '').toLowerCase();
+        el.style.display = (!q || name.indexOf(q) !== -1) ? '' : 'none';
+      });
+      // Hide sections with no visible declarations
+      sections.forEach(function(sec) {
+        var visible = sec.querySelectorAll('.decl');
+        var anyVisible = false;
+        visible.forEach(function(d) {
+          if (d.style.display !== 'none') anyVisible = true;
+        });
+        sec.style.display = anyVisible || !q ? '' : 'none';
+      });
+    });
+  }
+  setupFilter('api-filter');
+  setupFilter('lang-filter');
 })();
 ")
