@@ -69,10 +69,10 @@
 ;; --- Stdlib macros ---
 
 (defn- read-stdlib-source
-  "Read stdlib.mino from the mino repo root (sibling of mino.c)."
+  "Read core.mino from the mino repo root (sibling of mino.c)."
   [mino-c-path]
   (let [dir  (.getParent (java.io.File. mino-c-path))
-        path (str dir "/stdlib.mino")]
+        path (str dir "/core.mino")]
     (when (.exists (java.io.File. path))
       (slurp path))))
 
