@@ -14,22 +14,34 @@
 (def ^:private category-order
   "Authoritative category ordering and membership from the
   mino_install_core docstring in mino.h (lines 196-217)."
-  [{:name "arithmetic"  :fns #{"+" "-" "*" "/"}}
-   {:name "comparison"  :fns #{"=" "<" "<=" ">" ">=" "not="}}
+  [{:name "arithmetic"  :fns #{"+" "-" "*" "/" "mod" "rem" "quot"}}
+   {:name "comparison"  :fns #{"=" "<" "<=" ">" ">=" "not=" "compare"}}
+   {:name "math"        :fns #{"math-floor" "math-ceil" "math-round" "math-sqrt"
+                                "math-pow" "math-log" "math-exp" "math-sin"
+                                "math-cos" "math-tan" "math-atan2"}}
+   {:name "bitwise"     :fns #{"bit-and" "bit-or" "bit-xor" "bit-not"
+                                "bit-shift-left" "bit-shift-right"}}
    {:name "list"        :fns #{"car" "cdr" "cons" "list"}}
    {:name "collection"  :fns #{"count" "nth" "first" "rest" "vector" "hash-map"
-                                "assoc" "get" "conj" "update" "keys" "vals"}}
+                                "assoc" "dissoc" "get" "conj" "update" "keys" "vals"
+                                "hash"}}
    {:name "sets"        :fns #{"hash-set" "set?" "contains?" "disj"}}
    {:name "atoms"       :fns #{"atom" "deref" "reset!" "swap!" "atom?"}}
    {:name "sequences"   :fns #{"map" "filter" "reduce" "take" "drop" "range"
                                 "repeat" "concat" "into" "apply" "reverse" "sort"}}
    {:name "predicates"  :fns #{"cons?" "nil?" "string?" "number?" "keyword?"
-                                "symbol?" "vector?" "map?" "set?" "fn?" "empty?"}}
-   {:name "utility"     :fns #{"not" "not=" "identity" "some" "every?"}}
-   {:name "reflection"  :fns #{"type" "doc" "source" "apropos"}}
-   {:name "strings"     :fns #{"str" "subs" "split" "join" "starts-with?"
-                                "ends-with?" "includes?" "upper-case"
-                                "lower-case" "trim"}}
+                                "symbol?" "vector?" "map?" "set?" "fn?" "empty?"
+                                "seq?"}}
+   {:name "utility"     :fns #{"not" "not=" "identity" "some" "every?"
+                                "rand" "eval"}}
+   {:name "reflection"  :fns #{"type" "name" "symbol" "keyword" "doc" "source"
+                                "apropos"}}
+   {:name "strings"     :fns #{"str" "pr-str" "format" "subs" "split" "join"
+                                "starts-with?" "ends-with?" "includes?"
+                                "upper-case" "lower-case" "trim" "char-at"
+                                "read-string"}}
+   {:name "regex"       :fns #{"re-find" "re-matches"}}
+   {:name "type coercion" :fns #{"int" "float"}}
    {:name "exceptions"  :fns #{"throw"}}
    {:name "modules"     :fns #{"require"}}
    {:name "macros"      :fns #{"macroexpand" "macroexpand-1" "gensym"}}
