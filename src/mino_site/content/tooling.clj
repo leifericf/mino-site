@@ -15,6 +15,47 @@
        ", the standard used by every major editor in the ecosystem. "
        "One protocol, every editor."]
 
+      [:h2 "Syntax Highlighting"]
+      [:p [:a {:href "https://github.com/leifericf/tree-sitter-mino"
+               :target "_blank" :rel "noopener"}
+           "tree-sitter-mino"]
+       " is a "
+       [:a {:href "https://tree-sitter.github.io" :target "_blank"
+            :rel "noopener"} "tree-sitter"]
+       " grammar for mino. It provides syntax highlighting, bracket "
+       "matching, structural navigation, and code folding in any editor "
+       "that supports tree-sitter."]
+
+      [:h3 "Neovim"]
+      [:p "Add mino to your nvim-treesitter configuration:"]
+      [:pre [:code
+"local parser_config = require(\"nvim-treesitter.parsers\").get_parser_configs()\nparser_config.mino = {\n  install_info = {\n    url = \"https://github.com/leifericf/tree-sitter-mino\",\n    files = { \"src/parser.c\" },\n    branch = \"main\",\n  },\n  filetype = \"mino\",\n}\n\nvim.filetype.add({ extension = { mino = \"mino\" } })"]]
+      [:p "Then run " [:code ":TSInstall mino"] "."]
+
+      [:h3 "Helix"]
+      [:p "Add to " [:code "~/.config/helix/languages.toml"] ":"]
+      [:pre [:code
+"[[language]]\nname = \"mino\"\nscope = \"source.mino\"\nfile-types = [\"mino\"]\ncomment-token = \";\"\nindent = { tab-width = 2, unit = \"  \" }\n\n[[grammar]]\nname = \"mino\"\nsource = { git = \"https://github.com/leifericf/tree-sitter-mino\", rev = \"main\" }"]]
+      [:p "Then run " [:code "hx --grammar fetch && hx --grammar build"] "."]
+
+      [:h3 "Emacs (29+)"]
+      [:pre [:code
+"(add-to-list 'treesit-language-source-alist\n             '(mino \"https://github.com/leifericf/tree-sitter-mino\"))\n(treesit-install-language-grammar 'mino)"]]
+
+      [:h3 "Zed"]
+      [:p "Create a language extension or add mino to your settings "
+       "with the grammar pointed at the "
+       [:a {:href "https://github.com/leifericf/tree-sitter-mino"
+            :target "_blank" :rel "noopener"} "tree-sitter-mino"]
+       " repository."]
+
+      [:h3 "Structural Editing"]
+      [:p "Paredit and parinfer work out of the box with mino files. "
+       "mino uses standard balanced brackets " [:code "()"] ", "
+       [:code "[]"] ", and " [:code "{}"]
+       ", so every editor's structural editing support applies "
+       "without any additional configuration."]
+
       [:h2 "mino-nrepl"]
       [:p [:a {:href "https://github.com/leifericf/mino-nrepl"
                :target "_blank" :rel "noopener"}
