@@ -5,7 +5,9 @@
   cookbook entries with full source listings."
   (:require
     [clojure.string :as str]
-    [hiccup2.core :as h]))
+    [hiccup2.core :as h]
+    [hiccup.util :as hu]
+    [mino-site.format :as fmt]))
 
 ;; --- Helpers ---
 
@@ -21,11 +23,11 @@
     [:section.cookbook-entry {:id id}
      [:h2 (or title filename)]
      (when description
-       [:p.cookbook-desc description])
+       [:p.cookbook-desc (hu/raw-string (fmt/inline description))])
      (when (seq demonstrates)
        [:div.cookbook-demonstrates
         [:strong "Demonstrates: "]
-        (str/join ", " demonstrates)])
+        (hu/raw-string (fmt/inline (str/join ", " demonstrates)))])
      (when build
        [:div.cookbook-build
         [:strong "Build: "]

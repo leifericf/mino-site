@@ -21,7 +21,7 @@
          "Unstable alpha proof-of-concept. The API may change before v1.0."]
         [:section.hero
          [:h1.hero-tagline
-          "A tiny embeddable Lisp" [:br] "in pure ANSI C."]
+          "A tiny embeddable Lisp " [:br.desktop-br] "in pure ANSI C."]
          [:div.hero-ctas
           [:a.cta-primary {:href "/get-started/"} "Get Started"]
           [:a.cta-secondary {:href "/documentation/"} "Documentation"]]]

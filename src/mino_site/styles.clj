@@ -131,7 +131,16 @@
    [".nav-links li a:hover" {:color           (:text colors)
                               :text-decoration "none"}]
    [".nav-links li a.active" {:color       (:heading colors)
-                               :font-weight "500"}]])
+                               :font-weight "500"}]
+   ;; Hamburger toggle — hidden on desktop
+   [:.nav-toggle {:display    "none"
+                  :background "none"
+                  :border     "none"
+                  :cursor     "pointer"
+                  :padding    "0.25rem"
+                  :color      (:heading colors)
+                  :font-size  "1.5rem"
+                  :line-height "1"}]])
 
 ;; --- Footer ---
 
@@ -434,15 +443,22 @@
      ;; Layout
      [:.container {:padding "0 1.25rem"}]
      [:.container-wide {:padding "0 1.25rem"}]
-     ;; Nav
-     [:.nav {:flex-direction "column"
-             :gap            "0.75rem"
-             :align-items    "flex-start"}]
-     [:.nav-links {:flex-wrap "wrap"
-                   :gap       "1rem"}]
-     ;; Hero
+     ;; Nav — hamburger toggle
+     [:.nav {:flex-wrap   "wrap"
+             :align-items "center"}]
+     [:.nav-toggle {:display "block"}]
+     [:.nav-links {:display        "none"
+                   :flex-direction "column"
+                   :width          "100%"
+                   :gap            "0.25rem"
+                   :padding-top    "0.75rem"}]
+     [:.nav-links.open {:display "flex"}]
+     [".nav-links li a" {:display "block"
+                         :padding "0.4rem 0"}]
+     ;; Hero — smaller tagline, let it wrap naturally
      [:.hero {:padding "3rem 0 2rem"}]
-     [:.hero-tagline {:font-size "1.75rem"}]
+     [:.hero-tagline {:font-size "1.5rem"}]
+     [:.desktop-br {:display "none"}]
      [:.hero-ctas {:flex-direction "column"
                    :align-items    "center"}]
      ;; Typography

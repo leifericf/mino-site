@@ -76,6 +76,9 @@
         [:div {:class (if wide "container-wide" "container")}
          [:nav.nav
           [:a.nav-logo {:href "/"} site-title]
+          [:button.nav-toggle {:aria-label "Menu"
+                               :onclick "this.nextElementSibling.classList.toggle('open')"}
+           "\u2630"]
           [:ul.nav-links
            (for [{:keys [href label page external]} nav-items]
              [:li

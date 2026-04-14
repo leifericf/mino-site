@@ -6,7 +6,8 @@
   (:require
     [clojure.string :as str]
     [hiccup2.core :as h]
-    [hiccup.util :as hu]))
+    [hiccup.util :as hu]
+    [mino-site.format :as fmt]))
 
 ;; --- Helpers ---
 
@@ -24,10 +25,12 @@
   [:pre [:code {:data-lang "c"} signature]])
 
 (defn- render-doc
-  "Render a doc comment as a paragraph, or nothing if nil."
+  "Render a doc comment as paragraph(s) with inline code formatting."
   [doc]
   (when doc
-    [:p.decl-doc doc]))
+    (let [paragraphs (str/split doc #"\n\n+")]
+      (for [p paragraphs]
+        [:p.decl-doc (hu/raw-string (fmt/inline p))]))))
 
 ;; --- Declaration renderers by kind ---
 
@@ -75,7 +78,7 @@
      (for [{:keys [name comment]} variants]
        [:tr
         [:td [:code name]]
-        [:td (or comment "")]])]]])
+        [:td (if comment (hu/raw-string (fmt/inline comment)) "")]])]]])
 
 (defmethod render-declaration :struct
   [{:keys [name fields doc]}]
@@ -89,7 +92,7 @@
        [:tr
         [:td [:code type]]
         [:td [:code name]]
-        [:td (or comment "")]])]]])
+        [:td (if comment (hu/raw-string (fmt/inline comment)) "")]])]]])
 
 (defmethod render-declaration :default
   [{:keys [name signature doc]}]

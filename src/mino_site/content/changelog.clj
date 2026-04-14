@@ -6,18 +6,8 @@
     [clojure.java.io :as io]
     [clojure.string :as str]
     [hiccup2.core :as h]
-    [hiccup.util :as hu]))
-
-;; --- Inline markdown formatting ---
-
-(defn- format-inline
-  "Converts inline markdown (bold, code, links) to an HTML string.
-  Returns a raw HTML string suitable for hu/raw-string."
-  [text]
-  (-> text
-      (str/replace #"`([^`]+)`" "<code>$1</code>")
-      (str/replace #"\*\*([^*]+)\*\*" "<strong>$1</strong>")
-      (str/replace #"\[([^\]]+)\]\(([^)]+)\)" "<a href=\"$2\">$1</a>")))
+    [hiccup.util :as hu]
+    [mino-site.format :as fmt]))
 
 ;; --- Simple markdown-to-hiccup converter ---
 
@@ -74,7 +64,7 @@
                      (conj result
                            (into [:ul]
                                  (map (fn [item]
-                                        [:li (hu/raw-string (format-inline item))])
+                                        [:li (hu/raw-string (fmt/inline item))])
                                       items)))))
 
             ;; Blank line or other text
@@ -84,7 +74,7 @@
             ;; Plain paragraph
             :else
             (recur rest-lines
-                   (conj result [:p (hu/raw-string (format-inline line))]))))))))
+                   (conj result [:p (hu/raw-string (fmt/inline line))]))))))))
 
 (defn changelog-page
   "Generates the Changelog page HTML body."
