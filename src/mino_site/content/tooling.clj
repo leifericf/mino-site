@@ -9,13 +9,27 @@
   (str
     (h/html
       [:h1 "Tooling and Editor Integration"]
-      [:p "mino speaks the "
-       [:a {:href "https://nrepl.org" :target "_blank" :rel "noopener"}
-        "nREPL protocol"]
-       ", the standard used by every major editor in the ecosystem. "
-       "One protocol, every editor."]
+      [:p "mino's tooling is three independent, composable pieces. "
+       "Each speaks a standard protocol. Each works standalone. "
+       "Use any combination."]
+      [:table
+       [:thead
+        [:tr [:th "Tool"] [:th "What"] [:th "Protocol"]]]
+       [:tbody
+        [:tr [:td [:a {:href "#syntax-highlighting"} "tree-sitter-mino"]]
+         [:td "Syntax highlighting, brackets, folding"]
+         [:td "tree-sitter"]]
+        [:tr [:td [:a {:href "#mino-lsp"} "mino-lsp"]]
+         [:td "Diagnostics, completion, hover"]
+         [:td "LSP (JSON-RPC over stdio)"]]
+        [:tr [:td [:a {:href "#mino-nrepl"} "mino-nrepl"]]
+         [:td "Interactive eval, REPL"]
+         [:td "nREPL (bencode over TCP)"]]]]
+      [:p "No mino-specific client code is needed. Any editor that "
+       "supports tree-sitter, LSP, or nREPL can use the corresponding "
+       "tool directly."]
 
-      [:h2 "Syntax Highlighting"]
+      [:h2 {:id "syntax-highlighting"} "Syntax Highlighting"]
       [:p [:a {:href "https://github.com/leifericf/tree-sitter-mino"
                :target "_blank" :rel "noopener"}
            "tree-sitter-mino"]
@@ -56,7 +70,60 @@
        ", so every editor's structural editing support applies "
        "without any additional configuration."]
 
-      [:h2 "mino-nrepl"]
+      [:h2 {:id "mino-lsp"} "mino-lsp"]
+      [:p [:a {:href "https://github.com/leifericf/mino-lsp"
+               :target "_blank" :rel "noopener"}
+           "mino-lsp"]
+       " is a "
+       [:a {:href "https://microsoft.github.io/language-server-protocol/"
+            :target "_blank" :rel "noopener"}
+        "Language Server Protocol"]
+       " server for mino. It provides real-time diagnostics, symbol "
+       "completion, and hover documentation. It is a small C program "
+       "that links against " [:code "mino.c"] " and communicates over "
+       "stdin/stdout using JSON-RPC. No runtime dependencies beyond "
+       "mino itself."]
+
+      [:h3 "Features"]
+      [:table
+       [:thead
+        [:tr [:th "Feature"] [:th "Description"]]]
+       [:tbody
+        [:tr [:td "Diagnostics"]
+         [:td "Parse and eval errors shown inline as you type."]]
+        [:tr [:td "Completion"]
+         [:td "Symbol suggestions filtered by prefix."]]
+        [:tr [:td "Hover"]
+         [:td "Type and docstring for the symbol under the cursor."]]]]
+
+      [:h3 "Build"]
+      [:pre [:code "git clone --recursive https://github.com/leifericf/mino-lsp.git\ncd mino-lsp\nmake"]]
+      [:p "This produces a single " [:code "mino-lsp"] " binary."]
+
+      [:h3 "Editor Setup"]
+
+      [:h4 "Neovim (nvim-lspconfig)"]
+      [:pre [:code
+"local configs = require(\"lspconfig.configs\")\nconfigs.mino = {\n  default_config = {\n    cmd = { \"mino-lsp\" },\n    filetypes = { \"mino\" },\n    root_dir = function(fname)\n      return vim.fs.dirname(fname)\n    end,\n  },\n}\nrequire(\"lspconfig\").mino.setup({})"]]
+
+      [:h4 "Helix"]
+      [:p "Add to " [:code "~/.config/helix/languages.toml"] ":"]
+      [:pre [:code
+"[language-server.mino-lsp]\ncommand = \"mino-lsp\"\n\n[[language]]\nname = \"mino\"\nlanguage-servers = [\"mino-lsp\"]"]]
+
+      [:h4 "Emacs (eglot)"]
+      [:pre [:code
+"(add-to-list 'eglot-server-programs '(mino-mode \"mino-lsp\"))"]]
+
+      [:h4 "VS Code"]
+      [:p "Install a generic LSP client extension and point it at the "
+       [:code "mino-lsp"] " binary."]
+
+      [:h4 "Zed"]
+      [:p "Add " [:code "mino-lsp"] " as the language server in a mino "
+       "language extension."]
+
+      [:h2 {:id "mino-nrepl"} "mino-nrepl"]
       [:p [:a {:href "https://github.com/leifericf/mino-nrepl"
                :target "_blank" :rel "noopener"}
            "mino-nrepl"]
@@ -127,17 +194,37 @@
 
       [:h2 "Guide for Tools Developers"]
       [:p "If you are building editor plugins, developer tools, or "
-       "integrations that work with mino, the nREPL protocol gives "
-       "you a ready-made communication layer. You do not need to "
+       "integrations that work with mino, two standard protocols "
+       "give you ready-made communication layers. You do not need to "
        "parse mino output or invent a custom protocol."]
 
-      [:h3 "Connecting"]
+      [:h3 "LSP (mino-lsp)"]
+      [:p "mino-lsp speaks standard "
+       [:a {:href "https://microsoft.github.io/language-server-protocol/"
+            :target "_blank" :rel "noopener"} "LSP"]
+       " over stdin/stdout. Launch the " [:code "mino-lsp"]
+       " binary as a subprocess, send JSON-RPC 2.0 messages with "
+       [:code "Content-Length"] " framing, and receive responses on "
+       "stdout. Any LSP client library works without modification."]
+      [:p "Supported methods: " [:code "initialize"] ", "
+       [:code "textDocument/didOpen"] ", "
+       [:code "textDocument/didChange"] ", "
+       [:code "textDocument/didClose"] ", "
+       [:code "textDocument/completion"] ", "
+       [:code "textDocument/hover"] "."]
+      [:p "The server pushes "
+       [:code "textDocument/publishDiagnostics"]
+       " notifications whenever a document is opened or changed."]
+
+      [:h3 "nREPL (mino-nrepl)"]
+
+      [:h4 "Connecting"]
       [:p "Connect a TCP socket to the host and port. If "
        [:code ".nrepl-port"] " exists in the project directory, "
        "read it to discover the port number. The server listens on "
        [:code "127.0.0.1"] " by default."]
 
-      [:h3 "Wire format"]
+      [:h4 "Wire format"]
       [:p "All messages are "
        [:a {:href "https://wiki.theory.org/BitTorrentSpecification#Bencoding"
             :target "_blank" :rel "noopener"} "bencode"]
@@ -159,7 +246,7 @@
       [:p "Many languages have bencode libraries. A minimal encoder "
        "and decoder is roughly 50 lines in most languages."]
 
-      [:h3 "Message structure"]
+      [:h4 "Message structure"]
       [:p "Every request is a bencode dictionary with at least an "
        [:code "\"op\""] " field. Most ops also require "
        [:code "\"id\""] " (for correlating responses) and "
@@ -168,12 +255,12 @@
        ", a list that always contains " [:code "\"done\""]
        " when the operation is complete."]
 
-      [:h3 "Typical session lifecycle"]
+      [:h4 "Typical session lifecycle"]
       [:pre
        [:code {:data-lang "mino"}
 "1. Connect TCP socket to server\n2. Send:   {\"op\" \"clone\" \"id\" \"1\"}\n   Recv:   {\"id\" \"1\" \"new-session\" \"<uuid>\" \"status\" [\"done\"]}\n3. Send:   {\"op\" \"eval\" \"id\" \"2\" \"session\" \"<uuid>\" \"code\" \"(+ 1 2)\"}\n   Recv:   {\"id\" \"2\" \"session\" \"<uuid>\" \"ns\" \"user\" \"value\" \"3\" \"status\" [\"done\"]}\n4. Send:   {\"op\" \"close\" \"id\" \"3\" \"session\" \"<uuid>\"}\n   Recv:   {\"id\" \"3\" \"session\" \"<uuid>\" \"status\" [\"done\"]}\n5. Disconnect"]]
 
-      [:h3 "Evaluating code"]
+      [:h4 "Evaluating code"]
       [:p "Send an " [:code "eval"] " op with a " [:code "\"code\""]
        " field containing the mino source. The server responds with:"]
       [:ul
@@ -188,7 +275,7 @@
        "sends a separate message with an " [:code "\"out\""]
        " field before the result message."]
 
-      [:h3 "Completions"]
+      [:h4 "Completions"]
       [:p "Send a " [:code "completions"] " op with a "
        [:code "\"prefix\""] " field. The server returns a "
        [:code "\"completions\""] " list of dictionaries, each with a "
@@ -197,7 +284,7 @@
        [:code {:data-lang "mino"}
 "Send: {\"op\" \"completions\" \"id\" \"4\" \"prefix\" \"ma\" \"session\" \"<uuid>\"}\nRecv: {\"id\" \"4\" \"completions\" [{\"candidate\" \"map\"}\n                                {\"candidate\" \"map?\"}\n                                {\"candidate\" \"macroexpand\"}\n                                {\"candidate\" \"macroexpand-1\"}]\n       \"status\" [\"done\"]}"]]
 
-      [:h3 "Existing nREPL client libraries"]
+      [:h4 "Existing nREPL client libraries"]
       [:p "Most languages already have nREPL client libraries that "
        "handle bencode and the message protocol for you:"]
       [:ul
@@ -224,7 +311,7 @@
        "identical to connecting to any other nREPL server. No "
        "mino-specific client code is needed."]
 
-      [:h3 "Source"]
+      [:h4 "Source"]
       [:p "The full source for mino-nrepl is at "
        [:a {:href "https://github.com/leifericf/mino-nrepl"
             :target "_blank" :rel "noopener"}
