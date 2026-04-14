@@ -20,7 +20,8 @@
     [mino-site.content.api :as api]
     [mino-site.content.language :as language]
     [mino-site.content.cookbook-page :as cookbook-page]
-    [mino-site.content.not-found :as not-found]))
+    [mino-site.content.not-found :as not-found]
+    [mino-site.content.tooling :as tooling]))
 
 (defn pages
   "Returns a Stasis page map: {path -> (fn [ctx] html-string)}.
@@ -87,6 +88,13 @@
                           :active-page :documentation
                           :wide true}
          (cookbook-page/cookbook-page cookbook-data)))
+
+     "/documentation/tooling/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Tooling and Editor Integration"
+                          :description "nREPL server for mino: connect any editor, evaluate code interactively, build tools with the standard protocol."
+                          :active-page :documentation}
+         (tooling/tooling-page)))
 
      "/changelog/index.html"
      (fn [ctx]

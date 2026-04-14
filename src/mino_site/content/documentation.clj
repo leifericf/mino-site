@@ -29,7 +29,14 @@
         [:div.card-desc
          "Six worked examples showing real-world embedding patterns: "
          "config loader, rules engine, REPL on socket, plugin host, "
-         "data pipeline, and game scripting console."]]]
+         "data pipeline, and game scripting console."]]
+
+       [:a.card {:href "/documentation/tooling/"}
+        [:div.card-title "Tooling and Editor Integration"]
+        [:div.card-desc
+         "Connect your editor to mino via nREPL. Setup guides for "
+         "Conjure, vim-fireplace, CIDER, Calva, and Cursive. "
+         "Protocol reference for tools developers."]]]
 
       [:h2 "Additional resources"]
       [:ul
