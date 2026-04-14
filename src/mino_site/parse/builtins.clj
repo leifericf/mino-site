@@ -20,6 +20,7 @@
    {:name "collection"  :fns #{"count" "nth" "first" "rest" "vector" "hash-map"
                                 "assoc" "get" "conj" "update" "keys" "vals"}}
    {:name "sets"        :fns #{"hash-set" "set?" "contains?" "disj"}}
+   {:name "atoms"       :fns #{"atom" "deref" "reset!" "swap!" "atom?"}}
    {:name "sequences"   :fns #{"map" "filter" "reduce" "take" "drop" "range"
                                 "repeat" "concat" "into" "apply" "reverse" "sort"}}
    {:name "predicates"  :fns #{"cons?" "nil?" "string?" "number?" "keyword?"
@@ -31,7 +32,8 @@
                                 "lower-case" "trim"}}
    {:name "exceptions"  :fns #{"throw"}}
    {:name "modules"     :fns #{"require"}}
-   {:name "macros"      :fns #{"macroexpand" "macroexpand-1" "gensym"}}])
+   {:name "macros"      :fns #{"macroexpand" "macroexpand-1" "gensym"}}
+   {:name "definitions" :fns #{"defn"}}])
 
 (def ^:private special-forms
   "Special forms recognized directly by the evaluator."
@@ -66,22 +68,13 @@
 
 ;; --- Stdlib macros ---
 
-(defn- extract-stdlib-source
-  "Extract the stdlib_mino_src C string and unescape it to plain mino source."
-  [c-text]
-  (let [;; Match the string literal(s) assigned to stdlib_mino_src
-        m (re-find #"(?s)static const char \*stdlib_mino_src =\s*\n(.*?);" c-text)]
-    (when m
-      (let [raw (nth m 1)]
-        ;; Each line is a quoted C string: "...\n"
-        ;; Extract content between quotes and unescape
-        (->> (re-seq #"\"((?:[^\"\\]|\\.)*)\"" raw)
-             (map second)
-             (map #(-> %
-                       (str/replace "\\n" "\n")
-                       (str/replace "\\\"" "\"")
-                       (str/replace "\\\\" "\\")))
-             (str/join))))))
+(defn- read-stdlib-source
+  "Read stdlib.mino from the mino repo root (sibling of mino.c)."
+  [mino-c-path]
+  (let [dir  (.getParent (java.io.File. mino-c-path))
+        path (str dir "/stdlib.mino")]
+    (when (.exists (java.io.File. path))
+      (slurp path))))
 
 (defn- parse-stdlib-forms
   "Parse the unescaped stdlib source into individual form definitions.
@@ -162,7 +155,7 @@
   (let [c-text (slurp path)
         prims (extract-primitives c-text)
         io-prims (extract-io-primitives c-text)
-        stdlib-src (extract-stdlib-source c-text)
+        stdlib-src (read-stdlib-source path)
         stdlib-forms (when stdlib-src (parse-stdlib-forms stdlib-src))]
     {:categories
      (mapv (fn [{:keys [name fns]}]
