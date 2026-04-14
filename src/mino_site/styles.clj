@@ -431,21 +431,47 @@
 
 (def responsive-styles
   [(at-media {:max-width "768px"}
+     ;; Layout
      [:.container {:padding "0 1.25rem"}]
      [:.container-wide {:padding "0 1.25rem"}]
+     ;; Nav
+     [:.nav {:flex-direction "column"
+             :gap            "0.75rem"
+             :align-items    "flex-start"}]
+     [:.nav-links {:flex-wrap "wrap"
+                   :gap       "1rem"}]
+     ;; Hero
      [:.hero {:padding "3rem 0 2rem"}]
      [:.hero-tagline {:font-size "1.75rem"}]
      [:.hero-ctas {:flex-direction "column"
                    :align-items    "center"}]
-     [:.docs-layout {:flex-direction "column"}]
+     ;; Typography
+     [:h1 {:font-size "1.75rem"}]
+     [:h2 {:font-size "1.25rem"
+            :margin-top "2rem"}]
+     ;; Docs layout — sidebar stacks above content
+     [:.docs-layout {:flex-direction "column"
+                     :gap            "1.5rem"}]
      [:.docs-sidebar {:width      "100%"
                       :position   "static"
-                      :max-height "none"}]
+                      :max-height "none"
+                      :border-bottom (str "1px solid " (:border colors))
+                      :padding-bottom "1rem"}]
+     [:.docs-content {:min-width "0"}]
+     ;; Cards
      [:.card-grid {:grid-template-columns "1fr"}]
-     [:.nav {:flex-direction "column"
-             :gap            "0.75rem"
-             :align-items    "flex-start"}]
-     [:.nav-links {:flex-wrap "wrap"}])])
+     ;; Tables — horizontal scroll
+     [:table {:display "block"
+              :overflow-x "auto"
+              :white-space "nowrap"}]
+     ;; Pre blocks — tighter padding, full width
+     [:pre {:padding   "1rem"
+            :font-size "0.75rem"
+            :max-width "100%"}]
+     ;; Declarations — compact on mobile
+     [:.decl-name {:font-size "0.9rem"}]
+     ;; Footer
+     [:.footer {:margin-top "3rem"}])])
 
 ;; --- Aggregate ---
 

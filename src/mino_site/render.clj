@@ -12,6 +12,8 @@
 ;; --- Configuration ---
 
 (def site-title "mino")
+(def site-description "A tiny embeddable Lisp interpreter in pure ANSI C. Single file, no dependencies, MIT licensed.")
+(def site-url "https://mino-lang.org")
 
 (def nav-items
   [{:href "/about/"          :label "About"         :page :about}
@@ -28,31 +30,48 @@
   "Wraps body content in a full HTML page with nav, footer, and styles.
   opts:
     :title       — page title (appended to site name)
+    :description — meta description (falls back to site-description)
     :active-page — keyword matching a nav-item :page for highlighting
     :wide        — use wider container (for docs with sidebar)"
-  [{:keys [title active-page wide]} & body]
-  (str
-    "<!DOCTYPE html>\n"
-    (h/html
-      [:html {:lang "en"}
-       [:head
-        [:meta {:charset "utf-8"}]
-        [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
-        [:title (if title
-                  (str title " \u2014 " site-title)
-                  site-title)]
-        [:style (hu/raw-string (styles/site-css))]
-        ;; Google Analytics 4 — hostname-gated so local dev and preview
-        ;; deploys don't pollute the production stream.
-        [:script {:async true
-                  :src "https://www.googletagmanager.com/gtag/js?id=G-LD8F7JFYGB"}]
-        [:script (hu/raw-string
-                   (str "if(location.hostname==='leifericf.com'){"
-                        "window.dataLayer=window.dataLayer||[];"
-                        "function gtag(){dataLayer.push(arguments);}"
-                        "gtag('js',new Date());"
-                        "gtag('config','G-LD8F7JFYGB',{anonymize_ip:true});"
-                        "}"))]]
+  [{:keys [title description active-page wide]} & body]
+  (let [page-title (if title
+                     (str title " \u2014 " site-title)
+                     site-title)
+        desc       (or description site-description)]
+    (str
+      "<!DOCTYPE html>\n"
+      (h/html
+        [:html {:lang "en"}
+         [:head
+          [:meta {:charset "utf-8"}]
+          [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
+          [:title page-title]
+          [:meta {:name "description" :content desc}]
+          ;; Open Graph
+          [:meta {:property "og:type" :content "website"}]
+          [:meta {:property "og:site_name" :content site-title}]
+          [:meta {:property "og:title" :content page-title}]
+          [:meta {:property "og:description" :content desc}]
+          ;; Inline SVG favicon — a green lambda on dark background
+          [:link {:rel "icon" :type "image/svg+xml"
+                  :href (str "data:image/svg+xml,"
+                             "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E"
+                             "%3Crect width='32' height='32' rx='4' fill='%231a1a2e'/%3E"
+                             "%3Ctext x='16' y='24' font-size='22' text-anchor='middle' "
+                             "fill='%232c5282' font-family='monospace'%3E%CE%BB%3C/text%3E"
+                             "%3C/svg%3E")}]
+          [:style (hu/raw-string (styles/site-css))]
+          ;; Google Analytics 4 — hostname-gated so local dev and preview
+          ;; deploys don't pollute the production stream.
+          [:script {:async true
+                    :src "https://www.googletagmanager.com/gtag/js?id=G-JV5PT1PXQ1"}]
+          [:script (hu/raw-string
+                     (str "if(location.hostname==='mino-lang.org'){"
+                          "window.dataLayer=window.dataLayer||[];"
+                          "function gtag(){dataLayer.push(arguments);}"
+                          "gtag('js',new Date());"
+                          "gtag('config','G-JV5PT1PXQ1',{anonymize_ip:true});"
+                          "}"))]]
        [:body
         [:div {:class (if wide "container-wide" "container")}
          [:nav.nav
@@ -71,4 +90,4 @@
           [:p (str site-title " is MIT licensed. ")
            [:a {:href "https://github.com/leifericf/mino"} "Source on GitHub"]
            "."]]
-         [:script (hu/raw-string highlight/highlight-js)]]]])))
+         [:script (hu/raw-string highlight/highlight-js)]]]]))))
