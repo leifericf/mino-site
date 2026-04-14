@@ -10,11 +10,13 @@
 
 (defn pages
   "Returns a Stasis page map: {path → (fn [ctx] html-string)}.
+  Paths use /dir/index.html so GitHub Pages serves them at /dir/.
   mino-root is the path to the mino source tree (submodule or local)."
   [mino-root]
-  {"/" (fn [ctx]
-         (render/html-page {:title nil :active-page :home}
-           (landing/landing-page mino-root)))})
+  {"/index.html"
+   (fn [ctx]
+     (render/html-page {:title nil :active-page :home}
+       (landing/landing-page mino-root)))})
 
 (defn build-site!
   "Entry point for clj -X:build.

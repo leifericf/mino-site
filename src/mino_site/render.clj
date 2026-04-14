@@ -38,13 +38,20 @@
         [:meta {:charset "utf-8"}]
         [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
         [:title (if title
-                  (str title " — " site-title)
+                  (str title " \u2014 " site-title)
                   site-title)]
-        [:link {:rel "preconnect" :href "https://fonts.googleapis.com"}]
-        [:link {:rel "preconnect" :href "https://fonts.gstatic.com" :crossorigin ""}]
-        [:link {:rel "stylesheet"
-                :href "https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"}]
-        [:style (hu/raw-string (styles/site-css))]]
+        [:style (hu/raw-string (styles/site-css))]
+        ;; Google Analytics 4 — hostname-gated so local dev and preview
+        ;; deploys don't pollute the production stream.
+        [:script {:async true
+                  :src "https://www.googletagmanager.com/gtag/js?id=G-LD8F7JFYGB"}]
+        [:script (hu/raw-string
+                   (str "if(location.hostname==='leifericf.com'){"
+                        "window.dataLayer=window.dataLayer||[];"
+                        "function gtag(){dataLayer.push(arguments);}"
+                        "gtag('js',new Date());"
+                        "gtag('config','G-LD8F7JFYGB',{anonymize_ip:true});"
+                        "}"))]]
        [:body
         [:div {:class (if wide "container-wide" "container")}
          [:nav.nav

@@ -1,5 +1,5 @@
 (ns mino-site.styles
-  "Garden CSS definitions — retro green phosphor terminal aesthetic."
+  "Garden CSS definitions — clean Nordic-inspired design."
   (:require
     [garden.core :as garden]
     [garden.stylesheet :refer [at-media]]))
@@ -7,27 +7,31 @@
 ;; --- Colors ---
 
 (def colors
-  {:bg             "#0a0a0a"
-   :bg-card        "#111111"
-   :text           "#22cc22"
-   :text-bright    "#33ff33"
-   :text-dimmed    "#117711"
-   :link           "#55ffff"
-   :link-hover     "#88ffff"
-   :border         "#1a5a1a"
-   :border-bright  "#33ff33"
-   ;; CGA accent colors — syntax highlighting only
-   :code-keyword   "#ff55ff"
-   :code-string    "#ffff55"
-   :code-number    "#ffb000"
-   :code-comment   "#555555"
-   :code-type      "#55ffff"
-   :warning        "#ff5555"
-   :banner-bg      "#1a0a0a"})
+  {:bg           "#ffffff"
+   :bg-subtle    "#f8f9fa"
+   :text         "#2d3436"
+   :text-muted   "#808b96"
+   :heading      "#1a1a2e"
+   :link         "#2c5282"
+   :link-hover   "#1a365d"
+   :border       "#e8ecf0"
+   :code-bg      "#f5f7fa"
+   :code-text    "#2d3436"
+   ;; Syntax highlighting — muted, tasteful
+   :code-keyword "#7c3aed"
+   :code-string  "#16653e"
+   :code-number  "#c2410c"
+   :code-comment "#9ca3af"
+   :code-type    "#2c5282"
+   ;; Banner
+   :banner-bg    "#fef3c7"
+   :banner-text  "#92400e"
+   :banner-border "#fcd34d"})
 
 ;; --- Fonts ---
 
-(def font-heading "'Press Start 2P', monospace")
+(def font-body (str "-apple-system, BlinkMacSystemFont, 'Segoe UI', "
+                    "Roboto, Oxygen, Ubuntu, Cantarell, sans-serif"))
 (def font-mono (str "'SF Mono', 'Cascadia Code', 'JetBrains Mono', "
                     "'Fira Code', Menlo, Consolas, monospace"))
 
@@ -38,52 +42,62 @@
         :margin     0
         :padding    0}]
    [:html {:font-size "16px"}]
-   [:body {:font-family font-mono
+   [:body {:font-family font-body
            :background  (:bg colors)
            :color       (:text colors)
-           :line-height "1.7"}]
+           :line-height "1.7"
+           :-webkit-font-smoothing "antialiased"}]
    [:a {:color           (:link colors)
         :text-decoration "none"}]
-   ["a:hover" {:color (:link-hover colors)}]
-   [:code {:font-family font-mono
-           :font-size   "0.875rem"}]
-   [:pre {:background  (:bg-card colors)
-          :border      (str "1px solid " (:border colors))
-          :padding     "1.25rem"
-          :overflow-x  "auto"
-          :line-height "1.5"}]
+   ["a:hover" {:color           (:link-hover colors)
+               :text-decoration "underline"}]
+   [:code {:font-family   font-mono
+           :font-size     "0.875rem"
+           :background    (:code-bg colors)
+           :padding       "0.15rem 0.4rem"
+           :border-radius "3px"}]
+   [:pre {:background    (:code-bg colors)
+          :border        (str "1px solid " (:border colors))
+          :border-radius "6px"
+          :padding       "1.25rem"
+          :overflow-x    "auto"
+          :line-height   "1.6"}]
    ["pre code" {:background "none"
                 :padding    0}]
-   [:code {:background (:bg-card colors)
-           :padding    "0.15rem 0.4rem"}]
-   [:p {:margin-bottom "0.75rem"
-        :line-height   "1.7"}]
-   ["p + pre" {:margin-top "0.5rem"}]
-   ["pre + p" {:margin-top "1rem"}]
-   [:h1 :h2 :h3 {:font-family font-heading
-                  :color       (:text-bright colors)
-                  :line-height "1.4"}]
-   [:h1 {:font-size     "1.5rem"
-         :margin-bottom "1.5rem"}]
-   [:h2 {:font-size     "1rem"
-         :margin-top    "2.5rem"
-         :margin-bottom "1rem"}]
-   [:h3 {:font-size     "0.75rem"
-         :margin-top    "1.5rem"
+   [:p {:margin-bottom "1rem"
+        :line-height   "1.8"}]
+   ["p + pre" {:margin-top "0.75rem"}]
+   ["pre + p" {:margin-top "1.25rem"}]
+   [:h1 :h2 :h3 {:color       (:heading colors)
+                  :font-weight "600"
+                  :line-height "1.3"}]
+   [:h1 {:font-size     "2.25rem"
+         :margin-bottom "1.5rem"
+         :letter-spacing "-0.025em"}]
+   [:h2 {:font-size     "1.5rem"
+         :margin-top    "3rem"
+         :margin-bottom "1rem"
+         :letter-spacing "-0.02em"}]
+   [:h3 {:font-size     "1.125rem"
+         :margin-top    "2rem"
          :margin-bottom "0.75rem"}]
-   [:ul :ol {:margin-bottom "0.75rem"
+   [:ul :ol {:margin-bottom "1rem"
              :padding-left  "1.5rem"}]
-   [:li {:margin-bottom "0.35rem"}]
-   ["::selection" {:background (:text-bright colors)
-                   :color      (:bg colors)}]])
+   [:li {:margin-bottom "0.4rem"
+         :line-height   "1.7"}]
+   [:hr {:border     "none"
+         :border-top (str "1px solid " (:border colors))
+         :margin     "2rem 0"}]
+   ["::selection" {:background "#dbeafe"
+                   :color      (:heading colors)}]])
 
 ;; --- Layout ---
 
 (def layout-styles
-  [[:.container {:max-width "720px"
+  [[:.container {:max-width "680px"
                  :margin    "0 auto"
                  :padding   "0 1.5rem"}]
-   [:.container-wide {:max-width "900px"
+   [:.container-wide {:max-width "960px"
                       :margin    "0 auto"
                       :padding   "0 1.5rem"}]])
 
@@ -93,77 +107,88 @@
   [[:.nav {:display         "flex"
            :align-items     "center"
            :justify-content "space-between"
-           :padding         "1.25rem 0"
+           :padding         "1.5rem 0"
            :border-bottom   (str "1px solid " (:border colors))}]
-   [:.nav-logo {:font-family font-heading
-                :font-size   "0.875rem"
-                :color       (:text-bright colors)}]
-   ["a.nav-logo:hover" {:color (:link-hover colors)}]
+   [:.nav-logo {:font-family  font-mono
+                :font-size   "1.125rem"
+                :font-weight "700"
+                :color       (:heading colors)
+                :letter-spacing "-0.02em"}]
+   ["a.nav-logo" {:text-decoration "none"}]
+   ["a.nav-logo:hover" {:color (:link colors)
+                        :text-decoration "none"}]
    [:.nav-links {:display    "flex"
-                 :gap        "1.5rem"
+                 :gap        "2rem"
                  :list-style "none"}]
-   [:.nav-links>li>a {:color       (:text-dimmed colors)
-                      :font-size   "0.8rem"
-                      :font-family font-mono}]
-   [".nav-links li a:hover" {:color (:text colors)}]
-   [".nav-links li a.active" {:color (:text-bright colors)}]])
+   [:.nav-links>li>a {:color       (:text-muted colors)
+                      :font-size   "0.9rem"
+                      :font-weight "400"}]
+   [".nav-links li a:hover" {:color           (:text colors)
+                              :text-decoration "none"}]
+   [".nav-links li a.active" {:color       (:heading colors)
+                               :font-weight "500"}]])
 
 ;; --- Footer ---
 
 (def footer-styles
-  [[:.footer {:margin-top  "4rem"
-              :padding     "2rem 0"
+  [[:.footer {:margin-top  "6rem"
+              :padding     "2.5rem 0"
               :border-top  (str "1px solid " (:border colors))
               :text-align  "center"
-              :color       (:text-dimmed colors)
-              :font-size   "0.75rem"}]
-   [".footer a" {:color (:text-dimmed colors)}]
+              :color       (:text-muted colors)
+              :font-size   "0.85rem"}]
+   [".footer a" {:color (:text-muted colors)}]
    [".footer a:hover" {:color (:text colors)}]])
 
 ;; --- Hero ---
 
 (def hero-styles
-  [[:.hero {:padding    "4rem 0 3rem"
+  [[:.hero {:padding    "5rem 0 4rem"
             :text-align "center"}]
-   [:.hero-prompt {:font-family font-mono
-                   :font-size   "1.25rem"
-                   :color       (:text-bright colors)
-                   :margin-bottom "1rem"}]
-   [:.cursor {:display   "inline-block"
-              :width     "0.6em"
-              :height    "1.1em"
-              :background (:text-bright colors)
-              :margin-left "2px"
-              :animation "blink 1s step-end infinite"
-              :vertical-align "text-bottom"}]
-   ["@keyframes blink" {"0%, 100%" {:opacity 1}
-                        "50%"      {:opacity 0}}]
-   [:.hero-tagline {:font-family   font-heading
-                    :font-size     "1.25rem"
-                    :color         (:text-bright colors)
+   [:.hero-tagline {:font-family   font-mono
+                    :font-size     "2.25rem"
+                    :font-weight   "600"
+                    :color         (:heading colors)
                     :margin-bottom "1rem"
-                    :line-height   "1.6"}]
-   [:.hero-stats {:color         (:text-dimmed colors)
-                  :font-size     "0.875rem"
-                  :margin-bottom "2rem"}]
+                    :line-height   "1.3"
+                    :letter-spacing "-0.02em"}]
+   [:.hero-subtitle {:font-size     "1.125rem"
+                     :color         (:text-muted colors)
+                     :margin-bottom "2.5rem"
+                     :line-height   "1.6"}]
    [:.hero-ctas {:display         "flex"
                  :justify-content "center"
-                 :gap             "2rem"
+                 :gap             "1rem"
                  :margin-top      "2rem"}]
-   [:.cta {:font-family font-mono
-           :font-size   "1rem"
-           :color       (:link colors)}]
-   ["a.cta:hover" {:color (:link-hover colors)}]])
+   [:.cta-primary {:display        "inline-block"
+                   :padding        "0.75rem 1.75rem"
+                   :background     (:heading colors)
+                   :color          "#ffffff"
+                   :border-radius  "6px"
+                   :font-size      "0.95rem"
+                   :font-weight    "500"}]
+   ["a.cta-primary:hover" {:background      (:link colors)
+                            :color           "#ffffff"
+                            :text-decoration "none"}]
+   [:.cta-secondary {:display        "inline-block"
+                     :padding        "0.75rem 1.75rem"
+                     :border         (str "1px solid " (:border colors))
+                     :color          (:text colors)
+                     :border-radius  "6px"
+                     :font-size      "0.95rem"
+                     :font-weight    "500"}]
+   ["a.cta-secondary:hover" {:border-color    (:text-muted colors)
+                              :text-decoration "none"}]])
 
 ;; --- Banner ---
 
 (def banner-styles
-  [[:.banner {:background  (:banner-bg colors)
-              :border      (str "1px solid " (:warning colors))
-              :padding     "0.5rem 1rem"
-              :text-align  "center"
-              :font-size   "0.75rem"
-              :color       (:warning colors)}]])
+  [[:.banner {:background    (:banner-bg colors)
+              :border-bottom (str "1px solid " (:banner-border colors))
+              :padding       "0.6rem 1rem"
+              :text-align    "center"
+              :font-size     "0.85rem"
+              :color         (:banner-text colors)}]])
 
 ;; --- Cards ---
 
@@ -172,77 +197,89 @@
                  :grid-template-columns  "repeat(auto-fit, minmax(280px, 1fr))"
                  :gap                    "1.5rem"
                  :margin-top             "1.5rem"}]
-   [:.card {:border  (str "1px solid " (:border colors))
-            :padding "1.5rem"}]
-   ["a.card" {:color (:text colors)}]
-   ["a.card:hover" {:border-color (:border-bright colors)}]
-   [:.card-title {:font-family   font-heading
-                  :font-size     "0.625rem"
-                  :color         (:text-bright colors)
-                  :margin-bottom "0.75rem"}]
-   [:.card-desc {:color     (:text-dimmed colors)
-                 :font-size "0.875rem"}]])
+   [:.card {:border        (str "1px solid " (:border colors))
+            :border-radius "8px"
+            :padding       "1.75rem"
+            :transition    "border-color 0.15s ease"}]
+   ["a.card" {:color           (:text colors)
+              :text-decoration "none"
+              :display         "block"}]
+   ["a.card:hover" {:border-color    (:text-muted colors)
+                     :text-decoration "none"}]
+   [:.card-title {:font-size     "1.125rem"
+                  :font-weight   "600"
+                  :color         (:heading colors)
+                  :margin-bottom "0.5rem"}]
+   [:.card-desc {:color       (:text-muted colors)
+                 :font-size   "0.9rem"
+                 :line-height "1.6"}]])
 
 ;; --- Docs sidebar ---
 
 (def sidebar-styles
   [[:.docs-layout {:display  "flex"
                    :gap      "3rem"
-                   :padding  "2rem 0"}]
-   [:.docs-sidebar {:width      "200px"
+                   :padding  "2.5rem 0"}]
+   [:.docs-sidebar {:width       "200px"
                     :flex-shrink "0"
-                    :position   "sticky"
-                    :top        "1rem"
-                    :align-self "flex-start"
-                    :max-height "calc(100vh - 2rem)"
-                    :overflow-y "auto"}]
+                    :position    "sticky"
+                    :top         "1.5rem"
+                    :align-self  "flex-start"
+                    :max-height  "calc(100vh - 3rem)"
+                    :overflow-y  "auto"}]
    [:.docs-sidebar>ul {:list-style "none"
                        :padding    0}]
    [".docs-sidebar li" {:margin-bottom "0.5rem"}]
-   [".docs-sidebar a" {:color     (:text-dimmed colors)
-                       :font-size "0.8rem"}]
+   [".docs-sidebar a" {:color       (:text-muted colors)
+                       :font-size   "0.85rem"
+                       :font-weight "400"}]
    [".docs-sidebar a:hover" {:color (:text colors)}]
-   [".docs-sidebar a.active" {:color (:text-bright colors)}]
-   [:.docs-content {:flex "1"
+   [".docs-sidebar a.active" {:color       (:heading colors)
+                               :font-weight "500"}]
+   [:.docs-content {:flex      "1"
                     :min-width "0"}]])
 
-;; --- Code block header ---
+;; --- Code block ---
 
 (def code-styles
   [[:.code-block {:margin-bottom "1.5rem"}]
-   [:.code-header {:font-size   "0.75rem"
-                   :color       (:text-dimmed colors)
+   [:.code-header {:font-family font-mono
+                   :font-size   "0.8rem"
+                   :color       (:text-muted colors)
                    :padding     "0.5rem 1.25rem"
-                   :background  (:bg-card colors)
+                   :background  (:bg-subtle colors)
                    :border      (str "1px solid " (:border colors))
-                   :border-bottom "none"}]
-   [".code-block pre" {:margin-top 0}]
+                   :border-bottom "none"
+                   :border-radius "6px 6px 0 0"}]
+   [".code-block pre" {:margin-top    0
+                       :border-radius "0 0 6px 6px"}]
    ;; Syntax highlighting
    [:.hl-keyword {:color (:code-keyword colors)}]
    [:.hl-string  {:color (:code-string colors)}]
    [:.hl-number  {:color (:code-number colors)}]
-   [:.hl-comment {:color (:code-comment colors)}]
+   [:.hl-comment {:color  (:code-comment colors)
+                  :font-style "italic"}]
    [:.hl-type    {:color (:code-type colors)}]])
 
 ;; --- Responsive ---
 
 (def responsive-styles
   [(at-media {:max-width "768px"}
-     [:.container {:padding "0 1rem"}]
-     [:.container-wide {:padding "0 1rem"}]
-     [:.hero-tagline {:font-size "1rem"}]
+     [:.container {:padding "0 1.25rem"}]
+     [:.container-wide {:padding "0 1.25rem"}]
+     [:.hero {:padding "3rem 0 2rem"}]
+     [:.hero-tagline {:font-size "1.75rem"}]
      [:.hero-ctas {:flex-direction "column"
-                   :gap            "1rem"
                    :align-items    "center"}]
      [:.docs-layout {:flex-direction "column"}]
-     [:.docs-sidebar {:width    "100%"
-                      :position "static"
+     [:.docs-sidebar {:width      "100%"
+                      :position   "static"
                       :max-height "none"}]
      [:.card-grid {:grid-template-columns "1fr"}]
      [:.nav {:flex-direction "column"
-             :gap "0.75rem"}]
-     [:.nav-links {:flex-wrap "wrap"
-                   :justify-content "center"}])])
+             :gap            "0.75rem"
+             :align-items    "flex-start"}]
+     [:.nav-links {:flex-wrap "wrap"}])])
 
 ;; --- Aggregate ---
 
