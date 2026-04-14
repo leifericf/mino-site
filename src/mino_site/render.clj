@@ -6,6 +6,7 @@
   (:require
     [hiccup2.core :as h]
     [hiccup.util :as hu]
+    [mino-site.highlight :as highlight]
     [mino-site.styles :as styles]))
 
 ;; --- Configuration ---
@@ -69,4 +70,5 @@
          [:footer.footer
           [:p (str site-title " is MIT licensed. ")
            [:a {:href "https://github.com/leifericf/mino"} "Source on GitHub"]
-           "."]]]]])))
+           "."]]
+         [:script (hu/raw-string highlight/highlight-js)]]]])))

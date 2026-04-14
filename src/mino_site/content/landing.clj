@@ -2,9 +2,7 @@
   "Homepage content."
   (:require
     [clojure.java.io :as io]
-    [clojure.string :as str]
-    [hiccup2.core :as h]
-    [hiccup.util :as hu]))
+    [hiccup2.core :as h]))
 
 (defn- read-file
   "Read a file from the mino source tree, or nil if missing."
@@ -13,9 +11,6 @@
     (when (.exists f)
       (slurp f))))
 
-(defn- escape-html [s]
-  (str/escape s {\< "&lt;" \> "&gt;" \& "&amp;"}))
-
 (defn landing-page
   "Generates the homepage HTML body."
   [mino-root]
@@ -23,12 +18,13 @@
     (str
       (h/html
         [:div.banner
-         "v0.12.0 Release Candidate \u2014 API unstable until v1.0"]
+         "Unstable alpha proof-of-concept. The API may change before v1.0."]
         [:section.hero
          [:h1.hero-tagline
           "A tiny embeddable Lisp" [:br] "in pure ANSI C."]
          [:p.hero-subtitle
-          "~7,000 lines of C. No dependencies. Sandboxed by default. MIT licensed."]
+          "Inspired by Clojure, Lua, and Fennel. "
+          "~7,000 lines of C. No dependencies. Sandboxed by default."]
          [:div.hero-ctas
           [:a.cta-primary {:href "/get-started/"} "Get Started"]
           [:a.cta-secondary {:href "/documentation/"} "Documentation"]]]
@@ -37,6 +33,6 @@
            [:h2 "Embed in your C project"]
            [:p {:style "margin-bottom: 1rem;"}
             "Create a runtime, register a host function, evaluate code, "
-            "and extract the result \u2014 all in a single file."]
+            "and extract the result. All in a single file."]
            [:pre
-            [:code (hu/raw-string (escape-html embed-src))]]])))))
+            [:code {:data-lang "c"} embed-src]]])))))
