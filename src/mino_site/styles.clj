@@ -52,7 +52,7 @@
    ["a:hover" {:color           (:link-hover colors)
                :text-decoration "underline"}]
    [:code {:font-family   font-mono
-           :font-size     "0.875rem"
+           :font-size     "0.8125rem"
            :background    (:code-bg colors)
            :padding       "0.15rem 0.4rem"
            :border-radius "3px"}]
@@ -61,7 +61,11 @@
           :border-radius "6px"
           :padding       "1.25rem"
           :overflow-x    "auto"
-          :line-height   "1.6"}]
+          :line-height   "1.5"
+          :font-size     "0.8125rem"
+          :max-width     "min(100vw - 3rem, 860px)"
+          :margin-left   "auto"
+          :margin-right  "auto"}]
    ["pre code" {:background "none"
                 :padding    0}]
    [:p {:margin-bottom "1rem"
@@ -72,15 +76,15 @@
                   :font-weight "600"
                   :line-height "1.3"}]
    [:h1 {:font-size     "2.25rem"
-         :margin-bottom "1.5rem"
+         :margin-bottom "2rem"
          :letter-spacing "-0.025em"}]
    [:h2 {:font-size     "1.5rem"
          :margin-top    "3rem"
-         :margin-bottom "1rem"
+         :margin-bottom "1.25rem"
          :letter-spacing "-0.02em"}]
    [:h3 {:font-size     "1.125rem"
          :margin-top    "2rem"
-         :margin-bottom "0.75rem"}]
+         :margin-bottom "1rem"}]
    [:ul :ol {:margin-bottom "1rem"
              :padding-left  "1.5rem"}]
    [:li {:margin-bottom "0.4rem"
@@ -99,15 +103,16 @@
                  :padding   "0 1.5rem"}]
    [:.container-wide {:max-width "960px"
                       :margin    "0 auto"
-                      :padding   "0 1.5rem"}]])
+                      :padding   "0 1.5rem"}]
+   [:main {:padding-top "2.5rem"}]])
 
 ;; --- Nav ---
 
 (def nav-styles
   [[:.nav {:display         "flex"
-           :align-items     "center"
+           :align-items     "baseline"
            :justify-content "space-between"
-           :padding         "1.5rem 0"
+           :padding         "1.5rem 0 0.75rem"
            :border-bottom   (str "1px solid " (:border colors))}]
    [:.nav-logo {:font-family  font-mono
                 :font-size   "1.125rem"
@@ -152,6 +157,14 @@
                     :margin-bottom "1rem"
                     :line-height   "1.3"
                     :letter-spacing "-0.02em"}]
+   [:.hero-points {:list-style     "none"
+                   :padding-left   "0"
+                   :color          (:text-muted colors)
+                   :font-size      "1rem"
+                   :line-height    "2"
+                   :margin-bottom  "2.5rem"
+                   :display        "inline-block"
+                   :text-align     "left"}]
    [:.hero-subtitle {:font-size     "1.125rem"
                      :color         (:text-muted colors)
                      :margin-bottom "2.5rem"

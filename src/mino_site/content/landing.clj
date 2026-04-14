@@ -22,9 +22,6 @@
         [:section.hero
          [:h1.hero-tagline
           "A tiny embeddable Lisp" [:br] "in pure ANSI C."]
-         [:p.hero-subtitle
-          "Inspired by Clojure, Lua, and Fennel. "
-          "~7,000 lines of C. No dependencies. Sandboxed by default."]
          [:div.hero-ctas
           [:a.cta-primary {:href "/get-started/"} "Get Started"]
           [:a.cta-secondary {:href "/documentation/"} "Documentation"]]]
@@ -32,7 +29,6 @@
           [:section {:style "margin-top: 4rem;"}
            [:h2 "Embed in your C project"]
            [:p {:style "margin-bottom: 1rem;"}
-            "Create a runtime, register a host function, evaluate code, "
-            "and extract the result. All in a single file."]
+            "Register a host function, evaluate code, extract the result."]
            [:pre
             [:code {:data-lang "c"} embed-src]]])))))
