@@ -22,7 +22,8 @@
     [mino-site.content.cookbook-page :as cookbook-page]
     [mino-site.content.not-found :as not-found]
     [mino-site.content.tooling :as tooling]
-    [mino-site.content.testing :as testing]))
+    [mino-site.content.testing :as testing]
+    [mino-site.content.tco :as tco]))
 
 (defn pages
   "Returns a Stasis page map: {path -> (fn [ctx] html-string)}.
@@ -103,6 +104,13 @@
                           :description "Write and run tests in mino using deftest, is, and testing. Built-in test runner with CI-friendly exit codes."
                           :active-page :documentation}
          (testing/testing-page)))
+
+     "/documentation/tco/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Proper Tail Calls"
+                          :description "All function calls in tail position are optimized. Self-recursion, mutual recursion, and general tail calls run in constant stack space."
+                          :active-page :documentation}
+         (tco/tco-page)))
 
      "/changelog/index.html"
      (fn [ctx]

@@ -43,7 +43,14 @@
         [:div.card-desc
          "Write and run tests in mino itself using "
          [:code "deftest"] ", " [:code "is"] ", and " [:code "testing"]
-         ". Built-in test runner with CI-friendly exit codes."]]]
+         ". Built-in test runner with CI-friendly exit codes."]]
+
+       [:a.card {:href "/documentation/tco/"}
+        [:div.card-title "Proper Tail Calls"]
+        [:div.card-desc
+         "All function calls in tail position are optimized. "
+         "Self-recursion, mutual recursion, and general tail calls "
+         "run in constant stack space."]]]
 
       [:h2 "Additional resources"]
       [:ul
