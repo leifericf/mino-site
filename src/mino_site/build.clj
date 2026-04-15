@@ -32,8 +32,8 @@
   Paths use /dir/index.html so GitHub Pages serves them at /dir/.
   mino-root is the path to the mino source tree (submodule or local)."
   [mino-root]
-  (let [api-data     (parse.header/parse (str mino-root "/mino.h"))
-        builtin-data (parse.builtins/parse (str mino-root "/mino.c"))
+  (let [api-data     (parse.header/parse (str mino-root "/src/mino.h"))
+        builtin-data (parse.builtins/parse (str mino-root "/src/prim.c"))
         cookbook-data (parse.cookbook/parse mino-root)
         smoke-data   (parse.smoke/parse mino-root)]
     {"/index.html"

@@ -11,15 +11,15 @@
       [:h1 "Get Started"]
 
       [:h2 "1. Get the source"]
-      [:p "mino is two files: " [:code "mino.h"] " and " [:code "mino.c"]
-       ". Copy them into your project, or clone the repository:"]
+      [:p "mino is a handful of C files in " [:code "src/"]
+       ". Copy the directory into your project, or clone the repository:"]
       [:pre [:code "git clone https://github.com/leifericf/mino.git"]]
 
       [:h2 "2. Compile"]
       [:p "Build the standalone REPL:"]
       [:pre [:code "cd mino\nmake"]]
       [:p "Or compile mino directly into your own program:"]
-      [:pre [:code "cc -std=c99 -o myapp myapp.c mino.c"]]
+      [:pre [:code "cc -std=c99 -Isrc -o myapp myapp.c src/*.c -lm"]]
       [:p "No build system, package manager, or external dependencies required."]
 
       [:h2 "3. Embed in your C program"]

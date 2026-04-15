@@ -55,15 +55,15 @@
 ;; --- Primitive extraction from mino_install_core ---
 
 (defn- extract-primitives
-  "Extract mino_env_set calls from mino_install_core in mino.c.
+  "Extract mino_env_set calls from mino_install_core.
   Returns a seq of primitive names as strings."
   [c-text]
   (let [;; Find the mino_install_core function body
-        install-re #"(?s)void mino_install_core\(mino_env_t \*env\)\s*\{(.+?)\n\}"
+        install-re #"(?s)void mino_install_core\(mino_state_t \*S, mino_env_t \*env\)\s*\{(.+?)\n\}"
         m (re-find install-re c-text)]
     (when m
       (let [body (nth m 1)]
-        (->> (re-seq #"mino_env_set\(env,\s*\"([^\"]+)\"" body)
+        (->> (re-seq #"mino_env_set\(S_,\s*env,\s*\"([^\"]+)\"" body)
              (mapv second))))))
 
 ;; --- I/O primitives ---
@@ -71,19 +71,19 @@
 (defn- extract-io-primitives
   "Extract primitives registered in mino_install_io."
   [c-text]
-  (let [io-re #"(?s)void mino_install_io\(mino_env_t \*env\)\s*\{(.+?)\n\}"
+  (let [io-re #"(?s)void mino_install_io\(mino_state_t \*S, mino_env_t \*env\)\s*\{(.+?)\n\}"
         m (re-find io-re c-text)]
     (when m
       (let [body (nth m 1)]
-        (->> (re-seq #"mino_env_set\(env,\s*\"([^\"]+)\"" body)
+        (->> (re-seq #"mino_env_set\(S_,\s*env,\s*\"([^\"]+)\"" body)
              (mapv second))))))
 
 ;; --- Stdlib macros ---
 
 (defn- read-stdlib-source
-  "Read core.mino from the mino repo root (sibling of mino.c)."
-  [mino-c-path]
-  (let [dir  (.getParent (java.io.File. mino-c-path))
+  "Read core.mino from the src/ directory (sibling of prim.c)."
+  [prim-c-path]
+  (let [dir  (.getParent (java.io.File. prim-c-path))
         path (str dir "/core.mino")]
     (when (.exists (java.io.File. path))
       (slurp path))))
@@ -157,7 +157,8 @@
 ;; --- Public API ---
 
 (defn parse
-  "Parse mino.c for built-in functions and return structured data.
+  "Parse prim.c for built-in functions and return structured data.
+  Takes the path to prim.c (which contains mino_install_core/io).
   Returns:
     {:categories [{:name \"arithmetic\" :primitives [\"+ \" \"-\" ...]} ...]
      :stdlib [{:name \"when\" :kind :macro :source \"...\"} ...]

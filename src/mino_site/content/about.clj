@@ -62,9 +62,9 @@
 
       [:h2 "Why embed mino?"]
       [:ul
-       [:li [:strong "Single-file C implementation."] " ~7,000 lines of "
-        [:code "mino.c"] " plus a 350-line header. Copy two files into your "
-        "project and compile with any C99 compiler."]
+       [:li [:strong "Small C implementation."] " A handful of focused C "
+        "files in " [:code "src/"] ". Copy the directory into your project "
+        "and compile with any C99 compiler."]
        [:li [:strong "No external dependencies."] " No VM, no JIT, no "
         "platform-specific runtime services. Pure ANSI C."]
        [:li [:strong "Persistent data structures."] " Vectors (32-way tries), "
@@ -160,7 +160,7 @@
       [:ul
        [:li [:strong "Embeddable like Lua."] " A C library you link "
         "into your program. No separate process, no VM, no build "
-        "toolchain. Two files, any C99 compiler."]
+        "toolchain. Copy " [:code "src/"] ", any C99 compiler."]
        [:li [:strong "Immutable like Clojure."] " Persistent vectors, "
         "hash-array mapped tries, structural sharing. Values are "
         "safe to pass between host and guest without defensive "

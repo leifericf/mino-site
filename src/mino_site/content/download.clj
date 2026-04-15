@@ -20,16 +20,16 @@
        [:a {:href "https://github.com/leifericf/mino/archive/refs/heads/main.zip"}
         "download a zip archive"] " of the latest source."]
 
-      [:h2 "Single-file inclusion"]
-      [:p "mino is two files: " [:code "mino.h"] " (350 lines) and "
-       [:code "mino.c"] " (~7,000 lines). Copy both into your project and "
-       "compile. That's it. No build system or package manager required."]
+      [:h2 "Embed in your project"]
+      [:p "mino is a handful of C files in " [:code "src/"]
+       ". Copy the directory into your project and compile. "
+       "No build system or package manager required."]
 
       [:h2 "Building"]
       [:p "Build the standalone REPL binary:"]
       [:pre [:code "make"]]
       [:p "Or compile mino into your own program:"]
-      [:pre [:code "cc -std=c99 -o myapp myapp.c mino.c"]]
+      [:pre [:code "cc -std=c99 -Isrc -o myapp myapp.c src/*.c -lm"]]
       [:p "Run the test suite:"]
       [:pre [:code "make test"]]
 
