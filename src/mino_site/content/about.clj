@@ -12,15 +12,16 @@
 
       [:h2 "What is mino?"]
       [:p "mino is a tiny, embeddable Lisp runtime library implemented "
-       "in pure ANSI C. The host application links the library, creates "
+       "in pure ANSI C. The " [:em "host"] " (the C or C++ application "
+       "embedding mino) links the library, creates "
        "one or more " [:em "runtimes"] " (isolated instances, each with "
        "its own garbage collector, bindings, and memory), installs "
        "capabilities, and evaluates user code through a compact C API."]
-      [:p "The language centers on immutable values, persistent "
-       "collections with structural sharing, code-as-data, macros, "
-       "and REPL-driven development. The standalone REPL is a "
-       "convenience for development and testing. The embedding API "
-       "is the product."]
+      [:p "The language centers on immutable values and persistent "
+       "collections (data structures that preserve previous versions "
+       "when updated, sharing unchanged parts in memory). The "
+       "standalone REPL is a convenience for development and testing. "
+       "The embedding API is the product."]
 
       [:h2 "Inspirations"]
       [:p "mino draws from four projects that each got something "
@@ -30,7 +31,8 @@
         "persistent data structures, and a data-first programming "
         "model could be practical and productive. mino preserves "
         "this core: immutable collections with structural sharing, "
-        "code-as-data, and REPL-driven development."]
+        "code-as-data (programs are data structures that programs can "
+        "inspect and transform), and REPL-driven development."]
        [:li [:strong "Lua"] " proved that a small, portable ANSI C "
         "implementation could become a world-class embeddable "
         "scripting language. mino follows the same discipline: "
@@ -45,13 +47,10 @@
         "runtime isolation model draws from this: each runtime "
         "instance is a failure domain, concurrency happens between "
         "runtimes, and the host controls scheduling."]]
-      [:p "Where Clojure's concurrency model maps honestly to an "
-       "embedded context, mino provides familiar abstractions: atoms "
-       "for single-runtime mutation, agents backed by the actor model, "
-       "and dynamic binding scoped to a runtime instance. Where "
-       "Clojure's model assumes shared-memory threads (STM, refs, "
-       "dosync), mino intentionally diverges: message passing between "
-       "runtimes replaces coordinated in-process mutation."]
+      [:p "Within a single runtime, mino provides atoms (mutable "
+       "reference cells) and dynamic bindings for controlled state. "
+       "Between runtimes, message passing replaces shared-memory "
+       "coordination."]
 
       [:h2 "Why embed mino?"]
       [:ul
@@ -60,10 +59,10 @@
         "into your project and compile with any C99 compiler."]
        [:li [:strong "No external dependencies."] " No VM, no JIT, "
         "no platform-specific runtime services. Pure ANSI C."]
-       [:li [:strong "Persistent data structures."] " Vectors "
-        "(32-way tries), maps (HAMT), and sets with structural "
-        "sharing. Updates return new values; old versions remain "
-        "accessible."]
+       [:li [:strong "Persistent data structures."] " Vectors, "
+        "maps, and sets that preserve previous versions when "
+        "updated. Unchanged parts are shared in memory, so updates "
+        "are cheap and old versions remain accessible."]
        [:li [:strong "Sandboxed by default."] " A fresh runtime has "
         "no I/O capabilities. The host opts in to " [:code "println"]
         ", " [:code "slurp"] ", and file access by calling "
