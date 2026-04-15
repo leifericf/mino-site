@@ -25,7 +25,8 @@
     [mino-site.content.testing :as testing]
     [mino-site.content.tco :as tco]
     [mino-site.content.design :as design]
-    [mino-site.content.embedding :as embedding]))
+    [mino-site.content.embedding :as embedding]
+    [mino-site.content.performance :as performance]))
 
 (defn pages
   "Returns a Stasis page map: {path -> (fn [ctx] html-string)}.
@@ -127,6 +128,13 @@
                           :description "State lifecycle, value ownership, sandboxing, handles, sessions, actors, and threading rules for embedding mino in a host application."
                           :active-page :documentation}
          (embedding/embedding-page)))
+
+     "/documentation/performance/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Performance"
+                          :description "Preliminary performance characteristics: per-operation costs, collection throughput, actor scaling, and where the time goes."
+                          :active-page :documentation}
+         (performance/performance-page)))
 
      "/changelog/index.html"
      (fn [ctx]

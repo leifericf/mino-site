@@ -64,7 +64,14 @@
         [:div.card-desc
          "The design philosophy, core rules, trade-offs, and "
          "boundaries of the mino runtime. What mino is, what it "
-         "is not, and why."]]]
+         "is not, and why."]]
+
+       [:a.card {:href "/documentation/performance/"}
+        [:div.card-title "Performance"]
+        [:div.card-desc
+         "Preliminary operation costs, collection throughput, "
+         "actor scaling characteristics, and where the time goes "
+         "in a tree-walking interpreter."]]]
 
       [:h2 "Additional resources"]
       [:ul
