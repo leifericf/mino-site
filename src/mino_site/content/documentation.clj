@@ -50,7 +50,14 @@
         [:div.card-desc
          "All function calls in tail position are optimized. "
          "Self-recursion, mutual recursion, and general tail calls "
-         "run in constant stack space."]]]
+         "run in constant stack space."]]
+
+       [:a.card {:href "/documentation/design/"}
+        [:div.card-title "Design"]
+        [:div.card-desc
+         "The design philosophy, core rules, trade-offs, and "
+         "boundaries of the mino runtime. What mino is, what it "
+         "is not, and why."]]]
 
       [:h2 "Additional resources"]
       [:ul
