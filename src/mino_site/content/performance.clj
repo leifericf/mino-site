@@ -183,6 +183,27 @@
         "A bytecode compiler would give a large constant-factor "
         "improvement across the board."]]
 
+      [:h2 "Known issues"]
+      [:p "Two performance problems are identified and tracked in the "
+       "backlog. They require architectural work to address."]
+      [:ul
+       [:li [:strong "Core library initialization (0.5 ms per runtime)."]
+        " Every new runtime instance parses and evaluates ~800 lines "
+        "of " [:code "core.mino"] " from source text. This is the "
+        "dominant cost in actor creation. The parsed forms contain "
+        "pointers into a specific runtime's memory (interned symbols, "
+        "keywords), so they cannot be shared across runtimes without "
+        "re-interning, which is nearly as expensive as re-parsing. "
+        "A bytecode or pre-compiled format would solve this but does "
+        "not exist yet."]
+       [:li [:strong "Lazy sequence per-element overhead (7\u20138 \u00b5s)."]
+        " Lazy-by-default sequences pay for a thunk allocation, an "
+        "eval, and a cons cell on every element. For bulk work, "
+        [:code "loop/recur"] " is 5x faster because it avoids this "
+        "machinery. Adding eager C-level primitives for hot paths "
+        "would help specific cases, but changes the language "
+        "semantics in ways that need careful thought."]]
+
       [:h2 "What this means in practice"]
       [:p "mino is fast enough for configuration evaluation, rules "
        "engines, interactive consoles, plugin systems, and data "
