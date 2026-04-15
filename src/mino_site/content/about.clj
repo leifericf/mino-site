@@ -13,8 +13,9 @@
       [:h2 "What is mino?"]
       [:p "mino is a tiny, embeddable Lisp runtime library implemented "
        "in pure ANSI C. The host application links the library, creates "
-       "one or more runtime instances, installs capabilities, and "
-       "evaluates user code through a compact C API."]
+       "one or more " [:em "runtimes"] " (isolated instances, each with "
+       "its own garbage collector, bindings, and memory), installs "
+       "capabilities, and evaluates user code through a compact C API."]
       [:p "The language centers on immutable values, persistent "
        "collections with structural sharing, code-as-data, macros, "
        "and REPL-driven development. The standalone REPL is a "
