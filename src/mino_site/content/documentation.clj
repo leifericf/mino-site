@@ -24,6 +24,13 @@
          "Every built-in function, special form, and macro available in "
          "the mino language. Organized by category with usage examples."]]
 
+       [:a.card {:href "/documentation/embedding/"}
+        [:div.card-title "Embedding Guide"]
+        [:div.card-desc
+         "State lifecycle, value ownership, sandboxing, handles, "
+         "sessions, actors, and threading rules. The concepts you "
+         "need between Get Started and the Cookbook."]]
+
        [:a.card {:href "/documentation/cookbook/"}
         [:div.card-title "Embedding Cookbook"]
         [:div.card-desc

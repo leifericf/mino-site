@@ -24,7 +24,8 @@
     [mino-site.content.tooling :as tooling]
     [mino-site.content.testing :as testing]
     [mino-site.content.tco :as tco]
-    [mino-site.content.design :as design]))
+    [mino-site.content.design :as design]
+    [mino-site.content.embedding :as embedding]))
 
 (defn pages
   "Returns a Stasis page map: {path -> (fn [ctx] html-string)}.
@@ -119,6 +120,13 @@
                           :description "Design philosophy, core rules, trade-offs, and boundaries of the mino runtime."
                           :active-page :documentation}
          (design/design-page)))
+
+     "/documentation/embedding/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Embedding Guide"
+                          :description "State lifecycle, value ownership, sandboxing, handles, sessions, actors, and threading rules for embedding mino in a host application."
+                          :active-page :documentation}
+         (embedding/embedding-page)))
 
      "/changelog/index.html"
      (fn [ctx]

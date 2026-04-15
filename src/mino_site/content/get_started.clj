@@ -88,6 +88,9 @@ mino> (doc 'map)
 
       [:h2 "5. Next steps"]
       [:ul
+       [:li [:a {:href "/documentation/embedding/"} "Embedding Guide"]
+        ": state lifecycle, value ownership, sandboxing, handles, and "
+        "threading rules."]
        [:li [:a {:href "/documentation/api/"} "C API Reference"]
         ": every public function, type, and enum."]
        [:li [:a {:href "/documentation/language/"} "Language Reference"]
