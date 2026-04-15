@@ -69,26 +69,59 @@
         [:tr [:th "Operation"] [:th "Cost"] [:th "Per element"]]]
        [:tbody
         [:tr [:td [:code "(into [] (range 100))"]]
-             [:td "722 \u00b5s"]
-             [:td "7.2 \u00b5s"]]
+             [:td "728 \u00b5s"]
+             [:td "7.3 \u00b5s"]]
         [:tr [:td [:code "(reduce + 0 (range 100))"]]
-             [:td "698 \u00b5s"]
-             [:td "7.0 \u00b5s"]]
+             [:td "728 \u00b5s"]
+             [:td "7.3 \u00b5s"]]
         [:tr [:td [:code "(into [] (range 1000))"]]
-             [:td "8.0 ms"]
-             [:td "8.0 \u00b5s"]]
+             [:td "7.6 ms"]
+             [:td "7.6 \u00b5s"]]
         [:tr [:td [:code "(reduce + 0 (range 1000))"]]
-             [:td "7.4 ms"]
-             [:td "7.4 \u00b5s"]]
+             [:td "8.1 ms"]
+             [:td "8.1 \u00b5s"]]
         [:tr [:td "Build 100-key map"]
              [:td "1.1 ms"]
-             [:td "10.9 \u00b5s"]]
+             [:td "10.8 \u00b5s"]]
         [:tr [:td [:code "loop/recur"] " 10,000 iterations"]
-             [:td "13.5 ms"]
-             [:td "1.35 \u00b5s"]]
+             [:td "12.4 ms"]
+             [:td "1.24 \u00b5s"]]
         [:tr [:td [:code "(fib 20)"] " (recursive, ~21k calls)"]
-             [:td "44.6 ms"]
+             [:td "42.1 ms"]
              [:td "2.0 \u00b5s per call"]]]]
+
+      [:h2 "Eager collection builders"]
+      [:p "When lazy evaluation is not needed, the " [:code "rangev"]
+       ", " [:code "mapv"] ", and " [:code "filterv"]
+       " primitives produce vectors directly in C, bypassing thunk "
+       "allocation entirely."]
+      [:table
+       [:thead
+        [:tr [:th "Operation"] [:th "Cost"] [:th "Per element"]
+             [:th "vs. lazy"]]]
+       [:tbody
+        [:tr [:td [:code "(rangev 100)"]]
+             [:td "11 \u00b5s"]
+             [:td "0.11 \u00b5s"]
+             [:td "63\u00d7 faster"]]
+        [:tr [:td [:code "(rangev 1000)"]]
+             [:td "110 \u00b5s"]
+             [:td "0.11 \u00b5s"]
+             [:td "69\u00d7 faster"]]
+        [:tr [:td [:code "(reduce + 0 (rangev 1000))"]]
+             [:td "311 \u00b5s"]
+             [:td "0.31 \u00b5s"]
+             [:td "26\u00d7 faster"]]
+        [:tr [:td [:code "(mapv inc (rangev 1000))"]]
+             [:td "7.0 ms"]
+             [:td "7.0 \u00b5s"]
+             [:td "~1\u00d7 (fn call dominates)"]]]]
+      [:p "The speedup comes from eliminating thunk allocation and "
+       "eval overhead per element. When the per-element work is "
+       "dominated by a function call (as in " [:code "mapv"]
+       "), the eager path provides little advantage. Use "
+       [:code "rangev"] " for data generation and " [:code "reduce"]
+       " over vectors for the biggest wins."]
 
       [:h2 "Cross-state operations"]
       [:p "Cost of moving data between runtime instances and the "
@@ -164,14 +197,16 @@
         "per-element cost in " [:code "range"] ", " [:code "map"]
         ", " [:code "filter"] ", " [:code "take"] ", and "
         [:code "concat"] ". For tight loops, " [:code "loop/recur"]
-        " (1.35 \u00b5s/iteration) is 5x faster than lazy reduce "
-        "(7 \u00b5s/iteration)."]
+        " (1.24 \u00b5s/iteration) is 6x faster than lazy reduce "
+        "(7.3 \u00b5s/iteration). The eager variants "
+        [:code "rangev"] ", " [:code "mapv"] ", and "
+        [:code "filterv"] " eliminate thunk overhead entirely "
+        "when laziness is not needed."]
        [:li [:strong "Core library initialization."]
         " Every new runtime evaluates " [:code "core.mino"]
         " from source. This is why actor creation costs 0.5 ms "
-        "each. Pre-compiling or caching this would reduce it, "
-        "but it requires architectural changes to the reader and "
-        "intern table design."]
+        "each. Parsed forms are cached per state, so creating "
+        "multiple environments within one state avoids re-parsing."]
        [:li [:strong "Cons-list argument passing."]
         " Every function call builds a linked list of cons cells "
         "for its arguments. The callee walks the list to bind "
@@ -184,25 +219,25 @@
         "improvement across the board."]]
 
       [:h2 "Known issues"]
-      [:p "Two performance problems are identified and tracked in the "
-       "backlog. They require architectural work to address."]
+      [:p "Two performance characteristics are inherent to the current "
+       "architecture. Both have mitigations."]
       [:ul
        [:li [:strong "Core library initialization (0.5 ms per runtime)."]
-        " Every new runtime instance parses and evaluates ~800 lines "
-        "of " [:code "core.mino"] " from source text. This is the "
-        "dominant cost in actor creation. The parsed forms contain "
-        "pointers into a specific runtime's memory (interned symbols, "
-        "keywords), so they cannot be shared across runtimes without "
-        "re-interning, which is nearly as expensive as re-parsing. "
-        "A bytecode or pre-compiled format would solve this but does "
-        "not exist yet."]
+        " Every new runtime instance evaluates ~800 lines of "
+        [:code "core.mino"] " from source text. Parsed forms are "
+        "cached per state, so creating multiple environments within "
+        "one state avoids re-parsing. Cross-state sharing is not "
+        "possible because parsed forms contain state-specific "
+        "interned pointers. A bytecode format would address this "
+        "but does not exist yet."]
        [:li [:strong "Lazy sequence per-element overhead (7\u20138 \u00b5s)."]
         " Lazy-by-default sequences pay for a thunk allocation, an "
-        "eval, and a cons cell on every element. For bulk work, "
-        [:code "loop/recur"] " is 5x faster because it avoids this "
-        "machinery. Adding eager C-level primitives for hot paths "
-        "would help specific cases, but changes the language "
-        "semantics in ways that need careful thought."]]
+        "eval, and a cons cell on every element. The eager variants "
+        [:code "rangev"] ", " [:code "mapv"] ", and "
+        [:code "filterv"] " eliminate this overhead when laziness "
+        "is not needed (see table above). For iteration without "
+        "building a collection, " [:code "loop/recur"]
+        " remains the fastest option at 1.24 \u00b5s/iteration."]]
 
       [:h2 "What this means in practice"]
       [:p "mino is fast enough for configuration evaluation, rules "
