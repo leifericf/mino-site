@@ -14,7 +14,6 @@
     [mino-site.content.landing :as landing]
     [mino-site.content.about :as about]
     [mino-site.content.get-started :as get-started]
-    [mino-site.content.download :as download]
     [mino-site.content.documentation :as documentation]
     [mino-site.content.changelog :as changelog]
     [mino-site.content.api :as api]
@@ -23,8 +22,6 @@
     [mino-site.content.not-found :as not-found]
     [mino-site.content.tooling :as tooling]
     [mino-site.content.testing :as testing]
-    [mino-site.content.tco :as tco]
-    [mino-site.content.design :as design]
     [mino-site.content.embedding :as embedding]
     [mino-site.content.performance :as performance]))
 
@@ -55,13 +52,6 @@
                           :description "Copy the source, compile, and run your first mino program in under a minute."
                           :active-page :get-started}
          (get-started/get-started-page)))
-
-     "/download/index.html"
-     (fn [ctx]
-       (render/html-page {:title "Download"
-                          :description "Get the mino source. Single-file C library, any C99 compiler, no dependencies."
-                          :active-page :download}
-         (download/download-page)))
 
      "/documentation/index.html"
      (fn [ctx]
@@ -107,20 +97,6 @@
                           :description "Write and run tests in mino using deftest, is, and testing. Built-in test runner with CI-friendly exit codes."
                           :active-page :documentation}
          (testing/testing-page)))
-
-     "/documentation/tco/index.html"
-     (fn [ctx]
-       (render/html-page {:title "Proper Tail Calls"
-                          :description "All function calls in tail position are optimized. Self-recursion, mutual recursion, and general tail calls run in constant stack space."
-                          :active-page :documentation}
-         (tco/tco-page)))
-
-     "/documentation/design/index.html"
-     (fn [ctx]
-       (render/html-page {:title "Design"
-                          :description "Design philosophy, core rules, trade-offs, and boundaries of the mino runtime."
-                          :active-page :documentation}
-         (design/design-page)))
 
      "/documentation/embedding/index.html"
      (fn [ctx]

@@ -24,7 +24,8 @@
           "A tiny embeddable Lisp " [:br.desktop-br] "in pure ANSI C."]
          [:div.hero-ctas
           [:a.cta-primary {:href "/get-started/"} "Get Started"]
-          [:a.cta-secondary {:href "/documentation/"} "Documentation"]]]
+          [:a.cta-secondary {:href "/documentation/"} "Documentation"]
+          [:a.cta-secondary {:href "/about/"} "About"]]]
         (when embed-src
           [:section {:style "margin-top: 4rem;"}
            [:h2 "Embed in your C project"]

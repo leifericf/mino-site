@@ -292,6 +292,5 @@ mino_actor_free(a);"]]
         "rules engines, plugins, data pipelines, and interactive consoles."]
        [:li [:a {:href "/documentation/api/"} "C API Reference"]
         ": every public function, type, and enum in " [:code "mino.h"] "."]
-       [:li [:a {:href "/documentation/design/"} "Design"]
-        ": the philosophy, trade-offs, and boundaries behind the "
-        "runtime."]])))
+       [:li [:a {:href "/about/"} "About"]
+        ": design philosophy, trade-offs, and related projects."]])))

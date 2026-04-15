@@ -11,20 +11,25 @@
       [:h1 "Get Started"]
 
       [:h2 "1. Get the source"]
-      [:p "mino is a handful of C files in " [:code "src/"]
-       ". Copy the directory into your project, or clone the repository:"]
+      [:p "Clone the repository:"]
       [:pre [:code "git clone https://github.com/leifericf/mino.git"]]
+      [:p "Or "
+       [:a {:href "https://github.com/leifericf/mino/archive/refs/heads/main.zip"}
+        "download a zip archive"]
+       ". mino is a handful of C files in " [:code "src/"]
+       ". Any C99 compiler, no external dependencies."]
 
-      [:h2 "2. Compile"]
+      [:h2 "2. Build"]
       [:p "Build the standalone REPL:"]
       [:pre [:code "cd mino\nmake"]]
       [:p "Or compile mino directly into your own program:"]
       [:pre [:code "cc -std=c99 -Isrc -o myapp myapp.c src/*.c -lm"]]
-      [:p "No build system, package manager, or external dependencies required."]
+      [:p "Run the test suite:"]
+      [:pre [:code "make test"]]
 
       [:h2 "3. Embed in your C program"]
-      [:p "A minimal embedding creates a runtime, registers a host function, "
-       "evaluates mino code, and extracts the result:"]
+      [:p "A minimal embedding creates a runtime, registers a host "
+       "function, evaluates mino code, and extracts the result:"]
       [:pre
        [:code {:data-lang "c"}
 "#include \"mino.h\"
@@ -64,21 +69,24 @@ int main(void)
 }"]]
       [:p "Key points:"]
       [:ul
-       [:li [:code "mino_state_new()"] " creates an isolated runtime state "
-        "that owns the GC, intern tables, and all allocated objects."]
+       [:li [:code "mino_state_new()"] " creates an isolated runtime "
+        "state that owns the GC, intern tables, and all allocated "
+        "objects."]
        [:li [:code "mino_new(S)"] " creates an environment with core "
         "and I/O bindings installed."]
-       [:li [:code "mino_register_fn()"] " exposes a C function to mino code "
-        "under any name."]
-       [:li [:code "mino_eval_string()"] " reads and evaluates all forms, "
-        "returning the last result."]
-       [:li [:code "mino_to_float()"] " safely extracts a C value from the "
-        "result (returns 0 on type mismatch)."]
-       [:li [:code "mino_env_free()"] " and " [:code "mino_state_free()"]
-        " tear down the environment and state."]]
+       [:li [:code "mino_register_fn()"] " exposes a C function to "
+        "mino code under any name."]
+       [:li [:code "mino_eval_string()"] " reads and evaluates all "
+        "forms, returning the last result."]
+       [:li [:code "mino_to_float()"] " safely extracts a C value "
+        "from the result (returns 0 on type mismatch)."]
+       [:li [:code "mino_env_free()"] " and "
+        [:code "mino_state_free()"] " tear down the environment "
+        "and state."]]
 
       [:h2 "4. Try the REPL"]
-      [:p "The standalone REPL is useful for exploring the language interactively:"]
+      [:p "The standalone REPL is useful for exploring the language "
+       "interactively:"]
       [:pre
        [:code {:data-lang "mino"}
 "$ ./mino
@@ -91,14 +99,19 @@ mino> (map greet [\"alice\" \"bob\" \"carol\"])
 mino> (doc 'map)
 \"(map f coll) -- apply f to each element, return a list of results.\""]]
 
-      [:h2 "5. Next steps"]
+      [:h2 "Next steps"]
       [:ul
        [:li [:a {:href "/documentation/embedding/"} "Embedding Guide"]
-        ": state lifecycle, value ownership, sandboxing, handles, and "
-        "threading rules."]
+        ": state lifecycle, value ownership, sandboxing, handles, "
+        "and threading rules."]
        [:li [:a {:href "/documentation/api/"} "C API Reference"]
         ": every public function, type, and enum."]
        [:li [:a {:href "/documentation/language/"} "Language Reference"]
         ": every built-in function, special form, and macro."]
        [:li [:a {:href "/documentation/cookbook/"} "Embedding Cookbook"]
-        ": six worked examples for real-world patterns."]])))
+        ": six worked examples for real-world patterns."]]
+
+      [:h2 "License"]
+      [:p "mino is released under the "
+       [:a {:href "https://opensource.org/licenses/MIT"} "MIT License"]
+       ". Use it for anything."])))

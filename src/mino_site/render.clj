@@ -19,7 +19,7 @@
   [{:href "/about/"          :label "About"         :page :about}
    {:href "/get-started/"    :label "Get Started"   :page :get-started}
    {:href "/documentation/"  :label "Documentation" :page :documentation}
-   {:href "/download/"       :label "Download"      :page :download}
+   {:href "/changelog/"       :label "Changelog"     :page :changelog}
    {:href "https://github.com/leifericf/mino"
     :label "GitHub"
     :external true}])
