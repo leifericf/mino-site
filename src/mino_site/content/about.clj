@@ -40,11 +40,25 @@
        [:li [:strong "Fennel"] " demonstrated that Lisp syntax and macros "
         "can layer cleanly over a minimal runtime without sacrificing "
         "simplicity. mino takes a similar approach to keeping the language "
-        "small while making it extensible through macros and code-as-data."]]
+        "small while making it extensible through macros and code-as-data."]
+       [:li [:strong "Erlang/BEAM"] " showed that isolated processes "
+        "communicating via message passing create fault-tolerant, concurrent "
+        "systems without shared mutable state. mino's runtime isolation "
+        "model draws from this: each runtime instance is a failure domain, "
+        "concurrency happens between runtimes via explicit message passing, "
+        "and the host controls scheduling."]]
       [:p "The goal is not to replicate any of these languages, but to combine "
        "their best ideas into something new: a tiny embeddable runtime with "
-       "Clojure's data model, Lua's embedding philosophy, and Fennel's "
-       "pragmatic minimalism."]
+       "Clojure's data model, Lua's embedding philosophy, Fennel's "
+       "pragmatic minimalism, and Erlang's isolation-first concurrency."]
+
+      [:p "Where Clojure's concurrency model maps honestly to an embedded "
+       "context, mino provides familiar abstractions: atoms for single-runtime "
+       "mutation, agents backed by the actor model, and dynamic binding scoped "
+       "to a runtime instance. Where Clojure's model assumes shared-memory "
+       "threads (STM, refs, dosync), mino intentionally diverges: the embedding "
+       "context demands isolation, and message passing between runtimes replaces "
+       "coordinated in-process mutation."]
 
       [:h2 "Why embed mino?"]
       [:ul
