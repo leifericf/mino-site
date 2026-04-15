@@ -29,11 +29,10 @@
        "destroyed independently."]
 
       [:h3 "Environments"]
-      [:p "An environment holds name-to-value bindings. Create one and "
-       "install the standard library:"]
+      [:p "An environment holds name-to-value bindings. The quickest "
+       "start installs everything (core + I/O) in one call:"]
       [:pre [:code {:data-lang "c"}
-"mino_env_t *env = mino_new(S);       /* core bindings included */
-mino_install_io(S, env);              /* opt in to I/O          */"]]
+"mino_env_t *env = mino_new(S);       /* core + I/O included    */"]]
       [:p "Or start with an empty environment for a sandboxed context:"]
       [:pre [:code {:data-lang "c"}
 "mino_env_t *env = mino_env_new(S);   /* empty: no bindings     */
@@ -71,10 +70,12 @@ if (mino_pcall(S, fn, args, env, &out) != 0) {
 
       [:h2 "Value ownership"]
       [:p "This is the most important concept for correct embedding. "
-       "Every value returned by mino is " [:strong "borrowed"] ": it is "
-       "valid until the next mino function call that might allocate "
-       "memory. In practice, use a value or extract its data before "
-       "calling another mino function."]
+       "Every value returned by mino is " [:strong "borrowed"] ": it "
+       "survives until the next garbage collection cycle. Allocation "
+       "pressure triggers collection, so any mino call that allocates "
+       "may invalidate previously returned values. In practice, use a "
+       "value or extract its data promptly, and ref anything that must "
+       "survive across many mino calls."]
       [:pre [:code {:data-lang "c"}
 "mino_val_t *v = mino_int(S, 42);
 /* v is valid here */
@@ -109,9 +110,9 @@ mino_unref(S, r);                    /* release the root       */"]]
       [:p "Register C functions as mino primitives with "
        [:code "mino_register_fn"] ":"]
       [:pre [:code {:data-lang "c"}
-"static mino_val_t *my_greet(mino_val_t *args, mino_env_t *env)
+"static mino_val_t *my_greet(mino_state_t *S, mino_val_t *args,
+                            mino_env_t *env)
 {
-    mino_state_t *S = mino_current_state();
     const char *name;
     size_t len;
     (void)env;
@@ -124,9 +125,9 @@ mino_unref(S, r);                    /* release the root       */"]]
 }
 
 mino_register_fn(S, env, \"greet\", my_greet);"]]
-      [:p "Inside a primitive, use " [:code "mino_current_state()"]
-       " to get the active state. This is set by the runtime before "
-       "calling your function and is valid for the duration of the call."]
+      [:p "The runtime passes the active " [:code "mino_state_t *S"]
+       " as the first argument to every primitive callback. Use it "
+       "for all value construction and API calls within the function."]
 
       [:h2 "Handles"]
       [:p "Handles wrap opaque host pointers so mino code can pass them "
@@ -189,8 +190,7 @@ mino_set_resolver(S, my_resolver, NULL);"]]
       [:p "Multiple independent evaluation contexts can share a single "
        "state by cloning an environment:"]
       [:pre [:code {:data-lang "c"}
-"mino_env_t *base = mino_new(S);
-mino_install_io(S, base);
+"mino_env_t *base = mino_new(S);         /* core + I/O included    */
 
 mino_env_t *session1 = mino_env_clone(S, base);
 mino_env_t *session2 = mino_env_clone(S, base);"]]

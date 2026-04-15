@@ -80,7 +80,7 @@
         "Language Server Protocol"]
        " server for mino. It provides real-time diagnostics, symbol "
        "completion, and hover documentation. It is a small C program "
-       "that links against " [:code "mino.c"] " and communicates over "
+       "that links against the mino source and communicates over "
        "stdin/stdout using JSON-RPC. No runtime dependencies beyond "
        "mino itself."]
 
@@ -128,7 +128,7 @@
                :target "_blank" :rel "noopener"}
            "mino-nrepl"]
        " is a standalone nREPL server for mino. It is a small C program "
-       "that links against " [:code "mino.c"] " and implements the nREPL "
+       "that links against the mino source and implements the nREPL "
        "wire protocol (bencode over TCP). No JVM, no runtime dependencies "
        "beyond mino itself."]
 

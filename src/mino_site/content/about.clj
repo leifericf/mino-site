@@ -26,7 +26,7 @@
        "inspection."]
 
       [:h2 "Inspirations"]
-      [:p "mino draws from three languages that each got something deeply right:"]
+      [:p "mino draws from four projects that each got something deeply right:"]
       [:ul
        [:li [:strong "Clojure"] " showed that immutable values, persistent "
         "data structures, and a data-first programming model could be practical "

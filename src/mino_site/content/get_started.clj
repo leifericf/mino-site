@@ -31,21 +31,23 @@
 #include <stdio.h>
 
 /* A host function exposed to mino as (add-tax amount). */
-static mino_val_t *host_add_tax(mino_val_t *args, mino_env_t *env)
+static mino_val_t *host_add_tax(mino_state_t *S, mino_val_t *args,
+                                mino_env_t *env)
 {
     long long amount;
     (void)env;
     if (!mino_is_cons(args) || !mino_to_int(args->as.cons.car, &amount))
-        return mino_nil();
-    return mino_float((double)amount * 1.08);
+        return mino_nil(S);
+    return mino_float(S, (double)amount * 1.08);
 }
 
 int main(void)
 {
-    mino_env_t *env = mino_new();          /* env + core bindings */
-    mino_register_fn(env, \"add-tax\", host_add_tax);
+    mino_state_t *S   = mino_state_new();
+    mino_env_t   *env = mino_new(S);       /* env + core + I/O   */
+    mino_register_fn(S, env, \"add-tax\", host_add_tax);
 
-    mino_val_t *result = mino_eval_string(
+    mino_val_t *result = mino_eval_string(S,
         \"(def prices [100 200 300])\\n\"
         \"(reduce + (map add-tax prices))\\n\",
         env);
@@ -56,21 +58,24 @@ int main(void)
             printf(\"total with tax: %.2f\\n\", total);
     }
 
-    mino_env_free(env);
+    mino_env_free(S, env);
+    mino_state_free(S);
     return 0;
 }"]]
       [:p "Key points:"]
       [:ul
-       [:li [:code "mino_new()"] " allocates an environment and installs "
-        "core bindings in one call."]
+       [:li [:code "mino_state_new()"] " creates an isolated runtime state "
+        "that owns the GC, intern tables, and all allocated objects."]
+       [:li [:code "mino_new(S)"] " creates an environment with core "
+        "and I/O bindings installed."]
        [:li [:code "mino_register_fn()"] " exposes a C function to mino code "
         "under any name."]
        [:li [:code "mino_eval_string()"] " reads and evaluates all forms, "
         "returning the last result."]
        [:li [:code "mino_to_float()"] " safely extracts a C value from the "
         "result (returns 0 on type mismatch)."]
-       [:li [:code "mino_env_free()"] " unregisters the environment; the "
-        "garbage collector reclaims memory."]]
+       [:li [:code "mino_env_free()"] " and " [:code "mino_state_free()"]
+        " tear down the environment and state."]]
 
       [:h2 "4. Try the REPL"]
       [:p "The standalone REPL is useful for exploring the language interactively:"]

@@ -13,8 +13,8 @@
        "the same conventions as " [:code "clojure.test"] ": named tests with "
        [:code "deftest"] ", assertions with " [:code "is"] ", and contextual "
        "grouping with " [:code "testing"] "."]
-      [:p "The framework lives in " [:code "test.mino"] " at the project root "
-       "and is loaded via " [:code "(require \"test\")"] " from test files."]
+      [:p "The framework lives in " [:code "tests/test.mino"]
+       " and is loaded via " [:code "(require \"tests/test\")"] " from test files."]
 
       [:h2 "Writing Tests"]
       [:p "A test file is a normal " [:code ".mino"] " file that requires "
@@ -84,12 +84,12 @@
        "modules and calls " [:code "run-tests"] ":"]
       [:pre [:code {:data-lang "mino"}
 ";; tests/run.mino
-(require \"test\")
+(require \"tests/test\")
 (require \"tests/arithmetic_test\")
 (require \"tests/string_test\")
 ;; ...
 (run-tests)"]]
-      [:p "Each test file starts with " [:code "(require \"test\")"]
+      [:p "Each test file starts with " [:code "(require \"tests/test\")"]
        " to load the framework. The " [:code "require"] " call is "
        "idempotent: the framework is loaded once and cached."]
 

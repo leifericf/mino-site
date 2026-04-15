@@ -52,7 +52,7 @@
      "/get-started/index.html"
      (fn [ctx]
        (render/html-page {:title "Get Started"
-                          :description "Copy two files, compile, and run your first mino program in under a minute."
+                          :description "Copy the source, compile, and run your first mino program in under a minute."
                           :active-page :get-started}
          (get-started/get-started-page)))
 

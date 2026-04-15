@@ -64,11 +64,12 @@
 
       [:h3 "Runtime isolation"]
       [:p "Each " [:code "mino_state_t"] " is a complete, independent "
-       "runtime. Two runtimes in the same process share nothing. "
-       "There are no global variables, no shared caches, no implicit "
-       "coordination. This makes runtimes safe to use from different "
-       "threads (one thread per runtime) and safe to create and "
-       "destroy at will."]
+       "runtime. Two runtimes in the same process share no mutable "
+       "state that affects evaluation. A small process-wide filename "
+       "intern table exists for reader diagnostics, but it does not "
+       "influence runtime behavior. This makes runtimes safe to use "
+       "from different threads (one thread per runtime) and safe to "
+       "create and destroy at will."]
 
       [:h3 "Concurrency between runtimes, not within"]
       [:p "A single runtime is single-threaded. Concurrency happens "
