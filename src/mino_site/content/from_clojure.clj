@@ -59,7 +59,14 @@
        [:li [:code "#()"] " anonymous function shorthand"]
        [:li [:code "#_"] " discard reader macro"]
        [:li [:code "ex-info"] ", " [:code "ex-data"] ", "
-        [:code "ex-message"]]]
+        [:code "ex-message"]]
+       [:li [:code "reduced"] " for early termination in " [:code "reduce"]]
+       [:li "Multi-collection " [:code "map"] ": "
+        [:code "(map + [1 2] [3 4])"] " works"]
+       [:li [:code "set"] " constructor: " [:code "(set coll)"]]
+       [:li [:code "declare"] " for forward declarations"]
+       [:li "Variadic " [:code "comp"] ": "
+        [:code "(comp f g h ...)"]]]
 
       ;; --- Namespaces ---
 
@@ -180,9 +187,7 @@
       [:p "Differences:"]
       [:ul
        [:li "No chunked sequences"]
-       [:li "No transducers (planned)"]
-       [:li [:code "map"] " currently takes one collection. "
-        "Multi-collection " [:code "map"] " is planned."]]
+       [:li "No transducers (planned)"]]
 
       ;; --- Numeric tower ---
 
