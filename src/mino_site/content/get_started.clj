@@ -90,7 +90,7 @@ int main(void)
       [:pre
        [:code {:data-lang "mino"}
 "$ ./mino
-mino> (def greet (fn (name) (str \"hello, \" name \"!\")))
+mino> (def greet (fn [name] (str \"hello, \" name \"!\")))
 #<fn>
 mino> (greet \"world\")
 \"hello, world!\"

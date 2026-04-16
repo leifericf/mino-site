@@ -56,21 +56,6 @@
        [:li "Full test framework: " [:code "deftest"] ", "
         [:code "is"] ", " [:code "testing"]]]
 
-      ;; --- Binding forms ---
-
-      [:h2 "Binding forms"]
-      [:p "mino supports both Clojure-style vector bindings and legacy "
-       "list bindings. Vector style is standard:"]
-      [:pre [:code
-        ";; Clojure-style (recommended)\n"
-        "(fn [x y] (+ x y))\n"
-        "(let [a 1 b 2] (+ a b))\n"
-        "(loop [i 0] (if (< i 10) (recur (inc i)) i))\n"
-        "\n"
-        ";; Legacy list-style (still works)\n"
-        "(fn (x y) (+ x y))\n"
-        "(let (a 1 b 2) (+ a b))"]]
-
       ;; --- Namespaces ---
 
       [:h2 "Namespaces"]

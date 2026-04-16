@@ -75,7 +75,7 @@
        "iteration for code that reads better as a loop than as "
        "recursion. They continue to work exactly as before:"]
       [:pre [:code {:data-lang "mino"}
-"(loop (n 100 acc 0)
+"(loop [n 100 acc 0]
   (if (= n 0)
     acc
     (recur (- n 1) (+ acc n))))"]]
@@ -87,8 +87,8 @@
       [:p [:code "trampoline"] " is available for code that returns "
        "thunks (zero-argument functions) to defer work:"]
       [:pre [:code {:data-lang "mino"}
-"(defn bounce (n)
-  (if (= n 0) :done (fn () (bounce (- n 1)))))
+"(defn bounce [n]
+  (if (= n 0) :done (fn [] (bounce (- n 1)))))
 
 (trampoline bounce 100000) ;; => :done"]]
       [:p "In practice, " [:code "trampoline"] " is rarely needed "

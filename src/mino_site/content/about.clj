@@ -255,7 +255,7 @@
        "iteration when that reads more clearly. With proper tail "
        "calls they are a stylistic choice rather than a necessity."]
       [:pre [:code {:data-lang "mino"}
-"(loop (n 100 acc 0)
+"(loop [n 100 acc 0]
   (if (= n 0)
     acc
     (recur (- n 1) (+ acc n))))"]]
