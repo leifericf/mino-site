@@ -48,7 +48,9 @@
        [:li "Atoms with " [:code "swap!"] " and " [:code "reset!"]]
        [:li "Threading macros (" [:code "->"] ", " [:code "->>"] ", "
         [:code "as->"] ", " [:code "cond->"] ", " [:code "cond->>"] ")"]
-       [:li [:code "try"] "/" [:code "catch"] "/" [:code "throw"]]
+       [:li [:code "try"] "/" [:code "catch"] "/" [:code "finally"]
+        "/" [:code "throw"]]
+       [:li [:code "with-open"] " for resource management"]
        [:li [:code "apply"] ", " [:code "partial"] ", " [:code "comp"]
         ", " [:code "complement"]]
        [:li "Regular expressions via " [:code "re-find"] ", "
@@ -209,7 +211,11 @@
         "    (println \"caught:\" e)))"]]
       [:p [:code "ex-info"] ", " [:code "ex-data"] ", and "
        [:code "ex-message"] " work as in Clojure. "
-       [:code "finally"] " is not yet supported."]
+       [:code "finally"] " works as expected. " [:code "with-open"]
+       " manages resources with automatic cleanup:"]
+      [:pre [:code
+        "(with-open [f (open \"data.txt\")]\n"
+        "  (read-all f))"]]
 
       ;; --- What is intentionally absent ---
 
