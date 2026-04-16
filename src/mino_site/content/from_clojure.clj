@@ -54,7 +54,12 @@
        [:li "Regular expressions via " [:code "re-find"] ", "
         [:code "re-matches"] ", " [:code "re-seq"]]
        [:li "Full test framework: " [:code "deftest"] ", "
-        [:code "is"] ", " [:code "testing"]]]
+        [:code "is"] ", " [:code "testing"]]
+       [:li "Callable keywords: " [:code "(:k m)"] " as map lookup"]
+       [:li [:code "#()"] " anonymous function shorthand"]
+       [:li [:code "#_"] " discard reader macro"]
+       [:li [:code "ex-info"] ", " [:code "ex-data"] ", "
+        [:code "ex-message"]]]
 
       ;; --- Namespaces ---
 
@@ -114,20 +119,20 @@
       ;; --- Reader syntax ---
 
       [:h2 "Reader syntax"]
-      [:p "Some Clojure reader macros are not yet implemented:"]
+      [:p "Most reader macros work as in Clojure. A few are absent:"]
 
       [:table
        [:thead [:tr [:th "Clojure"] [:th "mino"] [:th "Status"]]]
        [:tbody
         [:tr [:td [:code "#(inc %)"]]
-         [:td [:code "(fn [x] (inc x))"]]
-         [:td "Planned"]]
+         [:td [:code "#(inc %)"]]
+         [:td "Same"]]
         [:tr [:td [:code "#'var"]]
          [:td "N/A"]
          [:td "No var indirection"]]
         [:tr [:td [:code "#_ form"]]
-         [:td "N/A"]
-         [:td "Planned"]]
+         [:td [:code "#_ form"]]
+         [:td "Same"]]
         [:tr [:td [:code "^{:key val}"]]
          [:td "N/A"]
          [:td "No value metadata yet"]]
@@ -163,9 +168,8 @@
        [:li "No transient collections (all mutation is through atoms)"]
        [:li "No metadata on values (planned)"]
        [:li "No sorted maps or sorted sets"]
-       [:li "Keywords are not callable as functions (planned). "
-        "Use " [:code "(get m :k)"] " or " [:code "(:k m)"]
-        " once callable keywords land."]]
+       [:li "Keywords as functions (" [:code "(:k m)"] ") work for "
+        "map lookup. Maps and sets are not callable."]]
 
       ;; --- Sequences ---
 
@@ -198,8 +202,9 @@
         "  (throw {:type :not-found :id 42})\n"
         "  (catch e\n"
         "    (println \"caught:\" e)))"]]
-      [:p [:code "ex-info"] "/" [:code "ex-data"] " are not yet "
-       "implemented. " [:code "finally"] " is not yet supported."]
+      [:p [:code "ex-info"] ", " [:code "ex-data"] ", and "
+       [:code "ex-message"] " work as in Clojure. "
+       [:code "finally"] " is not yet supported."]
 
       ;; --- What is intentionally absent ---
 
@@ -228,9 +233,9 @@
         [:tr [:td [:code "(ns ...)"]]
          [:td [:code "(require \"path\")"]]]
         [:tr [:td [:code "(:key map)"]]
-         [:td [:code "(get map :key)"]]]
+         [:td [:code "(:key map)"]]]
         [:tr [:td [:code "#(inc %)"]]
-         [:td [:code "(fn [x] (inc x))"]]]
+         [:td [:code "#(inc %)"]]]
         [:tr [:td [:code "(dosync ...)"]]
          [:td "Not applicable"]]
         [:tr [:td [:code "(ref ...)"]]
@@ -238,7 +243,7 @@
         [:tr [:td [:code "(.method obj)"]]
          [:td "Host-installed functions"]]
         [:tr [:td [:code "(ex-info ...)"]]
-         [:td [:code "(throw {:message ... :data ...})"]]]
+         [:td [:code "(ex-info ...)"]]]
         [:tr [:td [:code "(future ...)"]]
          [:td [:code "(spawn ...)"]]]]]))
 )
