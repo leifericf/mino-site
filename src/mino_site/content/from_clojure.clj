@@ -11,8 +11,10 @@
       [:h1 "Coming from Clojure"]
 
       [:p "mino is a Clojure dialect. If you know Clojure, you "
-       "can read and write mino immediately. This page documents "
-       "where mino differs and why."]
+       "can read and write mino immediately. Every top-level "
+       "definition in " [:code "clojure.core"] " loads unmodified "
+       "in mino's reader and evaluator. This page documents where "
+       "mino differs and why."]
 
       ;; --- Rules of thumb ---
 
@@ -66,13 +68,14 @@
        [:li "Multi-collection " [:code "map"] ": "
         [:code "(map + [1 2] [3 4])"] " works"]
        [:li [:code "set"] " constructor: " [:code "(set coll)"]]
-       [:li [:code "declare"] " for forward declarations"]
        [:li "Variadic " [:code "comp"] ": "
         [:code "(comp f g h ...)"]]
        [:li [:code "identical?"] " for pointer identity"]
        [:li "Value metadata: " [:code "meta"] ", "
         [:code "with-meta"] ", " [:code "vary-meta"] ", "
-        [:code "^{:key val}"] " reader syntax"]
+        [:code "alter-meta!"] ", "
+        [:code "^{:key val}"] "/" [:code "^:key"] "/"
+        [:code "^Type"] " reader syntax"]
        [:li "Protocols: " [:code "defprotocol"] ", "
         [:code "extend-type"] ", " [:code "extend-protocol"] ", "
         [:code "satisfies?"]]
@@ -81,7 +84,14 @@
        [:li "Transducers: " [:code "transduce"] ", "
         [:code "into"] " with xform, " [:code "sequence"] ", "
         [:code "eduction"] ", " [:code "completing"] ", "
-        [:code "cat"]]]
+        [:code "cat"]]
+       [:li "Attribute maps in " [:code "defn"] " and "
+        [:code "defmacro"] " are accepted and skipped"]
+       [:li "Forward declarations: " [:code "declare"] " and "
+        [:code "(def name)"] " without a value"]
+       [:li "Bootstrap aliases: " [:code "fn*"] ", "
+        [:code "let*"] ", " [:code "loop*"] " are accepted as "
+        "their unstarred equivalents"]]
 
       ;; --- Namespaces ---
 
@@ -157,7 +167,13 @@
          [:td "Same"]]
         [:tr [:td [:code "^{:key val}"]]
          [:td [:code "^{:key val}"]]
+         [:td "Same (attached at read time)"]]
+        [:tr [:td [:code "^:key"]]
+         [:td [:code "^:key"]]
          [:td "Same"]]
+        [:tr [:td [:code "^Type"]]
+         [:td [:code "^Type"]]
+         [:td "Same (becomes " [:code "{:tag Type}"] ")"]]
         [:tr [:td [:code "#\"regex\""]]
          [:td [:code "(re-pattern \"regex\")"]]
          [:td "Use function form"]]
@@ -242,8 +258,10 @@
       [:ul
        [:li [:strong "Multimethods"] " are not implemented. "
         "Protocols cover the same dispatch pattern."]
-       [:li [:strong "Type hints and records"] " do not exist. "
-        "Maps are the universal data carrier."]
+       [:li [:strong "Records and deftypes"] " do not exist. "
+        "Maps are the universal data carrier. Type hints ("
+        [:code "^String x"] ") parse as metadata but are not "
+        "enforced at runtime."]
        [:li [:strong "JVM classpath, deps, and jar resolution"]
         " do not apply. mino is embedded via C source files."]
        [:li [:strong "Shared-memory STM"] " is replaced by "
