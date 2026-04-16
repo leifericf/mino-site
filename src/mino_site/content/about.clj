@@ -32,7 +32,9 @@
         "model could be practical and productive. mino preserves "
         "this core: immutable collections with structural sharing, "
         "code-as-data (programs are data structures that programs can "
-        "inspect and transform), and REPL-driven development."]
+        "inspect and transform), and REPL-driven development. "
+        "See " [:a {:href "/documentation/coming-from-clojure/"}
+        "Coming from Clojure"] " for a detailed comparison."]
        [:li [:strong "Lua"] " proved that a small, portable ANSI C "
         "implementation could become a world-class embeddable "
         "scripting language. mino follows the same discipline: "
