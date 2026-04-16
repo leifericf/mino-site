@@ -39,7 +39,13 @@
         [:div.card-desc
          "tree-sitter grammar, LSP server, and nREPL server. "
          "Setup guides for Neovim, Helix, Emacs, VS Code, and "
-         "IntelliJ."]]]
+         "IntelliJ."]]
+
+       [:a.card {:href "/documentation/coming-from-clojure/"}
+        [:div.card-title "Coming from Clojure"]
+        [:div.card-desc
+         "Syntax, namespaces, concurrency, and interop: what "
+         "is the same, what differs, and why."]]]
 
       [:h2 "References"]
       [:div.card-grid

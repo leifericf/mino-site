@@ -23,7 +23,8 @@
     [mino-site.content.tooling :as tooling]
     [mino-site.content.testing :as testing]
     [mino-site.content.embedding :as embedding]
-    [mino-site.content.performance :as performance]))
+    [mino-site.content.performance :as performance]
+    [mino-site.content.from-clojure :as from-clojure]))
 
 (defn pages
   "Returns a Stasis page map: {path -> (fn [ctx] html-string)}.
@@ -111,6 +112,13 @@
                           :description "Preliminary performance characteristics: per-operation costs, collection throughput, actor scaling, and where the time goes."
                           :active-page :documentation}
          (performance/performance-page)))
+
+     "/documentation/coming-from-clojure/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Coming from Clojure"
+                          :description "How mino differs from Clojure: syntax, namespaces, concurrency, interop, and what is intentionally absent."
+                          :active-page :documentation}
+         (from-clojure/from-clojure-page)))
 
      "/changelog/index.html"
      (fn [ctx]
