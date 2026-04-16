@@ -77,7 +77,11 @@
         [:code "extend-type"] ", " [:code "extend-protocol"] ", "
         [:code "satisfies?"]]
        [:li "Multi-binding " [:code "for"] " and " [:code "doseq"]
-        " with " [:code ":when"] " and " [:code ":let"]]]
+        " with " [:code ":when"] " and " [:code ":let"]]
+       [:li "Transducers: " [:code "transduce"] ", "
+        [:code "into"] " with xform, " [:code "sequence"] ", "
+        [:code "eduction"] ", " [:code "completing"] ", "
+        [:code "cat"]]]
 
       ;; --- Namespaces ---
 
@@ -194,10 +198,16 @@
       [:p "Lazy sequences work the same way:"]
       [:pre [:code
         "(take 5 (map inc (range)))  ;=> (1 2 3 4 5)"]]
+      [:p "Transducers work as expected:"]
+      [:pre [:code
+        "(into [] (comp (map inc) (filter even?)) [1 2 3 4 5])\n"
+        ";=> [2 4 6]\n"
+        "\n"
+        "(transduce (map inc) + 0 [1 2 3])\n"
+        ";=> 9"]]
       [:p "Differences:"]
       [:ul
-       [:li "No chunked sequences"]
-       [:li "No transducers (planned)"]]
+       [:li "No chunked sequences"]]
 
       ;; --- Numeric tower ---
 
