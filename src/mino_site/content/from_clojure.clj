@@ -70,6 +70,9 @@
        [:li "Variadic " [:code "comp"] ": "
         [:code "(comp f g h ...)"]]
        [:li [:code "identical?"] " for pointer identity"]
+       [:li "Value metadata: " [:code "meta"] ", "
+        [:code "with-meta"] ", " [:code "vary-meta"] ", "
+        [:code "^{:key val}"] " reader syntax"]
        [:li "Protocols: " [:code "defprotocol"] ", "
         [:code "extend-type"] ", " [:code "extend-protocol"] ", "
         [:code "satisfies?"]]
@@ -149,8 +152,8 @@
          [:td [:code "#_ form"]]
          [:td "Same"]]
         [:tr [:td [:code "^{:key val}"]]
-         [:td "N/A"]
-         [:td "No value metadata yet"]]
+         [:td [:code "^{:key val}"]]
+         [:td "Same"]]
         [:tr [:td [:code "#\"regex\""]]
          [:td [:code "(re-pattern \"regex\")"]]
          [:td "Use function form"]]
@@ -181,7 +184,6 @@
       [:p "Differences:"]
       [:ul
        [:li "No transient collections (all mutation is through atoms)"]
-       [:li "No metadata on values (planned)"]
        [:li "No sorted maps or sorted sets"]
        [:li "Keywords as functions (" [:code "(:k m)"] ") work for "
         "map lookup. Maps and sets are not callable."]]
