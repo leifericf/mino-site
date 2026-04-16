@@ -80,7 +80,8 @@
         [:code "extend-type"] ", " [:code "extend-protocol"] ", "
         [:code "satisfies?"]]
        [:li "Multi-binding " [:code "for"] " and " [:code "doseq"]
-        " with " [:code ":when"] " and " [:code ":let"]]
+        " with " [:code ":when"] ", " [:code ":while"]
+        ", and " [:code ":let"]]
        [:li "Transducers: " [:code "transduce"] ", "
         [:code "into"] " with xform, " [:code "sequence"] ", "
         [:code "eduction"] ", " [:code "completing"] ", "
@@ -196,6 +197,8 @@
       [:p "Core data structures match Clojure semantics:"]
       [:ul
        [:li "Vectors, maps, sets, and lists are persistent and immutable"]
+       [:li "Cross-type sequential equality: "
+        [:code "(= '(1 2) [1 2])"] " is " [:code "true"]]
        [:li [:code "conj"] ", " [:code "assoc"] ", " [:code "dissoc"]
         ", " [:code "get"] ", " [:code "nth"] ", " [:code "into"]
         " work as expected"]
