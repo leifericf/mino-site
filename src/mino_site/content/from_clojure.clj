@@ -68,7 +68,13 @@
        [:li [:code "set"] " constructor: " [:code "(set coll)"]]
        [:li [:code "declare"] " for forward declarations"]
        [:li "Variadic " [:code "comp"] ": "
-        [:code "(comp f g h ...)"]]]
+        [:code "(comp f g h ...)"]]
+       [:li [:code "identical?"] " for pointer identity"]
+       [:li "Protocols: " [:code "defprotocol"] ", "
+        [:code "extend-type"] ", " [:code "extend-protocol"] ", "
+        [:code "satisfies?"]]
+       [:li "Multi-binding " [:code "for"] " and " [:code "doseq"]
+        " with " [:code ":when"] " and " [:code ":let"]]]
 
       ;; --- Namespaces ---
 
@@ -222,8 +228,8 @@
       [:h2 "Intentionally absent"]
       [:p "These are design decisions, not missing features:"]
       [:ul
-       [:li [:strong "Protocols and multimethods"] " are planned "
-        "but not yet implemented."]
+       [:li [:strong "Multimethods"] " are not implemented. "
+        "Protocols cover the same dispatch pattern."]
        [:li [:strong "Type hints and records"] " do not exist. "
         "Maps are the universal data carrier."]
        [:li [:strong "JVM classpath, deps, and jar resolution"]
