@@ -49,7 +49,8 @@
         ", etc.)"]
        [:li "Atoms with " [:code "swap!"] " and " [:code "reset!"]]
        [:li "Threading macros (" [:code "->"] ", " [:code "->>"] ", "
-        [:code "as->"] ", " [:code "cond->"] ", " [:code "cond->>"] ")"]
+        [:code "as->"] ", " [:code "cond->"] ", " [:code "cond->>"] ", "
+        [:code "some->"] ", " [:code "some->>"] ")"]
        [:li [:code "try"] "/" [:code "catch"] "/" [:code "finally"]
         "/" [:code "throw"]]
        [:li [:code "with-open"] " for resource management"]
@@ -85,14 +86,27 @@
        [:li "Transducers: " [:code "transduce"] ", "
         [:code "into"] " with xform, " [:code "sequence"] ", "
         [:code "eduction"] ", " [:code "completing"] ", "
-        [:code "cat"]]
+        [:code "cat"] ", " [:code "halt-when"] ", "
+        [:code "ensure-reduced"]]
        [:li "Attribute maps in " [:code "defn"] " and "
         [:code "defmacro"] " are accepted and skipped"]
        [:li "Forward declarations: " [:code "declare"] " and "
         [:code "(def name)"] " without a value"]
        [:li "Bootstrap aliases: " [:code "fn*"] ", "
         [:code "let*"] ", " [:code "loop*"] " are accepted as "
-        "their unstarred equivalents"]]
+        "their unstarred equivalents"]
+       [:li [:code "update-vals"] " and " [:code "update-keys"]
+        " for transforming map values or keys"]
+       [:li [:code "min-key"] " and " [:code "max-key"]
+        " for finding elements by keyed comparison"]
+       [:li [:code "random-sample"] " for probabilistic filtering"]
+       [:li [:code "bounded-count"] " for counting with an upper limit "
+        "on lazy sequences"]
+       [:li [:code "while"] " macro for imperative loops"]
+       [:li [:code "distinct?"] " for checking argument uniqueness"]
+       [:li "Type predicates: " [:code "sorted?"] ", "
+        [:code "associative?"] ", " [:code "reversible?"] ", "
+        [:code "counted?"] ", " [:code "any?"]]]
 
       ;; --- Namespaces ---
 
