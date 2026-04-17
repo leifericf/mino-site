@@ -10,10 +10,9 @@
     (h/html
       [:h1 "Coming from Clojure"]
 
-      [:p "mino is a Clojure dialect. If you know Clojure, you "
-       "can read and write mino immediately. Every top-level "
-       "definition in " [:code "clojure.core"] " loads unmodified "
-       "in mino's reader and evaluator. This page documents where "
+      [:p "mino aspires to become a proper Clojure dialect. "
+       "It's a work in progress. If you know Clojure, most mino "
+       "code will look familiar. This page documents where "
        "mino differs and why."]
 
       ;; --- Rules of thumb ---
