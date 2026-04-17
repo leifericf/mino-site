@@ -322,6 +322,31 @@
        "event loop, and a package manager. A feature-rich embeddable "
        "Lisp with a broader standard library and an active ecosystem."]
 
+      [:h3 [:a {:href "https://github.com/Zelex/jo_clojure" :target "_blank"
+                :rel "noopener"} "JO Clojure"]]
+      [:p "JO Clojure is a native C/C++ implementation of a "
+       "Clojure-like language with very fast startup, persistent "
+       "data structures, and an interactive REPL. It shares mino's "
+       "interest in native embedding and small-footprint deployment, "
+       "while aiming for broader Clojure compatibility over time."]
+
+      [:h3 [:a {:href "https://github.com/rekola/nanoclj" :target "_blank"
+                :rel "noopener"} "nanoclj"]]
+      [:p "nanoclj is a tiny Clojure interpreter written in C, "
+       "focused on compactness and embeddability. Like mino, it "
+       "explores what a small native Lisp can do outside the JVM, "
+       "but it makes explicit compatibility trade-offs and includes "
+       "a distinct REPL-oriented graphics and data-visualization "
+       "direction."]
+
+      [:h3 [:a {:href "https://github.com/mll/clojure-rt" :target "_blank"
+                :rel "noopener"} "clojure-rt"]]
+      [:p "clojure-rt is an LLVM-based Clojure implementation "
+       "focused on deterministic, high-performance execution. It is "
+       "a compiler-and-runtime effort aimed at real-time constraints, "
+       "in contrast to mino's deliberately small interpreter core "
+       "and library-first embedding model."]
+
       [:h3 "What makes mino different"]
       [:p "None of the projects above fill a specific gap: an "
        "embeddable scripting runtime with an immutable-first data "
@@ -336,6 +361,14 @@
         "and tables as its core data structures, with a larger "
         "footprint (VM, bytecode compiler, event loop, package "
         "manager)."]
+       [:li "JO Clojure and nanoclj are close in spirit as native "
+        "C/C++ Clojure-like runtimes, but mino emphasizes a narrower "
+        "embedding surface, capability-first sandboxing, and strict "
+        "runtime isolation as the primary product shape."]
+       [:li "clojure-rt targets deterministic high performance via "
+        "LLVM/JIT compiler architecture; mino intentionally "
+        "prioritizes a small interpreter core and host-controlled "
+        "orchestration over compiler complexity."]
        [:li "Erlang/BEAM pioneered isolated processes with message "
         "passing, but it is a full runtime system, not an "
         "embeddable library."]]
@@ -366,4 +399,12 @@
         " " [:a {:href "https://janet-lang.org" :target "_blank"
                  :rel "noopener"} "Janet"]
         " has PEG matching, an event loop, multithreading, and a "
-        "package ecosystem."]])))
+        "package ecosystem."]
+       [:li [:strong "Native C/C++ Clojure-like runtime experiments:"]
+        " " [:a {:href "https://github.com/Zelex/jo_clojure" :target "_blank"
+                 :rel "noopener"} "JO Clojure"]
+        " and " [:a {:href "https://github.com/rekola/nanoclj" :target "_blank"
+                     :rel "noopener"} "nanoclj"] "."]
+       [:li [:strong "Compiler/JIT path for deterministic performance:"]
+        " " [:a {:href "https://github.com/mll/clojure-rt" :target "_blank"
+                 :rel "noopener"} "clojure-rt"] "."]])))
