@@ -216,11 +216,13 @@
        [:li [:code "find"] " returns " [:code "[key val]"]
         " or " [:code "nil"]]
        [:li [:code "empty"] " returns an empty collection of the same type"]
-       [:li [:code "rseq"] " for reverse-order vector traversal"]]
+       [:li [:code "rseq"] " for reverse-order vector traversal"]
+       [:li [:code "sorted-map"] " and " [:code "sorted-set"]
+        " with persistent red-black tree (LLRB), maintaining key ordering "
+        "with structural sharing"]]
       [:p "Differences:"]
       [:ul
        [:li "No transient collections (all mutation is through atoms)"]
-       [:li "No sorted maps or sorted sets"]
        [:li "No array maps (small maps use HAMT directly)"]]
 
       ;; --- Sequences ---
