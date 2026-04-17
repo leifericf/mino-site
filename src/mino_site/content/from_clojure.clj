@@ -196,20 +196,32 @@
       [:h2 "Data structures"]
       [:p "Core data structures match Clojure semantics:"]
       [:ul
-       [:li "Vectors, maps, sets, and lists are persistent and immutable"]
+       [:li "Vectors, maps, sets, and lists are persistent and immutable "
+        "with structural sharing (Bagwell tries for vectors, HAMT for maps "
+        "and sets)"]
        [:li "Cross-type sequential equality: "
         [:code "(= '(1 2) [1 2])"] " is " [:code "true"]]
        [:li [:code "conj"] ", " [:code "assoc"] ", " [:code "dissoc"]
         ", " [:code "get"] ", " [:code "nth"] ", " [:code "into"]
         " work as expected"]
        [:li "Sets support " [:code "contains?"] ", " [:code "conj"]
-        ", " [:code "disj"]]]
+        ", " [:code "disj"]]
+       [:li "Collections as callable functions: " [:code "({:a 1} :a)"]
+        " returns " [:code "1"] ", " [:code "([1 2 3] 0)"] " returns "
+        [:code "1"] ", " [:code "(#{:a :b} :a)"] " returns " [:code ":a"]
+        ". Works in higher-order contexts like "
+        [:code "(map :name coll)"] " and " [:code "(filter #{:a} coll)"]]
+       [:li [:code "peek"] " and " [:code "pop"] " for stack abstraction "
+        "on vectors (from end) and lists (from front)"]
+       [:li [:code "find"] " returns " [:code "[key val]"]
+        " or " [:code "nil"]]
+       [:li [:code "empty"] " returns an empty collection of the same type"]
+       [:li [:code "rseq"] " for reverse-order vector traversal"]]
       [:p "Differences:"]
       [:ul
        [:li "No transient collections (all mutation is through atoms)"]
        [:li "No sorted maps or sorted sets"]
-       [:li "Keywords as functions (" [:code "(:k m)"] ") work for "
-        "map lookup. Maps and sets are not callable."]]
+       [:li "No array maps (small maps use HAMT directly)"]]
 
       ;; --- Sequences ---
 
@@ -217,6 +229,9 @@
       [:p "Lazy sequences work the same way:"]
       [:pre [:code
         "(take 5 (map inc (range)))  ;=> (1 2 3 4 5)"]]
+      [:p [:code "rest"] " on vectors, maps, sets, and strings returns "
+       "a lazy cons chain (elements produced on demand), matching the "
+       "expected behavior for large collections."]
       [:p "Transducers work as expected:"]
       [:pre [:code
         "(into [] (comp (map inc) (filter even?)) [1 2 3 4 5])\n"
@@ -226,7 +241,11 @@
         ";=> 9"]]
       [:p "Differences:"]
       [:ul
-       [:li "No chunked sequences"]]
+       [:li "No chunked sequences"]
+       [:li [:code "rest"] " has " [:code "next"] " semantics: it returns "
+        [:code "nil"] " when exhausted, not an empty list. mino's empty list "
+        "is " [:code "nil"] ". This matches how most real-world code uses "
+        [:code "next"] " for nil-punning."]]
 
       ;; --- Numeric tower ---
 
