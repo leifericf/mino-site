@@ -183,19 +183,26 @@
                  (map str/trim)
                  (remove str/blank?)
                  (remove #(str/starts-with? % "union"))
-                 (remove #(str/starts-with? % "struct {"))
+                 (remove #(str/starts-with? % "struct"))
                  (remove #(= % "{"))
-                 (remove #(= % "}"))
-                 (remove #(str/starts-with? % "} as;"))
-                 (remove #(str/starts-with? % "};"))
+                 (remove #(re-matches #"\}.*" %))
                  (mapv (fn [line]
                          (let [comment-m (re-find #"/\*\s*(.+?)\s*\*/" line)
                                clean (str/trim (str/replace line #"/\*.*?\*/" ""))
-                               fm (re-find #"^(.+?)\s+(\*?\w+(?:\[\d+\])?)\s*;?" clean)]
+                               clean (str/replace clean #";$" "")
+                               clean (str/trim clean)
+                               ;; Split on the last whitespace-separated word
+                               ;; to handle multi-word types like "long long"
+                               fm (re-find #"^(.+)\s+(\*?\w+(?:\[\d+\])?)$" clean)]
                            (when fm
-                             {:type (str/trim (nth fm 1))
-                              :name (str/trim (nth fm 2))
-                              :comment (when comment-m (nth comment-m 1))}))))
+                             (let [raw-type (str/trim (nth fm 1))
+                                   raw-name (str/trim (nth fm 2))
+                                   [t n] (if (str/starts-with? raw-name "*")
+                                           [(str raw-type " *") (subs raw-name 1)]
+                                           [raw-type raw-name])]
+                               {:type t
+                                :name n
+                                :comment (when comment-m (nth comment-m 1))})))))
                  (filterv some?))]
         {:kind :struct
          :name name
