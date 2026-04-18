@@ -352,8 +352,11 @@
        "embeddable scripting runtime with an immutable-first data "
        "model and zero external dependencies."]
       [:ul
-       [:li "jank and Babashka are standalone runtimes, not "
-        "embeddable libraries."]
+       [:li "jank is a compiled language with an LLVM runtime; its "
+        "embedding surface is JIT-based C++ interop, not a drop-in "
+        "C library."]
+       [:li "Babashka is a standalone scripting runtime, not an "
+        "embeddable library."]
        [:li "Lua is embeddable but centers on mutable tables."]
        [:li "Fennel gives you Lisp over Lua, but inherits Lua's "
         "mutable data model."]
