@@ -10,6 +10,11 @@
     (h/html
       [:h1 "About mino"]
 
+      [:p.callout [:strong "Coming from Clojure? "]
+       [:a {:href "/documentation/coming-from-clojure/"} "Read this first"]
+       " for a quick guide to what's the same, what's different, and "
+       "what's missing."]
+
       [:h2 "What is mino?"]
       [:p "mino is a tiny, embeddable Lisp runtime library implemented "
        "in pure ANSI C. The " [:em "host"] " (the C or C++ application "

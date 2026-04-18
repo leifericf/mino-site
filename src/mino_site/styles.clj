@@ -212,6 +212,17 @@
               :font-size     "0.85rem"
               :color         (:banner-text colors)}]])
 
+;; --- Callout ---
+
+(def callout-styles
+  [[:.callout {:background     (:bg-subtle colors)
+               :border-left    (str "3px solid " (:link colors))
+               :padding        "1rem 1.25rem"
+               :margin-bottom  "1.5rem"
+               :border-radius  "4px"
+               :font-size      "1rem"
+               :line-height    "1.6"}]])
+
 ;; --- Cards ---
 
 (def card-styles
@@ -567,6 +578,7 @@
             footer-styles
             hero-styles
             banner-styles
+            callout-styles
             card-styles
             sidebar-styles
             code-styles

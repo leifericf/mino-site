@@ -141,7 +141,9 @@
         [:h1 "Language Reference"]
         [:p "Every built-in function, special form, and macro in the mino "
          "language. Organized by category with usage examples from the "
-         "test suite."]
+         "test suite. "
+         [:a {:href "/documentation/coming-from-clojure/"}
+          "Coming from Clojure?"] ]
         [:div.filter-bar
          [:input#lang-filter {:type "text"
                               :placeholder "Filter functions..."
