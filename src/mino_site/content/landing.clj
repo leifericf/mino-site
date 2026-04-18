@@ -93,22 +93,25 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
          [:div.step-panel.active
           [:div.step-label "The application developer"]
           [:p.step-desc
-           "The application developer creates a mino runtime and "
-           "decides what the script can access. Here, an "
-           [:code "EventSource"] " type is registered with a "
-           "constructor, a method, and a getter. The script never "
-           "sees raw pointers or memory. It only sees the "
-           "capabilities the host chose to expose."]
+           "A fresh runtime starts with zero capabilities. No file "
+           "access, no network, no ambient globals to remove. The "
+           "host opts in to exactly what the script can reach. "
+           "Types are registered declaratively by name, arity, and "
+           "role (constructor, method, getter) rather than pushing "
+           "individual functions onto a stack. Each runtime is fully "
+           "isolated so multiple runtimes can run on separate threads "
+           "with no shared state."]
           [:pre [:code {:data-lang "c"} embed-example]]]
          [:div.step-panel
           [:div.step-label "The C++ engineer"]
           [:p.step-desc
-           "The C++ engineer writes the callbacks that back each "
-           "registered capability. Host objects are wrapped as opaque "
-           "handles with automatic cleanup. Each callback receives "
-           "the mino runtime, the target handle, and the arguments. "
-           "Events are returned as mino maps so the script side "
-           "works with immutable data, not C++ objects."]
+           "Host objects are wrapped as type-tagged handles with "
+           "automatic GC cleanup. The API uses direct value pointers "
+           "rather than stack indices, so there is no stack balancing "
+           "and no off-by-one indexing errors. Data returned to the "
+           "script is immutable. The script cannot mutate your state "
+           "through the values you hand it, and you never need to "
+           "defensively copy data at the boundary."]
           [:pre [:code {:data-lang "c"} expose-example]]]
          [:div.step-panel
           [:div.step-label "The scripter"]
