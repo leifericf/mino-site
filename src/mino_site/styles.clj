@@ -316,7 +316,24 @@
    [:.step-desc {:font-size "0.9rem"
                  :line-height "1.6"
                  :color (:text colors)
-                 :margin-bottom "1rem"}]])
+                 :margin-bottom "1rem"}]
+   ;; Use case grid (landing page)
+   [:.use-case-grid {:display "grid"
+                     :grid-template-columns "repeat(4, 1fr)"
+                     :gap "1.25rem"
+                     :margin-top "1rem"}]
+   [:.use-case {:padding "1.25rem"
+                :border (str "1px solid " (:border colors))
+                :border-radius "6px"
+                :background (:bg-subtle colors)}]
+   [".use-case strong" {:display "block"
+                        :margin-bottom "0.35rem"
+                        :color (:heading colors)
+                        :font-size "0.95rem"}]
+   [".use-case p" {:font-size "0.85rem"
+                   :line-height "1.5"
+                   :color (:text-muted colors)
+                   :margin 0}]])
 
 ;; --- Declaration entries (API + Language reference) ---
 
@@ -515,6 +532,7 @@
             :max-width "100%"}]
      ;; Declarations — compact on mobile
      [:.decl-name {:font-size "0.9rem"}]
+     [:.use-case-grid {:grid-template-columns "repeat(2, 1fr)"}]
      ;; Footer
      [:.footer {:margin-top "3rem"}])])
 

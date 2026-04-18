@@ -86,26 +86,6 @@
         "mutual recursion, and general tail calls are optimized "
         "automatically with no special syntax required."]]
 
-      [:h2 "Use cases"]
-      [:ul
-       [:li [:strong "Configuration files."] " Sandboxed evaluation "
-        "of structured config with computed values, conditionals, "
-        "and host queries."]
-       [:li [:strong "Rules engines."] " Host state exposed to mino "
-        "predicates for declarative business logic, validation, "
-        "and policy."]
-       [:li [:strong "Plugin and extension systems."] " Load user "
-        "scripts with controlled capabilities and resource limits."]
-       [:li [:strong "Interactive consoles."] " In-app REPLs for "
-        "live inspection, debugging, and runtime configuration of "
-        "running applications."]
-       [:li [:strong "Data transformation pipelines."] " "
-        [:code "map"] ", " [:code "filter"] ", " [:code "reduce"]
-        " over persistent collections with structural sharing."]
-       [:li [:strong "Game scripting."] " Embed a programmable "
-        "console in game engines with sandboxing and step limits "
-        "for player-authored code."]]
-
       ;; ----- Design -----
 
       [:h2 "Design"]

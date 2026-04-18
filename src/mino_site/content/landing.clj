@@ -131,6 +131,42 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
            "via automatic tail-call optimization. "
            "Change the processing logic without recompiling."]
           [:pre [:code {:data-lang "mino"} script-example]]]]]]
+      [:section {:style "margin-top: 4rem;"}
+       [:h2 "Use cases"]
+       [:div.use-case-grid
+        [:div.use-case
+         [:strong "Configuration"]
+         [:p "Sandboxed evaluation of structured config with computed "
+          "values, conditionals, and host queries."]]
+        [:div.use-case
+         [:strong "Rules engines"]
+         [:p "Host state exposed to mino predicates for declarative "
+          "business logic, validation, and policy."]]
+        [:div.use-case
+         [:strong "Plugins"]
+         [:p "Load user scripts with controlled capabilities and "
+          "resource limits. No ambient access."]]
+        [:div.use-case
+         [:strong "Interactive consoles"]
+         [:p "In-app REPLs for live inspection, debugging, and "
+          "runtime configuration."]]
+        [:div.use-case
+         [:strong "Data pipelines"]
+         [:p "Compose " [:code "map"] ", " [:code "filter"]
+          ", " [:code "reduce"] " over persistent collections "
+          "with structural sharing."]]
+        [:div.use-case
+         [:strong "Event processing"]
+         [:p "Filter, group, and aggregate streams of host data. "
+          "Change the rules without recompiling."]]
+        [:div.use-case
+         [:strong "Game scripting"]
+         [:p "Embed a programmable console with sandboxing and "
+          "step limits for player-authored code."]]
+        [:div.use-case
+         [:strong "Automation"]
+         [:p "User-defined workflows over host APIs with "
+          "full macro and REPL support."]]]]
       [:script (hu/raw-string
         "document.querySelectorAll('.step-tab').forEach(function(tab){
   tab.addEventListener('click',function(){
