@@ -1,7 +1,8 @@
 (ns mino-site.content.landing
   "Homepage content."
   (:require
-    [hiccup2.core :as h]))
+    [hiccup2.core :as h]
+    [hiccup.util :as hu]))
 
 (def ^:private embed-example
   "// Create a sandboxed runtime with host capabilities.
@@ -19,7 +20,7 @@ double avg;
 if (mino_to_float(result, &avg))
     printf(\"average: %.1f\\n\", avg);")
 
-(def ^:private cpp-example
+(def ^:private expose-example
   "// Define host callbacks for a Sensor type.
 static mino_val_t *sensor_new(mino_state_t *S, mino_val_t *,
                               mino_val_t *, void *) {
@@ -30,19 +31,25 @@ static mino_val_t *sensor_read(mino_state_t *S, mino_val_t *target,
                                mino_val_t *, void *) {
     auto *s = static_cast<Sensor *>(mino_handle_ptr(target));
     return mino_float(S, s->read_value());
+}
+
+static mino_val_t *sensor_name(mino_state_t *S, mino_val_t *target,
+                               mino_val_t *, void *) {
+    auto *s = static_cast<Sensor *>(mino_handle_ptr(target));
+    return mino_string(S, s->name().c_str());
 }")
 
-(def ^:private mino-example
+(def ^:private script-example
   ";; Use host types with dot-syntax and tail recursion.
-(defn avg-readings [sensor n]
-  (loop [i 0 total 0.0]
-    (if (= i n)
-      (/ total n)
-      (recur (inc i) (+ total (.read sensor))))))
+(defn sum-readings [sensor i acc]
+  (if (= i 0)
+    acc
+    (sum-readings sensor (dec i) (+ acc (.read sensor)))))
 
-(let [s (new Sensor)]
+(let [s (new Sensor)
+      n 100]
   (println \"sensor:\" (.-name s))
-  (avg-readings s 100))")
+  (/ (sum-readings s n 0.0) n))")
 
 (defn landing-page
   "Generates the homepage HTML body."
@@ -63,14 +70,30 @@ static mino_val_t *sensor_read(mino_state_t *S, mino_val_t *target,
        [:p {:style "margin-bottom: 1rem;"}
         "The application developer embeds mino. "
         "The C++ engineer exposes host types. "
-        "The scripter writes logic in mino."]
-       [:div.code-panels
-        [:div.code-panel
-         [:div.code-panel-header "Embed"]
-         [:pre [:code {:data-lang "c"} embed-example]]]
-        [:div.code-panel
-         [:div.code-panel-header "Expose"]
-         [:pre [:code {:data-lang "c"} cpp-example]]]
-        [:div.code-panel
-         [:div.code-panel-header "Script"]
-         [:pre [:code {:data-lang "mino"} mino-example]]]]])))
+        "The scripter writes logic."]
+       [:div.step-switcher
+        [:div.step-tabs
+         [:button.step-tab.active {:data-step "0"} "1. Embed"]
+         [:button.step-tab {:data-step "1"} "2. Expose"]
+         [:button.step-tab {:data-step "2"} "3. Script"]]
+        [:div.step-panels
+         [:div.step-panel.active
+          [:div.step-label "The application developer"]
+          [:pre [:code {:data-lang "c"} embed-example]]]
+         [:div.step-panel
+          [:div.step-label "The C++ engineer"]
+          [:pre [:code {:data-lang "c"} expose-example]]]
+         [:div.step-panel
+          [:div.step-label "The scripter"]
+          [:pre [:code {:data-lang "mino"} script-example]]]]]]
+      [:script (hu/raw-string
+        "document.querySelectorAll('.step-tab').forEach(function(tab){
+  tab.addEventListener('click',function(){
+    var idx=this.getAttribute('data-step');
+    document.querySelectorAll('.step-tab').forEach(function(t){t.classList.remove('active')});
+    document.querySelectorAll('.step-panel').forEach(function(p){p.classList.remove('active')});
+    this.classList.add('active');
+    document.querySelectorAll('.step-panel')[idx].classList.add('active');
+    if(window.hlAll)hlAll();
+  });
+});")])))

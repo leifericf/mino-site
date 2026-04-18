@@ -288,23 +288,31 @@
    [:.hl-comment {:color  (:code-comment colors)
                   :font-style "italic"}]
    [:.hl-type    {:color (:code-type colors)}]
-   ;; Two-panel code display (landing page)
-   [:.code-panels {:display "grid"
-                   :grid-template-columns "repeat(auto-fit, minmax(280px, 1fr))"
-                   :gap "1rem"
-                   :margin-top "1rem"}]
-   [:.code-panel {:border (str "1px solid " (:border colors))
-                  :border-radius "6px"
-                  :overflow "hidden"}]
-   [:.code-panel-header {:font-family font-mono
-                         :font-size "0.8rem"
-                         :color (:text-muted colors)
-                         :padding "0.5rem 1.25rem"
-                         :background (:bg-subtle colors)
-                         :border-bottom (str "1px solid " (:border colors))}]
-   [".code-panel pre" {:margin 0
-                       :border "none"
-                       :border-radius 0}]])
+   ;; Step switcher (landing page)
+   [:.step-switcher {:margin-top "1rem"}]
+   [:.step-tabs {:display "flex"
+                 :gap "0"
+                 :border-bottom (str "2px solid " (:border colors))}]
+   [:.step-tab {:font-family font-mono
+                :font-size "0.85rem"
+                :padding "0.6rem 1.25rem"
+                :background "none"
+                :border "none"
+                :color (:text-muted colors)
+                :cursor "pointer"
+                :border-bottom "2px solid transparent"
+                :margin-bottom "-2px"
+                :transition "color 0.15s, border-color 0.15s"}]
+   [:.step-tab:hover {:color (:text colors)}]
+   [:.step-tab.active {:color (:heading colors)
+                       :border-bottom-color (:link colors)
+                       :font-weight "600"}]
+   [:.step-panel {:display "none"
+                  :padding-top "0.5rem"}]
+   [:.step-panel.active {:display "block"}]
+   [:.step-label {:font-size "0.85rem"
+                  :color (:text-muted colors)
+                  :margin-bottom "0.5rem"}]])
 
 ;; --- Declaration entries (API + Language reference) ---
 
@@ -503,8 +511,6 @@
             :max-width "100%"}]
      ;; Declarations — compact on mobile
      [:.decl-name {:font-size "0.9rem"}]
-     ;; Code panels — stack vertically on mobile
-     [:.code-panels {:grid-template-columns "1fr"}]
      ;; Footer
      [:.footer {:margin-top "3rem"}])])
 
