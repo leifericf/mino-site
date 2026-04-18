@@ -11,3 +11,6 @@ classes/
 .nrepl-port
 .lein-repl-history
 _site/
+
+# Local working files
+.local/
