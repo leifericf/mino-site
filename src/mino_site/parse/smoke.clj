@@ -147,6 +147,35 @@
           :else
           (extract-atom text i))))))
 
+;; --- Text cleanup ---
+
+(defn- dedent
+  "Remove common leading whitespace from a multi-line string.
+  The first line keeps its original position; subsequent lines are
+  dedented by the minimum indentation found among them."
+  [^String s]
+  (let [lines (str/split-lines s)]
+    (if (<= (count lines) 1)
+      s
+      (let [rest-lines (rest lines)
+            min-indent (->> rest-lines
+                           (remove str/blank?)
+                           (map #(count (re-find #"^ *" %)))
+                           (reduce min Integer/MAX_VALUE))
+            min-indent (if (= min-indent Integer/MAX_VALUE) 0 min-indent)]
+        (str/join "\n"
+                  (cons (first lines)
+                        (map #(if (>= (count %) min-indent)
+                                (subs % min-indent)
+                                %)
+                             rest-lines)))))))
+
+(defn- has-test-vars?
+  "True if the text contains test-specific variable names
+  (symbols with __ suffixes used to avoid collision across test files)."
+  [^String s]
+  (boolean (re-find #"\w__\w*\b" s)))
+
 ;; --- Assertion extraction ---
 
 (defn- find-assertions
@@ -178,13 +207,17 @@
                       (let [after-eq (inc after-open)]
                         (if-let [[expected after-expected] (extract-form text after-eq)]
                           (if-let [[actual after-actual] (extract-form text after-expected)]
-                            (recur (inc idx)
-                                   (conj results
-                                         {:description test-name
-                                          :input actual
-                                          :expected expected
-                                          :kind :run
-                                          :section nil}))
+                            (let [di (dedent actual)
+                                  de (dedent expected)]
+                              (if (or (has-test-vars? di) (has-test-vars? de))
+                                (recur (inc idx) results)
+                                (recur (inc idx)
+                                       (conj results
+                                             {:description test-name
+                                              :input di
+                                              :expected de
+                                              :kind :run
+                                              :section nil}))))
                             (recur (inc idx) results))
                           (recur (inc idx) results))))))))))))))
 
