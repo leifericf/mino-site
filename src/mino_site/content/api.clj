@@ -40,8 +40,8 @@
   [{:keys [name signature doc]}]
   [:div.decl {:id name :data-name name}
    [:h3.decl-name [:code name]]
-   (render-signature signature)
-   (render-doc doc)])
+   (render-doc doc)
+   (render-signature signature)])
 
 (defmethod render-declaration :typedef-fn
   [{:keys [name signature doc]}]
