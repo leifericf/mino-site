@@ -55,28 +55,27 @@
 ;; --- Primitive extraction from mino_install_core ---
 
 (defn- extract-primitives
-  "Extract mino_env_set calls from mino_install_core.
-  Returns a seq of primitive names as strings."
+  "Extract DEF_PRIM calls from mino_install_core.
+  Returns a seq of {:name \"...\" :doc \"...\"}."
   [c-text]
-  (let [;; Find the mino_install_core function body
-        install-re #"(?s)void mino_install_core\(mino_state_t \*S, mino_env_t \*env\)\s*\{(.+?)\n\}"
+  (let [install-re #"(?s)void mino_install_core\(mino_state_t \*S, mino_env_t \*env\)\s*\{(.+?)\n\}"
         m (re-find install-re c-text)]
     (when m
       (let [body (nth m 1)]
-        (->> (re-seq #"mino_env_set\(S_,\s*env,\s*\"([^\"]+)\"" body)
-             (mapv second))))))
+        (->> (re-seq #"DEF_PRIM\(env,\s*\"([^\"]+)\"[^\"]*\"([^\"]+)\"\)" body)
+             (mapv (fn [[_ name doc]] {:name name :doc doc})))))))
 
 ;; --- I/O primitives ---
 
 (defn- extract-io-primitives
-  "Extract primitives registered in mino_install_io."
+  "Extract DEF_PRIM calls from mino_install_io."
   [c-text]
   (let [io-re #"(?s)void mino_install_io\(mino_state_t \*S, mino_env_t \*env\)\s*\{(.+?)\n\}"
         m (re-find io-re c-text)]
     (when m
       (let [body (nth m 1)]
-        (->> (re-seq #"mino_env_set\(S_,\s*env,\s*\"([^\"]+)\"" body)
-             (mapv second))))))
+        (->> (re-seq #"DEF_PRIM\(env,\s*\"([^\"]+)\"[^\"]*\"([^\"]+)\"\)" body)
+             (mapv (fn [[_ name doc]] {:name name :doc doc})))))))
 
 ;; --- Stdlib macros ---
 
@@ -114,11 +113,15 @@
                             new-depth (+ depth opens (- closes))]
                         (if (and (pos? (+ depth opens)) (<= new-depth 0))
                           (conj collected l)
-                          (recur (rest ls) (conj collected l) new-depth)))))]
+                          (recur (rest ls) (conj collected l) new-depth)))))
+                  source (str/join "\n" form-lines)
+                  doc-m (re-find #"(?s)\(defmacro\s+\S+\s+\"([^\"]+)\"" source)
+                  doc (when doc-m (second doc-m))]
               (recur (drop (count form-lines) lines)
                      (conj forms {:name name
                                   :kind :macro
-                                  :source (str/join "\n" form-lines)})))
+                                  :doc doc
+                                  :source source})))
 
             ;; def (for comp, partial, complement)
             (str/starts-with? line "(def ")
@@ -134,11 +137,15 @@
                             new-depth (+ depth opens (- closes))]
                         (if (and (pos? (+ depth opens)) (<= new-depth 0))
                           (conj collected l)
-                          (recur (rest ls) (conj collected l) new-depth)))))]
+                          (recur (rest ls) (conj collected l) new-depth)))))
+                  source (str/join "\n" form-lines)
+                  doc-m (re-find #"(?s)\(def\s+\S+\s+\"([^\"]+)\"" source)
+                  doc (when doc-m (second doc-m))]
               (recur (drop (count form-lines) lines)
                      (conj forms {:name name
                                   :kind :function
-                                  :source (str/join "\n" form-lines)})))
+                                  :doc doc
+                                  :source source})))
 
             ;; Blank or other
             :else
@@ -166,18 +173,24 @@
      :special-forms [\"quote\" \"def\" ...]}"
   [path]
   (let [c-text (slurp path)
-        prims (extract-primitives c-text)
-        io-prims (extract-io-primitives c-text)
+        prims (or (extract-primitives c-text) [])
+        io-prims (or (extract-io-primitives c-text) [])
+        prim-names (mapv :name prims)
+        prim-docs (into {} (map (fn [{:keys [name doc]}] [name doc]) prims))
+        io-docs (into {} (map (fn [{:keys [name doc]}] [name doc]) io-prims))
+        all-docs (merge prim-docs io-docs)
         stdlib-src (read-stdlib-source path)
         stdlib-forms (when stdlib-src (parse-stdlib-forms stdlib-src))]
     {:categories
      (mapv (fn [{:keys [name fns]}]
              {:name name
-              :primitives (filterv #(contains? fns %) prims)})
+              :primitives (filterv #(contains? fns %) prim-names)})
            category-order)
+
+     :prim-docs all-docs
 
      :stdlib (or stdlib-forms [])
 
-     :io-primitives (or io-prims [])
+     :io-primitives (mapv :name io-prims)
 
      :special-forms special-forms}))

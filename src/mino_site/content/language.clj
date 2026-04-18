@@ -41,10 +41,12 @@
 
 (defn- render-primitive
   "Render a single primitive function entry."
-  [prim-name examples]
-  (let [exs (find-examples examples prim-name 3)]
+  [prim-name examples prim-docs]
+  (let [exs (find-examples examples prim-name 3)
+        doc (get prim-docs prim-name)]
     [:div.decl {:id (str "fn-" prim-name) :data-name prim-name}
      [:h3.decl-name [:code prim-name]]
+     (when doc [:p.decl-doc doc])
      (when (seq exs)
        [:div.examples
         (for [ex exs]
@@ -54,25 +56,25 @@
 
 (defn- render-category
   "Render a category section with its primitives."
-  [{:keys [name primitives]} examples]
+  [{:keys [name primitives]} examples prim-docs]
   (let [id (section-id name)]
     (when (seq primitives)
       [:section.api-section {:id id}
        [:h2 (str/capitalize name)]
        (for [prim primitives]
-         (render-primitive prim examples))])))
+         (render-primitive prim examples prim-docs))])))
 
 ;; --- Special forms ---
 
 (defn- render-special-forms
   "Render the special forms section."
-  [special-forms examples]
+  [special-forms examples prim-docs]
   [:section.api-section {:id "special-forms"}
    [:h2 "Special forms"]
    [:p "These forms are recognized directly by the evaluator and cannot "
     "be redefined."]
    (for [sf special-forms]
-     (render-primitive sf examples))])
+     (render-primitive sf examples prim-docs))])
 
 ;; --- Stdlib macros ---
 
@@ -83,11 +85,12 @@
    [:h2 "Standard library"]
    [:p "Defined in mino source at startup. View with "
     [:code "(source name)"] " at the REPL."]
-   (for [{:keys [name kind source]} stdlib]
+   (for [{:keys [name kind doc source]} stdlib]
      (let [exs (find-examples examples name 3)]
        [:div.decl {:id (str "fn-" name) :data-name name}
         [:h3.decl-name [:code name]
          [:span.decl-badge (clojure.core/name kind)]]
+        (when doc [:p.decl-doc doc])
         [:details.stdlib-source
          [:summary "Source"]
          [:pre [:code {:data-lang "mino"} source]]]
@@ -100,13 +103,13 @@
 
 (defn- render-io-primitives
   "Render the I/O primitives section."
-  [io-prims examples]
+  [io-prims examples prim-docs]
   [:section.api-section {:id "io"}
    [:h2 "I/O primitives"]
    [:p "Available only after the host calls "
     [:code "mino_install_io()"] ". Not present in sandboxed environments."]
    (for [prim io-prims]
-     (render-primitive prim examples))])
+     (render-primitive prim examples prim-docs))])
 
 ;; --- Sidebar ---
 
@@ -131,7 +134,7 @@
   builtin-data is the output of parse/builtins.clj.
   smoke-data is the output of parse/smoke.clj."
   [builtin-data smoke-data]
-  (let [{:keys [categories stdlib io-primitives special-forms]} builtin-data
+  (let [{:keys [categories stdlib io-primitives special-forms prim-docs]} builtin-data
         examples (:examples smoke-data)]
     (str
       (h/html
@@ -147,7 +150,7 @@
          (render-sidebar categories special-forms stdlib io-primitives)
          [:div.docs-content
           (for [cat categories]
-            (render-category cat examples))
-          (render-special-forms special-forms examples)
+            (render-category cat examples prim-docs))
+          (render-special-forms special-forms examples prim-docs)
           (render-stdlib stdlib examples)
-          (render-io-primitives io-primitives examples)]]))))
+          (render-io-primitives io-primitives examples prim-docs)]]))))
