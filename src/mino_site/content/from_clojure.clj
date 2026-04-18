@@ -110,19 +110,21 @@
       ;; --- Namespaces ---
 
       [:h2 "Namespaces"]
-      [:p "mino uses a flat namespace model. There is no " [:code "ns"]
-       " form, no " [:code ":require"] "/" [:code ":as"]
-       "/" [:code ":refer"] " within " [:code "ns"] "."]
+      [:p "mino supports " [:code "ns"] " forms and "
+       [:code "require"] " with " [:code ":as"] " and "
+       [:code ":refer"] ". Namespace-qualified and aliased symbols "
+       "resolve correctly across files."]
       [:pre [:code
-        ";; Clojure\n"
         "(ns myapp.core\n"
         "  (:require [clojure.string :as str]))\n"
         "\n"
-        ";; mino\n"
-        "(require \"path/to/module\")"]]
-      [:p [:code "require"] " loads a file once by path. All definitions "
-       "go into a single global environment per runtime. Isolation "
-       "between runtimes replaces isolation between namespaces."]
+        "(str/blank? \"\")  ;=> true"]]
+      [:p "Module resolution uses a host-supplied resolver. The "
+       "default standalone resolver searches relative paths with "
+       [:code ".mino"] " and " [:code ".cljc"] " extensions. "
+       "All definitions go into a single global environment per "
+       "runtime. Isolation between runtimes replaces isolation "
+       "between namespaces."]
 
       ;; --- Concurrency ---
 
@@ -146,20 +148,25 @@
       ;; --- Host interop ---
 
       [:h2 "Host interop"]
-      [:p "Clojure interops with the JVM through " [:code ".method"]
-       " and " [:code "Class/staticMethod"] " syntax. mino interops "
-       "with C through opaque handles and capability functions:"]
+      [:p "mino uses the same " [:code ".method"] ", "
+       [:code ".-field"] ", " [:code "new"] ", and "
+       [:code "Type/static"] " syntax. The host registers "
+       "capabilities through a type-oriented registry with a "
+       "default-deny policy:"]
       [:pre [:code
-        ";; Clojure: Java interop\n"
-        "(.toLowerCase \"HELLO\")\n"
-        "(System/getProperty \"os.name\")\n"
+        ";; Familiar syntax, capability-gated dispatch\n"
+        "(def c (new Counter))\n"
+        "(.inc c)\n"
+        "(.-value c)          ;=> 1\n"
+        "(Math/add 3 4)       ;=> 7\n"
         "\n"
-        ";; mino: handle-based C interop\n"
-        "(def db (db-open \"test.db\"))  ; host installs db-open\n"
-        "(db-query db \"SELECT 1\")      ; host installs db-query"]]
-      [:p "The host decides which capabilities each runtime gets. "
-       "There is no ambient access to system resources. See the "
-       [:a {:href "/documentation/embedding/"} "Embedding Guide"]
+        ";; Explicit forms also available\n"
+        "(host/call c :inc)\n"
+        "(host/get c :value)\n"
+        "(host/static-call :Math :add 3 4)"]]
+      [:p "The host decides which types and methods each runtime "
+       "gets. There is no ambient access to system resources. See "
+       "the " [:a {:href "/documentation/embedding/"} "Embedding Guide"]
        " for details."]
 
       ;; --- Reader syntax ---
@@ -168,41 +175,31 @@
       [:p "Most reader macros work as in Clojure. A few are absent:"]
 
       [:table
-       [:thead [:tr [:th "Clojure"] [:th "mino"] [:th "Status"]]]
+       [:thead [:tr [:th "Syntax"] [:th "Status"]]]
        [:tbody
         [:tr [:td [:code "#(inc %)"]]
-         [:td [:code "#(inc %)"]]
          [:td "Same"]]
         [:tr [:td [:code "#'var"]]
-         [:td "N/A"]
-         [:td "No var indirection"]]
+         [:td "Same"]]
         [:tr [:td [:code "#_ form"]]
-         [:td [:code "#_ form"]]
          [:td "Same"]]
-        [:tr [:td [:code "^{:key val}"]]
-         [:td [:code "^{:key val}"]]
-         [:td "Same (attached at read time)"]]
-        [:tr [:td [:code "^:key"]]
-         [:td [:code "^:key"]]
+        [:tr [:td [:code "^{:key val}"] " / " [:code "^:key"]
+         " / " [:code "^Type"]]
          [:td "Same"]]
-        [:tr [:td [:code "^Type"]]
-         [:td [:code "^Type"]]
-         [:td "Same (becomes " [:code "{:tag Type}"] ")"]]
+        [:tr [:td [:code "#?(:clj ... :default ...)"]]
+         [:td "Same (dialect key is " [:code ":mino"] ")"]]
+        [:tr [:td [:code "#?@(...)"]]
+         [:td "Same (splice reader conditional)"]]
+        [:tr [:td [:code "'()"] " / " [:code "`(~x ~@xs)"]
+         " / " [:code "@atom"]]
+         [:td "Same"]]
+        [:tr [:td [:code "2r1010"] " / " [:code "0xFF"]
+         " / " [:code "8r77"]]
+         [:td "Same (radix and hex integer literals)"]]
         [:tr [:td [:code "#\"regex\""]]
-         [:td [:code "(re-pattern \"regex\")"]]
-         [:td "Use function form"]]
+         [:td "Use " [:code "(re-pattern \"regex\")"]]]
         [:tr [:td [:code "::keyword"]]
-         [:td "N/A"]
-         [:td "No auto-resolved keywords"]]
-        [:tr [:td [:code "'()"]]
-         [:td [:code "'()"]]
-         [:td "Same"]]
-        [:tr [:td [:code "`(~x ~@xs)"]]
-         [:td [:code "`(~x ~@xs)"]]
-         [:td "Same"]]
-        [:tr [:td [:code "@atom"]]
-         [:td [:code "@atom"]]
-         [:td "Same"]]]]
+         [:td "Not supported (no auto-resolved keywords)"]]]]
 
       ;; --- Data structures ---
 
@@ -236,7 +233,8 @@
       [:p "Differences:"]
       [:ul
        [:li "No transient collections (all mutation is through atoms)"]
-       [:li "No array maps (small maps use HAMT directly)"]]
+       [:li [:code "array-map"] " is an alias for " [:code "hash-map"]
+        " (HAMT is used at all sizes)"]]
 
       ;; --- Sequences ---
 
@@ -265,9 +263,23 @@
       ;; --- Numeric tower ---
 
       [:h2 "Numbers"]
-      [:p "mino has 64-bit integers and 64-bit IEEE 754 floats. "
-       "There are no ratios, BigIntegers, or BigDecimals. Integer "
-       "overflow wraps silently (C semantics)."]
+      [:p "mino has 64-bit integers and 64-bit IEEE 754 floats."]
+      [:ul
+       [:li "Ratio literals (" [:code "1/2"] ") parse but convert "
+        "to int (when exact) or float. " [:code "ratio?"] " always "
+        "returns false."]
+       [:li "BigInt literals (" [:code "42N"] ") parse as regular "
+        "integers. " [:code "decimal?"] " always returns false."]
+       [:li "BigDec literals (" [:code "1.5M"] ") parse as regular "
+        "floats."]
+       [:li "Integer overflow wraps silently (C semantics). "
+        [:code "(+ Long/MAX_VALUE 1)"] " wraps to a negative number "
+        "rather than auto-promoting to BigInt."]
+       [:li "Float arithmetic follows IEEE 754 without exact rational "
+        "arithmetic."]]
+      [:p "All standard arithmetic, comparison, and math functions work. "
+       "The difference is in type predicates and overflow behavior, "
+       "not in the operations themselves."]
 
       ;; --- Error handling ---
 
@@ -293,41 +305,65 @@
       [:h2 "Intentionally absent"]
       [:p "These are design decisions, not missing features:"]
       [:ul
-       [:li [:strong "Multimethods"] " are not implemented. "
-        "Protocols cover the same dispatch pattern."]
-       [:li [:strong "Records and deftypes"] " do not exist. "
-        "Maps are the universal data carrier. Type hints ("
-        [:code "^String x"] ") parse as metadata but are not "
-        "enforced at runtime."]
-       [:li [:strong "JVM classpath, deps, and jar resolution"]
-        " do not apply. mino is embedded via C source files."]
-       [:li [:strong "Shared-memory STM"] " is replaced by "
-        "runtime isolation and message passing."]
-       [:li [:strong "Java interop syntax"] " is replaced by "
-        "capability-based C handle APIs."]
-       [:li [:strong "Full numeric tower"] " (ratios, BigInt, BigDec) "
-        "is excluded to keep the runtime small."]]
+       [:li [:strong "Arbitrary-precision numbers."]
+        " No BigInt, BigDecimal, or exact ratio types. Ratio, N, "
+        "and M literals parse but convert to int/float. This keeps "
+        "the runtime small and avoids a library dependency."]
+       [:li [:strong "Distinct character type."]
+        " Character literals (" [:code "\\A"] ", " [:code "\\space"]
+        ") are represented as single-character strings. "
+        [:code "char?"] " returns false, " [:code "string?"]
+        " returns true. This simplifies the value model at the "
+        "cost of " [:code "char?"] "/" [:code "string?"] " predicate "
+        "divergence."]
+       [:li [:strong "Distinct empty list."]
+        " " [:code "(list)"] " returns " [:code "nil"] ", not an "
+        "empty list object. " [:code "rest"] " has " [:code "next"]
+        " semantics. " [:code "(seq ())"] " and " [:code "(seq nil)"]
+        " are both " [:code "nil"] "."]
+       [:li [:strong "Multimethods."]
+        " " [:code "defmulti"] "/" [:code "defmethod"] " are not "
+        "implemented. Protocols cover the same dispatch patterns."]
+       [:li [:strong "Records and types."]
+        " " [:code "defrecord"] "/" [:code "deftype"] " do not exist. "
+        "Maps are the universal data carrier."]
+       [:li [:strong "Transient collections."]
+        " All mutation goes through atoms. "
+        [:code "transient"] "/" [:code "persistent!"] " are not "
+        "implemented."]
+       [:li [:strong "Integer overflow detection."]
+        " Arithmetic wraps silently per C semantics rather than "
+        "throwing or auto-promoting."]
+       [:li [:strong "Shared-memory STM."]
+        " No refs, no " [:code "dosync"] ". Runtime isolation and "
+        "message passing replace shared-memory coordination."]
+       [:li [:strong "Auto-resolved keywords."]
+        " " [:code "::key"] " and " [:code "::alias/key"]
+        " are not supported."]]
 
       ;; --- Quick reference ---
 
       [:h2 "Quick reference"]
       [:table
-       [:thead [:tr [:th "Clojure"] [:th "mino equivalent"]]]
+       [:thead [:tr [:th "Feature"] [:th "Status"]]]
        [:tbody
-        [:tr [:td [:code "(ns ...)"]]
-         [:td [:code "(require \"path\")"]]]
-        [:tr [:td [:code "(:key map)"]]
-         [:td [:code "(:key map)"]]]
-        [:tr [:td [:code "#(inc %)"]]
-         [:td [:code "#(inc %)"]]]
-        [:tr [:td [:code "(dosync ...)"]]
-         [:td "Not applicable"]]
-        [:tr [:td [:code "(ref ...)"]]
-         [:td [:code "(atom ...)"]]]
-        [:tr [:td [:code "(.method obj)"]]
-         [:td "Host-installed functions"]]
-        [:tr [:td [:code "(ex-info ...)"]]
-         [:td [:code "(ex-info ...)"]]]
+        [:tr [:td [:code "(ns ...)"] " / " [:code "require"]]
+         [:td "Same"]]
+        [:tr [:td [:code "(:key map)"] " / " [:code "#(inc %)"]]
+         [:td "Same"]]
+        [:tr [:td [:code "(.method obj)"] " / "
+         [:code "Type/static"]]
+         [:td "Same (capability-gated)"]]
+        [:tr [:td [:code "(ex-info ...)"] " / "
+         [:code "try"] "/" [:code "catch"]]
+         [:td "Same"]]
+        [:tr [:td [:code "(dosync ...)"] " / " [:code "(ref ...)"]]
+         [:td "Not applicable (use atoms)"]]
         [:tr [:td [:code "(future ...)"]]
-         [:td [:code "(spawn ...)"]]]]]))
+         [:td [:code "(spawn ...)"]]]
+        [:tr [:td [:code "defmulti"] " / " [:code "defrecord"]]
+         [:td "Not implemented"]]
+        [:tr [:td [:code "1/2"] " / " [:code "42N"] " / "
+         [:code "1.5M"]]
+         [:td "Parse but convert to int/float"]]]])))
 )
