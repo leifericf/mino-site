@@ -114,11 +114,15 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
           [:div.step-label "The scripter"]
           [:p.step-desc
            "The scripter writes processing rules without knowing "
-           "anything about C++. " [:code "drain"] " consumes the "
-           "stream via self-recursion (tail-call optimized, runs in "
-           "constant stack space). " [:code "analyze"] " uses a set "
-           "as a filter predicate, " [:code "group-by"] " for "
-           "bucketing, and destructuring to unpack each group. "
+           "anything about C++. Every value flowing through the "
+           "pipeline is immutable "
+           "with structural sharing, so there are no aliasing bugs "
+           "and no \"who mutated my table\" surprises. Keywords "
+           "like " [:code ":device"] " double as data accessors. "
+           "The set " [:code "#{:temp}"] " is used directly as a "
+           "filter predicate because collections are callable. "
+           [:code "drain"] " recurses in constant stack space "
+           "via automatic tail-call optimization. "
            "Change the processing logic without recompiling."]
           [:pre [:code {:data-lang "mino"} script-example]]]]]]
       [:script (hu/raw-string
