@@ -48,16 +48,19 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
       acc
       (drain source (conj acc evt)))))
 
-;; Filter by type, group by device, compute stats.
+;; Summarize a [device readings] group.
+(defn summarize [[device readings]]
+  [device {:count (count readings)
+           :avg   (/ (reduce + (map :value readings))
+                     (count readings))}])
+
+;; Filter, group, summarize.
 (defn analyze [events type-filter]
-  (let [filtered (filter #(type-filter (:type %)) events)
-        grouped  (group-by :device filtered)]
-    (into (sorted-map)
-      (map (fn [[device readings]]
-             [device {:count (count readings)
-                      :avg   (/ (reduce + (map :value readings))
-                                (count readings))}])
-           grouped))))
+  (->> events
+       (filter #(type-filter (:type %)))
+       (group-by :device)
+       (map summarize)
+       (into (sorted-map))))
 
 (let [events (drain (new EventSource) [])]
   (analyze events #{:temp}))
