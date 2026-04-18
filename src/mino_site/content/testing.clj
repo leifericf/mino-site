@@ -95,7 +95,7 @@
 
       [:h2 "Output"]
       [:p "On success:"]
-      [:pre [:code "152 tests, 376 assertions: 376 passed, 0 failed, 0 errors"]]
+      [:pre [:code "790 tests, 3069 assertions: 3069 passed, 0 failed, 0 errors"]]
       [:p "On failure, each failing assertion is reported with its test "
        "name, context path, the original form, and a diff:"]
       [:pre [:code "Failures:\n  in addition\n    arithmetic > basic\n    (= 4 (+ 1 2))\n    expected: 4\n    actual: 3\n\n10 tests, 12 assertions: 11 passed, 1 failed, 0 errors"]]

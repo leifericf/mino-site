@@ -129,6 +129,30 @@ mino_register_fn(S, env, \"greet\", my_greet);"]]
        " as the first argument to every primitive callback. Use it "
        "for all value construction and API calls within the function."]
 
+      [:h2 "Structured host interop"]
+      [:p "For richer host integration, mino provides a type-oriented "
+       "capability registry. The host registers constructors, methods, "
+       "static methods, and getters per type, and mino code calls them "
+       "through familiar dot-syntax:"]
+      [:pre [:code {:data-lang "c"}
+"mino_host_enable(S);
+
+/* Register a Counter type with constructor and methods */
+mino_host_register_ctor(S, \"Counter\", 0, counter_new, NULL);
+mino_host_register_method(S, \"Counter\", \"inc\", 0, counter_inc, NULL);
+mino_host_register_method(S, \"Counter\", \"get\", 0, counter_get, NULL);
+mino_host_register_getter(S, \"Counter\", \"value\", counter_value, NULL);"]]
+      [:p "mino code can then use dot-syntax:"]
+      [:pre [:code {:data-lang "mino"}
+"(def c (new Counter))
+(.inc c)
+(.-value c)  ;=> 1"]]
+      [:p "Interop is disabled by default. The host must call "
+       [:code "mino_host_enable(S)"] " to activate it. Unregistered "
+       "types and methods produce clear error messages. "
+       [:code "mino_register_fn"] " remains available for simpler "
+       "one-off host functions."]
+
       [:h2 "Handles"]
       [:p "Handles wrap opaque host pointers so mino code can pass them "
        "around without knowing what they contain:"]
