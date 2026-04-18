@@ -319,7 +319,7 @@
                  :margin-bottom "1rem"}]
    ;; Use case grid (landing page)
    [:.use-case-grid {:display "grid"
-                     :grid-template-columns "repeat(4, 1fr)"
+                     :grid-template-columns "repeat(2, 1fr)"
                      :gap "1.25rem"
                      :margin-top "1rem"}]
    [:.use-case {:padding "1.25rem"
@@ -532,7 +532,7 @@
             :max-width "100%"}]
      ;; Declarations — compact on mobile
      [:.decl-name {:font-size "0.9rem"}]
-     [:.use-case-grid {:grid-template-columns "repeat(2, 1fr)"}]
+     [:.use-case-grid {:grid-template-columns "1fr"}]
      ;; Footer
      [:.footer {:margin-top "3rem"}])])
 
