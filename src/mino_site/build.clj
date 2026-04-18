@@ -24,17 +24,34 @@
     [mino-site.content.testing :as testing]
     [mino-site.content.embedding :as embedding]
     [mino-site.content.performance :as performance]
-    [mino-site.content.from-clojure :as from-clojure]))
+    [mino-site.content.from-clojure :as from-clojure]
+    [mino-site.parse.use-cases :as parse.use-cases]
+    [mino-site.content.use-case-page :as use-case-page]))
 
 (defn pages
   "Returns a Stasis page map: {path -> (fn [ctx] html-string)}.
   Paths use /dir/index.html so GitHub Pages serves them at /dir/.
   mino-root is the path to the mino source tree (submodule or local)."
   [mino-root]
-  (let [api-data     (parse.header/parse (str mino-root "/src/mino.h"))
-        builtin-data (parse.builtins/parse (str mino-root "/src/prim.c"))
-        cookbook-data (parse.cookbook/parse mino-root)
-        smoke-data   (parse.smoke/parse mino-root)]
+  (let [api-data       (parse.header/parse (str mino-root "/src/mino.h"))
+        builtin-data   (parse.builtins/parse (str mino-root "/src/prim.c"))
+        cookbook-data   (parse.cookbook/parse mino-root)
+        smoke-data     (parse.smoke/parse mino-root)
+        use-case-data  (parse.use-cases/parse mino-root)
+        use-case-index (into {} (map (juxt :slug identity) use-case-data))
+        use-case-pages (into {}
+                         (for [slug (use-case-page/use-case-slugs)
+                               :let [uc (get use-case-index slug)]
+                               :when uc]
+                           [(str "/use-cases/" slug "/index.html")
+                            (fn [ctx]
+                              (render/html-page
+                                {:title (use-case-page/use-case-title slug)
+                                 :description (:description uc)
+                                 :active-page :home
+                                 :wide true}
+                                (use-case-page/use-case-page uc)))]))]
+    (merge use-case-pages
     {"/index.html"
      (fn [ctx]
        (render/html-page {:active-page :home}
@@ -130,7 +147,8 @@
      (fn [ctx]
        (render/html-page {:title "Page Not Found"
                           :description "This page does not exist."}
-         (not-found/not-found-page)))}))
+         (not-found/not-found-page)))})))
+
 
 (defn build-site!
   "Entry point for clj -X:build.

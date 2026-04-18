@@ -333,7 +333,28 @@
    [".use-case p" {:font-size "0.85rem"
                    :line-height "1.5"
                    :color (:text-muted colors)
-                   :margin 0}]])
+                   :margin 0}]
+   ;; Use case cards as links
+   ["a.use-case" {:text-decoration "none"
+                  :color "inherit"
+                  :transition "border-color 0.15s, box-shadow 0.15s"}]
+   ["a.use-case:hover" {:border-color (:link colors)
+                        :box-shadow (str "0 2px 8px rgba(0,0,0,0.06)")}]
+   ;; Use case detail pages
+   [:.use-case-subtitle {:font-size "1.1rem"
+                         :color (:text-muted colors)
+                         :margin-top "-0.5rem"
+                         :margin-bottom "1.5rem"}]
+   [:.use-case-section {:margin-top "2rem"}]
+   [:.use-case-build {:margin-top "1rem"
+                      :padding "1rem"
+                      :background (:bg-subtle colors)
+                      :border-radius "6px"}]
+   [".use-case-build pre" {:margin-top "0.5rem"
+                           :margin-bottom 0}]
+   [:.use-case-nav {:margin-top "2rem"
+                    :padding-top "1rem"
+                    :border-top (str "1px solid " (:border colors))}]])
 
 ;; --- Declaration entries (API + Language reference) ---
 
