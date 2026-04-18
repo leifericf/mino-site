@@ -92,12 +92,34 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
         [:div.step-panels
          [:div.step-panel.active
           [:div.step-label "The application developer"]
+          [:p.step-desc
+           "The application developer creates a mino runtime and "
+           "decides what the script can access. Here, an "
+           [:code "EventSource"] " type is registered with a "
+           "constructor, a method, and a getter. The script never "
+           "sees raw pointers or memory. It only sees the "
+           "capabilities the host chose to expose."]
           [:pre [:code {:data-lang "c"} embed-example]]]
          [:div.step-panel
           [:div.step-label "The C++ engineer"]
+          [:p.step-desc
+           "The C++ engineer writes the callbacks that back each "
+           "registered capability. Host objects are wrapped as opaque "
+           "handles with automatic cleanup. Each callback receives "
+           "the mino runtime, the target handle, and the arguments. "
+           "Events are returned as mino maps so the script side "
+           "works with immutable data, not C++ objects."]
           [:pre [:code {:data-lang "c"} expose-example]]]
          [:div.step-panel
           [:div.step-label "The scripter"]
+          [:p.step-desc
+           "The scripter writes processing rules without knowing "
+           "anything about C++. " [:code "drain"] " consumes the "
+           "stream via self-recursion (tail-call optimized, runs in "
+           "constant stack space). " [:code "analyze"] " uses a set "
+           "as a filter predicate, " [:code "group-by"] " for "
+           "bucketing, and destructuring to unpack each group. "
+           "Change the processing logic without recompiling."]
           [:pre [:code {:data-lang "mino"} script-example]]]]]]
       [:script (hu/raw-string
         "document.querySelectorAll('.step-tab').forEach(function(tab){

@@ -312,7 +312,11 @@
    [:.step-panel.active {:display "block"}]
    [:.step-label {:font-size "0.85rem"
                   :color (:text-muted colors)
-                  :margin-bottom "0.5rem"}]])
+                  :margin-bottom "0.5rem"}]
+   [:.step-desc {:font-size "0.9rem"
+                 :line-height "1.6"
+                 :color (:text colors)
+                 :margin-bottom "1rem"}]])
 
 ;; --- Declaration entries (API + Language reference) ---
 
