@@ -264,130 +264,33 @@
       ;; ----- Related projects -----
 
       [:h2 "Related projects"]
-      [:p "mino exists alongside other excellent projects in the "
-       "same programming tradition. Each one occupies a distinct "
-       "niche."]
-
-      [:h3 [:a {:href "https://jank-lang.org" :target "_blank"
-                :rel "noopener"} "jank"]]
-      [:p "jank is a native Clojure dialect with an LLVM-based "
-       "compiler, inline C++ interop, and full AOT and JIT "
-       "compilation. If you want to write entire programs in a "
-       "native Lisp, jank is a great choice."]
-
-      [:h3 [:a {:href "https://babashka.org" :target "_blank"
-                :rel "noopener"} "Babashka"]]
-      [:p "Babashka is a fast-starting Clojure scripting runtime "
-       "built on GraalVM native image. It starts in milliseconds "
-       "and ships with built-in support for HTTP, JSON, CSV, and "
-       "shell interop."]
-
-      [:h3 [:a {:href "https://www.lua.org" :target "_blank"
-                :rel "noopener"} "Lua"]]
-      [:p "Lua is the gold standard for embeddable scripting. "
-       "Small, fast, portable, and battle-tested in game engines "
-       "and networking equipment. Its C API is a model of embedding "
-       "design."]
-
-      [:h3 [:a {:href "https://fennel-lang.org" :target "_blank"
-                :rel "noopener"} "Fennel"]]
-      [:p "Fennel is a Lisp that compiles to Lua. Macros, pattern "
-       "matching, and Lisp syntax on top of the Lua VM with full "
-       "access to the Lua ecosystem."]
-
-      [:h3 [:a {:href "https://janet-lang.org" :target "_blank"
-                :rel "noopener"} "Janet"]]
-      [:p "Janet is a functional, embeddable Lisp written in C "
-       "with a register-based VM, PEG pattern matching, a built-in "
-       "event loop, and a package manager. A feature-rich embeddable "
-       "Lisp with a broader standard library and an active ecosystem."]
-
-      [:h3 [:a {:href "https://github.com/Zelex/jo_clojure" :target "_blank"
-                :rel "noopener"} "JO Clojure"]]
-      [:p "JO Clojure is a native C/C++ implementation of a "
-       "Clojure-like language with very fast startup, persistent "
-       "data structures, and an interactive REPL. It shares mino's "
-       "interest in native embedding and small-footprint deployment, "
-       "while aiming for broader Clojure compatibility over time."]
-
-      [:h3 [:a {:href "https://github.com/rekola/nanoclj" :target "_blank"
-                :rel "noopener"} "nanoclj"]]
-      [:p "nanoclj is a tiny Clojure interpreter written in C, "
-       "focused on compactness and embeddability. Like mino, it "
-       "explores what a small native Lisp can do outside the JVM, "
-       "but it makes explicit compatibility trade-offs and includes "
-       "a distinct REPL-oriented graphics and data-visualization "
-       "direction."]
-
-      [:h3 [:a {:href "https://github.com/mll/clojure-rt" :target "_blank"
-                :rel "noopener"} "clojure-rt"]]
-      [:p "clojure-rt is an LLVM-based Clojure implementation "
-       "focused on deterministic, high-performance execution. It is "
-       "a compiler-and-runtime effort aimed at real-time constraints, "
-       "in contrast to mino's deliberately small interpreter core "
-       "and library-first embedding model."]
-
-      [:h3 "What makes mino different"]
-      [:p "None of the projects above fill a specific gap: an "
-       "embeddable scripting runtime with an immutable-first data "
-       "model and zero external dependencies."]
+      [:p "mino exists alongside other projects in the same "
+       "programming tradition."]
       [:ul
-       [:li "jank is a compiled language with an LLVM runtime; its "
-        "embedding surface is JIT-based C++ interop, not a drop-in "
-        "C library."]
-       [:li "Babashka is a standalone scripting runtime, not an "
-        "embeddable library."]
-       [:li "Lua is embeddable but centers on mutable tables."]
-       [:li "Fennel gives you Lisp over Lua, but inherits Lua's "
-        "mutable data model."]
-       [:li "Janet is embeddable and Lisp, but uses mutable arrays "
-        "and tables as its core data structures, with a larger "
-        "footprint (VM, bytecode compiler, event loop, package "
-        "manager)."]
-       [:li "JO Clojure and nanoclj are close in spirit as native "
-        "C/C++ Clojure-like runtimes, but mino emphasizes a narrower "
-        "embedding surface, capability-first sandboxing, and strict "
-        "runtime isolation as the primary product shape."]
-       [:li "clojure-rt targets deterministic high performance via "
-        "LLVM/JIT compiler architecture; mino intentionally "
-        "prioritizes a small interpreter core and host-controlled "
-        "orchestration over compiler complexity."]
-       [:li "Erlang/BEAM pioneered isolated processes with message "
-        "passing, but it is a full runtime system, not an "
-        "embeddable library."]]
-      [:p "mino combines embeddability (like Lua), immutable "
-       "persistent data (like Clojure), sandboxing by default, "
-       "and zero dependencies in pure ANSI C."]
-
-      [:h3 "When to choose something else"]
-      [:ul
-       [:li [:strong "Standalone application:"]
-        " " [:a {:href "https://jank-lang.org" :target "_blank"
+       [:li [:a {:href "https://jank-lang.org" :target "_blank"
                  :rel "noopener"} "jank"]
-        " for compiled native Lisp, or Clojure on the JVM."]
-       [:li [:strong "Shell scripting:"]
-        " " [:a {:href "https://babashka.org" :target "_blank"
+        " — native Clojure dialect with an LLVM-based compiler."]
+       [:li [:a {:href "https://babashka.org" :target "_blank"
                  :rel "noopener"} "Babashka"]
-        " starts in milliseconds with built-in HTTP, JSON, and "
-        "shell interop."]
-       [:li [:strong "Battle-tested embeddable runtime:"]
-        " " [:a {:href "https://www.lua.org" :target "_blank"
+        " — fast-starting Clojure scripting runtime on GraalVM."]
+       [:li [:a {:href "https://www.lua.org" :target "_blank"
                  :rel "noopener"} "Lua"]
-        " has decades of production use and thousands of libraries."]
-       [:li [:strong "Lisp on Lua:"]
-        " " [:a {:href "https://fennel-lang.org" :target "_blank"
+        " — embeddable scripting language in C with a mutable data model."]
+       [:li [:a {:href "https://fennel-lang.org" :target "_blank"
                  :rel "noopener"} "Fennel"]
-        " compiles to Lua with macros and pattern matching."]
-       [:li [:strong "Feature-rich embeddable Lisp:"]
-        " " [:a {:href "https://janet-lang.org" :target "_blank"
+        " — Lisp that compiles to Lua."]
+       [:li [:a {:href "https://janet-lang.org" :target "_blank"
                  :rel "noopener"} "Janet"]
-        " has PEG matching, an event loop, multithreading, and a "
-        "package ecosystem."]
-       [:li [:strong "Native C/C++ Clojure-like runtime experiments:"]
-        " " [:a {:href "https://github.com/Zelex/jo_clojure" :target "_blank"
+        " — embeddable Lisp in C with a register-based VM and package manager."]
+       [:li [:a {:href "https://github.com/Zelex/jo_clojure" :target "_blank"
                  :rel "noopener"} "JO Clojure"]
-        " and " [:a {:href "https://github.com/rekola/nanoclj" :target "_blank"
-                     :rel "noopener"} "nanoclj"] "."]
-       [:li [:strong "Compiler/JIT path for deterministic performance:"]
-        " " [:a {:href "https://github.com/mll/clojure-rt" :target "_blank"
-                 :rel "noopener"} "clojure-rt"] "."]])))
+        " — native C/C++ Clojure-like runtime with persistent data structures."]
+       [:li [:a {:href "https://github.com/rekola/nanoclj" :target "_blank"
+                 :rel "noopener"} "nanoclj"]
+        " — tiny Clojure interpreter in C."]
+       [:li [:a {:href "https://github.com/mll/clojure-rt" :target "_blank"
+                 :rel "noopener"} "clojure-rt"]
+        " — LLVM-based Clojure implementation for deterministic performance."]]
+      [:p "mino occupies a specific niche: an embeddable runtime "
+       "with immutable persistent data and zero external dependencies "
+       "in pure ANSI C."])))
