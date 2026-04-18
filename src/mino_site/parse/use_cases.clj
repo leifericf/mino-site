@@ -69,27 +69,28 @@
            (str/join "\n")
            str/trim))))
 
+(defn- strip-comment-stars
+  "Strip leading * from C block comment lines and join into prose."
+  [body]
+  (->> (str/split-lines body)
+       (map #(str/replace % #"^\s*\*\s?" ""))
+       (map str/trim)
+       (remove str/blank?)
+       (str/join " ")))
+
 (defn- extract-expose-comment
   "Extract the prose comment from the Expose section."
   [section-text]
   (when section-text
     (when-let [m (re-find #"(?s)/\*\s*(.+?)\s*\*/" section-text)]
-      (let [body (nth m 1)]
-        (->> (str/split-lines body)
-             (map str/trim)
-             (remove str/blank?)
-             (str/join " "))))))
+      (strip-comment-stars (nth m 1)))))
 
 (defn- extract-script-comment
   "Extract the prose comment from the Script section."
   [section-text]
   (when section-text
     (when-let [m (re-find #"(?s)/\*\s*(.+?)\s*\*/" section-text)]
-      (let [body (nth m 1)]
-        (->> (str/split-lines body)
-             (map str/trim)
-             (remove str/blank?)
-             (str/join " "))))))
+      (strip-comment-stars (nth m 1)))))
 
 (defn- parse-use-case-file
   "Parse a single use case C++ file."

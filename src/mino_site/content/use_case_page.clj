@@ -41,6 +41,27 @@
 (defn- find-meta [slug]
   (some #(when (= (:slug %) slug) %) use-case-meta))
 
+(defn- format-prose
+  "Convert a prose string into hiccup with inline code spans.
+  Recognizes backtick-wrapped `code` tokens from the source comments."
+  [text]
+  (when text
+    (let [parts (str/split text #"`([^`]+)`")
+          codes (re-seq #"`([^`]+)`" text)]
+      (loop [result []
+             ps (seq parts)
+             cs (seq codes)]
+        (if ps
+          (let [result (if (seq (first ps))
+                         (conj result (first ps))
+                         result)]
+            (if cs
+              (recur (conj result [:code (second (first cs))])
+                     (next ps)
+                     (next cs))
+              (recur result (next ps) nil)))
+          result)))))
+
 ;; --- Rendering ---
 
 (defn use-case-page
@@ -76,7 +97,7 @@
         (when mino-script
           [:section.use-case-section
            [:h2 "The mino script"]
-           (when script-prose [:p script-prose])
+           (when script-prose (into [:p] (format-prose script-prose)))
            [:pre [:code {:data-lang "mino"} mino-script]]])
 
         [:p.use-case-nav
