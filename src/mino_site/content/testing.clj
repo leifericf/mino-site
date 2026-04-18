@@ -20,7 +20,7 @@
       [:p "A test file is a normal " [:code ".mino"] " file that requires "
        "the framework and defines tests:"]
       [:pre [:code {:data-lang "mino"}
-"(require \"test\")
+"(require \"tests/test\")
 
 (deftest addition
   (is (= 3 (+ 1 2))))

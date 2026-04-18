@@ -287,7 +287,24 @@
    [:.hl-number  {:color (:code-number colors)}]
    [:.hl-comment {:color  (:code-comment colors)
                   :font-style "italic"}]
-   [:.hl-type    {:color (:code-type colors)}]])
+   [:.hl-type    {:color (:code-type colors)}]
+   ;; Two-panel code display (landing page)
+   [:.code-panels {:display "grid"
+                   :grid-template-columns "repeat(auto-fit, minmax(280px, 1fr))"
+                   :gap "1rem"
+                   :margin-top "1rem"}]
+   [:.code-panel {:border (str "1px solid " (:border colors))
+                  :border-radius "6px"
+                  :overflow "hidden"}]
+   [:.code-panel-header {:font-family font-mono
+                         :font-size "0.8rem"
+                         :color (:text-muted colors)
+                         :padding "0.5rem 1.25rem"
+                         :background (:bg-subtle colors)
+                         :border-bottom (str "1px solid " (:border colors))}]
+   [".code-panel pre" {:margin 0
+                       :border "none"
+                       :border-radius 0}]])
 
 ;; --- Declaration entries (API + Language reference) ---
 
@@ -486,6 +503,8 @@
             :max-width "100%"}]
      ;; Declarations — compact on mobile
      [:.decl-name {:font-size "0.9rem"}]
+     ;; Code panels — stack vertically on mobile
+     [:.code-panels {:grid-template-columns "1fr"}]
      ;; Footer
      [:.footer {:margin-top "3rem"}])])
 
