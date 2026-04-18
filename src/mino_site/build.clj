@@ -26,7 +26,8 @@
     [mino-site.content.performance :as performance]
     [mino-site.content.from-clojure :as from-clojure]
     [mino-site.parse.use-cases :as parse.use-cases]
-    [mino-site.content.use-case-page :as use-case-page]))
+    [mino-site.content.use-case-page :as use-case-page]
+    [mino-site.content.bindings-page :as bindings-page]))
 
 (defn pages
   "Returns a Stasis page map: {path -> (fn [ctx] html-string)}.
@@ -52,7 +53,15 @@
                                  :wide true}
                                 (use-case-page/use-case-page uc)))]))]
     (merge use-case-pages
-    {"/index.html"
+    {"/examples/bindings/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Language Bindings"
+                          :description "Embed mino from C, C++, Java, Zig, Rust, C#, Go, and Swift."
+                          :active-page :documentation
+                          :wide true}
+         (bindings-page/bindings-page mino-root)))
+
+     "/index.html"
      (fn [ctx]
        (render/html-page {:active-page :home}
          (landing/landing-page mino-root)))
