@@ -16,17 +16,17 @@
       (str/replace #"^-|-$" "")))
 
 (defn- find-examples
-  "Find smoke test examples whose description mentions the given function name.
+  "Find smoke test examples for the given function name.
+  Matches on exact test name or function call in the input expression.
   Returns up to max-count matching examples."
   [examples fn-name max-count]
-  (let [pattern (re-pattern (str "(?i)\\b" (java.util.regex.Pattern/quote fn-name) "\\b"))]
-    (->> examples
-         (filter #(or (re-find pattern (:description %))
-                      (str/includes? (:input %) (str "(" fn-name " "))
-                      (str/includes? (:input %) (str "(" fn-name ")"))
-                      (str/includes? (:input %) (str "(" fn-name "\n"))))
-         (take max-count)
-         vec)))
+  (->> examples
+       (filter #(or (= (:description %) fn-name)
+                    (str/includes? (:input %) (str "(" fn-name " "))
+                    (str/includes? (:input %) (str "(" fn-name ")"))
+                    (str/includes? (:input %) (str "(" fn-name "\n"))))
+       (take max-count)
+       vec))
 
 (defn- render-example
   "Render a single smoke test example as input/output."
