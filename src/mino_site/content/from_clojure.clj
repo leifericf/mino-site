@@ -145,21 +145,44 @@
       ;; --- Concurrency ---
 
       [:h2 "Concurrency"]
-      [:p "Clojure provides shared-memory concurrency via STM, refs, "
-       "agents, and " [:code "core.async"] " channels within a single "
-       "JVM. mino provides runtime-level isolation instead:"]
+      [:p "mino provides two concurrency models:"]
+
+      [:h3 "core.async"]
+      [:p [:code "core.async"] " channels and go blocks work as expected:"]
       [:pre [:code
-        ";; Clojure: shared-memory coordination\n"
-        "(def counter (ref 0))\n"
-        "(dosync (alter counter inc))\n"
+        "(require \"core/async\")\n"
         "\n"
-        ";; mino: isolated runtimes with message passing\n"
+        "(let [ch (chan 10)]\n"
+        "  (go (>! ch 42))\n"
+        "  (println (<!! ch)))  ;=> 42"]]
+      [:p "Supported: " [:code "chan"] ", " [:code "put!"] ", "
+       [:code "take!"] ", " [:code "close!"] ", " [:code "go"] ", "
+       [:code "go-loop"] ", " [:code "<!"] ", " [:code ">!"] ", "
+       [:code "<!!"] ", " [:code ">!!"] ", " [:code "alts!"] ", "
+       [:code "alts!!"] ", " [:code "timeout"] ", " [:code "pipe"] ", "
+       [:code "merge"] ", " [:code "mult"] "/" [:code "tap"] ", "
+       [:code "pub"] "/" [:code "sub"] ", " [:code "mix"] "/" [:code "admix"] ", "
+       [:code "pipeline"] ", " [:code "pipeline-async"] ". "
+       "Channels support transducers and exception handlers."]
+      [:p "Differences from the JVM implementation:"]
+      [:ul
+       [:li "Single-threaded cooperative scheduling (no OS threads)"]
+       [:li "No " [:code "thread"] " or " [:code "thread-call"] " (use "
+        [:code "go"] " blocks instead)"]
+       [:li [:code "alt!"] " macro is not implemented (use " [:code "alts!"] ")"]
+       [:li "Parks in " [:code "catch"] "/" [:code "finally"] " bodies "
+        "are not supported"]
+       [:li "Nested parks in function call arguments require explicit "
+        [:code "let"] " bindings"]]
+
+      [:h3 "Actors"]
+      [:p "For inter-runtime isolation, " [:code "spawn"] " creates "
+       "isolated actors with their own state and " [:code "send"] "/"
+       [:code "ask"] " pass immutable messages:"]
+      [:pre [:code
         "(def worker (spawn (receive msg (send (first msg) \"done\"))))\n"
         "(def reply (ask worker \"go\"))"]]
-      [:p "Within a single runtime, atoms work as in Clojure. Between "
-       "runtimes, " [:code "spawn"] " creates isolated actors and "
-       [:code "send"] "/" [:code "ask"] " pass immutable messages. "
-       "There are no refs, no STM, no agents in the Clojure sense."]
+      [:p "There are no refs, no STM, no agents."]
 
       ;; --- Host interop ---
 
@@ -373,10 +396,14 @@
         [:tr [:td [:code "(ex-info ...)"] " / "
          [:code "try"] "/" [:code "catch"]]
          [:td "Same"]]
+        [:tr [:td [:code "core.async"] " channels / " [:code "go"]]
+         [:td "Same (single-threaded scheduling)"]]
         [:tr [:td [:code "(dosync ...)"] " / " [:code "(ref ...)"]]
          [:td "Not applicable (use atoms)"]]
         [:tr [:td [:code "(future ...)"]]
          [:td [:code "(spawn ...)"]]]
+        [:tr [:td [:code "(thread ...)"]]
+         [:td "Not implemented (use " [:code "go"] ")"]]
         [:tr [:td [:code "defmulti"] " / " [:code "defrecord"]]
          [:td "Not implemented"]]
         [:tr [:td [:code "1/2"] " / " [:code "42N"] " / "
