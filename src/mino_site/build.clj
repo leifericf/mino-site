@@ -26,6 +26,7 @@
     [mino-site.content.performance :as performance]
     [mino-site.content.from-clojure :as from-clojure]
     [mino-site.parse.use-cases :as parse.use-cases]
+    [mino-site.parse.async-api :as parse.async]
     [mino-site.content.use-case-page :as use-case-page]
     [mino-site.content.bindings-page :as bindings-page]))
 
@@ -38,6 +39,7 @@
         builtin-data   (parse.builtins/parse (str mino-root "/src/prim.c"))
         cookbook-data   (parse.cookbook/parse mino-root)
         smoke-data     (parse.smoke/parse mino-root)
+        async-data     (parse.async/parse mino-root)
         use-case-data  (parse.use-cases/parse "mino-examples")
         use-case-index (into {} (map (juxt :slug identity) use-case-data))
         use-case-pages (into {}
@@ -101,7 +103,7 @@
                           :description "Built-in functions, special forms, and standard library macros in the mino language."
                           :active-page :documentation
                           :wide true}
-         (language/language-page builtin-data smoke-data)))
+         (language/language-page builtin-data smoke-data async-data)))
 
      "/documentation/cookbook/index.html"
      (fn [ctx]

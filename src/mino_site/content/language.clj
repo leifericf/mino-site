@@ -111,11 +111,29 @@
    (for [prim io-prims]
      (render-primitive prim examples prim-docs))])
 
+;; --- Async library ---
+
+(defn- render-async-api
+  "Render the core.async library section."
+  [async-forms]
+  [:section.api-section {:id "async"}
+   [:h2 "core.async"]
+   [:p "CSP channels and go blocks. Available after "
+    [:code "(require \"core/async\")"] "."]
+   (for [{:keys [name kind doc source]} async-forms]
+     [:div.decl {:id (str "fn-" name) :data-name name}
+      [:h3.decl-name [:code name]
+       [:span.decl-badge (clojure.core/name kind)]]
+      (when doc [:p.decl-doc doc])
+      [:details.stdlib-source
+       [:summary "Source"]
+       [:pre [:code {:data-lang "mino"} source]]]])])
+
 ;; --- Sidebar ---
 
 (defn- render-sidebar
   "Render the sidebar navigation."
-  [categories special-forms stdlib io-prims]
+  [categories special-forms stdlib io-prims async-forms]
   [:nav.docs-sidebar
    [:div.sidebar-header "Categories"]
    [:ul
@@ -125,15 +143,18 @@
     [:li [:a {:href "#special-forms"} "Special forms"]]
     [:li [:a {:href "#stdlib"} "Standard library"]]
     (when (seq io-prims)
-      [:li [:a {:href "#io"} "I/O primitives"]])]])
+      [:li [:a {:href "#io"} "I/O primitives"]])
+    (when (seq async-forms)
+      [:li [:a {:href "#async"} "core.async"]])]])
 
 ;; --- Public API ---
 
 (defn language-page
   "Generates the Language Reference page HTML body.
   builtin-data is the output of parse/builtins.clj.
-  smoke-data is the output of parse/smoke.clj."
-  [builtin-data smoke-data]
+  smoke-data is the output of parse/smoke.clj.
+  async-data is the output of parse/async-api.clj."
+  [builtin-data smoke-data async-data]
   (let [{:keys [categories stdlib io-primitives special-forms prim-docs]} builtin-data
         examples (:examples smoke-data)]
     (str
@@ -149,10 +170,12 @@
                               :placeholder "Filter functions..."
                               :autocomplete "off"}]]
         [:div.docs-layout
-         (render-sidebar categories special-forms stdlib io-primitives)
+         (render-sidebar categories special-forms stdlib io-primitives async-data)
          [:div.docs-content
           (for [cat categories]
             (render-category cat examples prim-docs))
           (render-special-forms special-forms examples prim-docs)
           (render-stdlib stdlib examples)
-          (render-io-primitives io-primitives examples prim-docs)]]))))
+          (render-io-primitives io-primitives examples prim-docs)
+          (when (seq async-data)
+            (render-async-api async-data))]]))))
