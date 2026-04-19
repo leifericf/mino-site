@@ -38,7 +38,7 @@
         builtin-data   (parse.builtins/parse (str mino-root "/src/prim.c"))
         cookbook-data   (parse.cookbook/parse mino-root)
         smoke-data     (parse.smoke/parse mino-root)
-        use-case-data  (parse.use-cases/parse mino-root)
+        use-case-data  (parse.use-cases/parse "mino-examples")
         use-case-index (into {} (map (juxt :slug identity) use-case-data))
         use-case-pages (into {}
                          (for [slug (use-case-page/use-case-slugs)

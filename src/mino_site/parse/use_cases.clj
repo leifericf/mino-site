@@ -113,10 +113,10 @@
 ;; --- Public API ---
 
 (defn parse
-  "Parse all examples/use-cases/*.cpp files under the given mino root.
+  "Parse all use-cases/*.cpp files under the given examples root.
   Returns a vector of use case entries sorted by filename."
-  [mino-root]
-  (let [dir (io/file mino-root "examples" "use-cases")
+  [examples-root]
+  (let [dir (io/file examples-root "use-cases")
         files (when (.isDirectory dir)
                 (->> (.listFiles dir)
                      (filter #(str/ends-with? (.getName %) ".cpp"))
