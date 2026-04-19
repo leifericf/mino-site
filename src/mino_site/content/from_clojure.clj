@@ -175,14 +175,18 @@
        [:li "Nested parks in function call arguments require explicit "
         [:code "let"] " bindings"]]
 
-      [:h3 "Actors"]
+      [:h3 "Isolated runtimes"]
       [:p "For inter-runtime isolation, " [:code "spawn"] " creates "
-       "isolated actors with their own state and " [:code "send"] "/"
-       [:code "ask"] " pass immutable messages:"]
+       "a separate mino runtime with its own state. "
+       [:code "send"] " and " [:code "ask"] " pass immutable messages "
+       "between runtimes:"]
       [:pre [:code
         "(def worker (spawn (receive msg (send (first msg) \"done\"))))\n"
         "(def reply (ask worker \"go\"))"]]
-      [:p "There are no refs, no STM, no agents."]
+      [:p "Each spawned runtime is fully isolated with its own heap "
+       "and environment. " [:code "send"] " here is inter-runtime "
+       "message passing, not the " [:code "send"] " that dispatches "
+       "to an agent. There are no refs, no STM, no agents."]
 
       ;; --- Host interop ---
 
@@ -401,7 +405,7 @@
         [:tr [:td [:code "(dosync ...)"] " / " [:code "(ref ...)"]]
          [:td "Not applicable (use atoms)"]]
         [:tr [:td [:code "(future ...)"]]
-         [:td [:code "(spawn ...)"]]]
+         [:td [:code "(spawn ...)"] " (isolated runtime, not a thread)"]]
         [:tr [:td [:code "(thread ...)"]]
          [:td "Not implemented (use " [:code "go"] ")"]]
         [:tr [:td [:code "defmulti"] " / " [:code "defrecord"]]
