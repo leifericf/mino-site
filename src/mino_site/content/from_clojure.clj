@@ -98,6 +98,22 @@
         " for transforming map values or keys"]
        [:li [:code "min-key"] " and " [:code "max-key"]
         " for finding elements by keyed comparison"]
+       [:li [:code "case"] " with literal matching, multi-match lists, "
+        "and default clauses"]
+       [:li [:code "comment"] " and " [:code "when-first"] " macros"]
+       [:li [:code "clojure.set"] " namespace: " [:code "union"] ", "
+        [:code "intersection"] ", " [:code "difference"] ", "
+        [:code "select"] ", " [:code "project"] ", " [:code "rename"] ", "
+        [:code "rename-keys"] ", " [:code "map-invert"] ", "
+        [:code "join"] ", " [:code "index"] ", " [:code "subset?"] ", "
+        [:code "superset?"]]
+       [:li [:code "clojure.string"] " namespace: " [:code "lower-case"] ", "
+        [:code "upper-case"] ", " [:code "capitalize"] ", "
+        [:code "reverse"] ", " [:code "blank?"] ", "
+        [:code "starts-with?"] ", " [:code "ends-with?"] ", "
+        [:code "escape"] ", " [:code "replace"] ", " [:code "trim"] ", "
+        [:code "triml"] ", " [:code "trimr"] ", " [:code "trim-newline"] ", "
+        [:code "split-lines"] ", " [:code "join"] ", " [:code "includes?"]]
        [:li [:code "random-sample"] " for probabilistic filtering"]
        [:li [:code "bounded-count"] " for counting with an upper limit "
         "on lazy sequences"]
