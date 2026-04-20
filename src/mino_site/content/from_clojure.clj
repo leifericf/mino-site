@@ -328,17 +328,29 @@
 
       [:h2 "Error handling"]
       [:p [:code "try"] "/" [:code "catch"] "/" [:code "throw"] " work "
-       "as in Clojure, but " [:code "throw"] " accepts any value, "
-       "not just exceptions:"]
+       "as expected, but mino improves on the JVM approach: "
+       [:code "throw"] " accepts any value, and " [:code "catch"]
+       " always receives a structured diagnostic map with stable "
+       "keys like " [:code ":mino/kind"] ", " [:code ":mino/code"]
+       ", and " [:code ":mino/message"] ". The original thrown value "
+       "is accessible via " [:code "ex-data"] ":"]
       [:pre [:code
         "(try\n"
-        "  (throw {:type :not-found :id 42})\n"
+        "  (count 42)\n"
         "  (catch e\n"
-        "    (println \"caught:\" e)))"]]
+        "    (println (:mino/kind e))    ;; :eval/type\n"
+        "    (println (:mino/code e))    ;; \"MTY001\"\n"
+        "    (println (:mino/message e)) ;; \"count: expected a collection, got int\"\n"
+        "    ))"]]
+      [:p "Errors render with source snippets in the REPL, similar "
+       "to Rust and Elm. Every error has a searchable code. See the "
+       [:a {:href "/documentation/errors/"} "Error Diagnostics"]
+       " guide for the full story."]
       [:p [:code "ex-info"] ", " [:code "ex-data"] ", and "
-       [:code "ex-message"] " work as in Clojure. "
-       [:code "finally"] " works as expected. " [:code "with-open"]
-       " manages resources with automatic cleanup:"]
+       [:code "ex-message"] " work transparently with both "
+       "diagnostic maps and user-thrown values. "
+       [:code "finally"] " and " [:code "with-open"]
+       " work as expected:"]
       [:pre [:code
         "(with-open [f (open \"data.txt\")]\n"
         "  (read-all f))"]]
