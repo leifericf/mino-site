@@ -42,7 +42,7 @@
                                 "read-string"}}
    {:name "regex"       :fns #{"re-find" "re-matches"}}
    {:name "type coercion" :fns #{"int" "float"}}
-   {:name "exceptions"  :fns #{"throw"}}
+   {:name "exceptions"  :fns #{"throw" "last-error" "error?"}}
    {:name "modules"     :fns #{"require"}}
    {:name "macros"      :fns #{"macroexpand" "macroexpand-1" "gensym"}}
    {:name "definitions" :fns #{"defn"}}])
