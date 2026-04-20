@@ -27,6 +27,12 @@
          "REPL on socket, plugin host, data pipeline, and "
          "game scripting console."]]
 
+       [:a.card {:href "/documentation/errors/"}
+        [:div.card-title "Error Diagnostics"]
+        [:div.card-desc
+         "Structured errors with stable codes, source snippets, "
+         "and programmatic access. Errors are plain mino data."]]
+
        [:a.card {:href "/documentation/testing/"}
         [:div.card-title "Testing"]
         [:div.card-desc

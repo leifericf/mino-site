@@ -28,7 +28,8 @@
     [mino-site.parse.use-cases :as parse.use-cases]
     [mino-site.parse.async-api :as parse.async]
     [mino-site.content.use-case-page :as use-case-page]
-    [mino-site.content.bindings-page :as bindings-page]))
+    [mino-site.content.bindings-page :as bindings-page]
+    [mino-site.content.errors :as errors]))
 
 (defn pages
   "Returns a Stasis page map: {path -> (fn [ctx] html-string)}.
@@ -126,6 +127,13 @@
                           :description "Write and run tests in mino using deftest, is, and testing. Built-in test runner with CI-friendly exit codes."
                           :active-page :documentation}
          (testing/testing-page)))
+
+     "/documentation/errors/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Error Diagnostics"
+                          :description "Structured error reporting with stable codes, source snippets, and programmatic access from mino and C."
+                          :active-page :documentation}
+         (errors/errors-page)))
 
      "/documentation/embedding/index.html"
      (fn [ctx]
