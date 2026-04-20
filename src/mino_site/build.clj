@@ -37,7 +37,7 @@
   [mino-root]
   (let [api-data       (parse.header/parse (str mino-root "/src/mino.h"))
         builtin-data   (parse.builtins/parse (str mino-root "/src/prim.c"))
-        cookbook-data   (parse.cookbook/parse mino-root)
+        cookbook-data   (parse.cookbook/parse "mino-examples/src")
         smoke-data     (parse.smoke/parse mino-root)
         async-data     (parse.async/parse mino-root)
         use-case-data  (parse.use-cases/parse "mino-examples")
