@@ -29,7 +29,8 @@
     [mino-site.parse.async-api :as parse.async]
     [mino-site.content.use-case-page :as use-case-page]
     [mino-site.content.bindings-page :as bindings-page]
-    [mino-site.content.errors :as errors]))
+    [mino-site.content.errors :as errors]
+    [mino-site.content.dependencies :as dependencies]))
 
 (defn pages
   "Returns a Stasis page map: {path -> (fn [ctx] html-string)}.
@@ -155,6 +156,13 @@
                           :description "How mino differs from Clojure: syntax, namespaces, concurrency, interop, and what is intentionally absent."
                           :active-page :documentation}
          (from-clojure/from-clojure-page)))
+
+     "/documentation/dependencies/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Dependencies"
+                          :description "Declare dependencies in mino.edn, fetch git repos, and wire them into the module resolver."
+                          :active-page :documentation}
+         (dependencies/dependencies-page)))
 
      "/changelog/index.html"
      (fn [ctx]

@@ -40,6 +40,13 @@
          [:code "deftest"] ", " [:code "is"] ", and "
          [:code "testing"] ". CI-friendly exit codes."]]
 
+       [:a.card {:href "/documentation/dependencies/"}
+        [:div.card-title "Dependencies"]
+        [:div.card-desc
+         "Declare dependencies in " [:code "mino.edn"]
+         ", fetch git repos with " [:code "mino deps"]
+         ", and use libraries from other ecosystems."]]
+
        [:a.card {:href "/documentation/tooling/"}
         [:div.card-title "Tooling and Editors"]
         [:div.card-desc
