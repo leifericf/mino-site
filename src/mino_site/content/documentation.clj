@@ -47,6 +47,13 @@
          ", fetch git repos with " [:code "mino deps"]
          ", and use libraries from other ecosystems."]]
 
+       [:a.card {:href "/documentation/tasks/"}
+        [:div.card-title "Task Runner"]
+        [:div.card-desc
+         "Define build tasks in " [:code "mino.edn"]
+         " as ordinary functions. Dependency resolution, "
+         "incremental builds, and self-hosting."]]
+
        [:a.card {:href "/documentation/tooling/"}
         [:div.card-title "Tooling and Editors"]
         [:div.card-desc

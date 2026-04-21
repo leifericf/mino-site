@@ -30,7 +30,8 @@
     [mino-site.content.use-case-page :as use-case-page]
     [mino-site.content.bindings-page :as bindings-page]
     [mino-site.content.errors :as errors]
-    [mino-site.content.dependencies :as dependencies]))
+    [mino-site.content.dependencies :as dependencies]
+    [mino-site.content.tasks :as tasks]))
 
 (defn pages
   "Returns a Stasis page map: {path -> (fn [ctx] html-string)}.
@@ -163,6 +164,13 @@
                           :description "Declare dependencies in mino.edn, fetch git repos, and wire them into the module resolver."
                           :active-page :documentation}
          (dependencies/dependencies-page)))
+
+     "/documentation/tasks/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Task Runner"
+                          :description "Define and run build tasks in mino.edn. Tasks are ordinary mino functions with dependency resolution."
+                          :active-page :documentation}
+         (tasks/tasks-page)))
 
      "/changelog/index.html"
      (fn [ctx]

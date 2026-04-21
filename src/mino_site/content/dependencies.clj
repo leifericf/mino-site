@@ -137,8 +137,9 @@ mino deps"]]
         " No constraint solver, no transitive dependencies, no registry. "
         "Dependencies are direct source coordinates."]
        [:li [:strong "Unknown keys are ignored."]
-        " Future versions of mino can add " [:code ":tasks"] ", "
-        [:code ":main"] ", or other keys without breaking existing "
+        " The manifest already uses " [:code ":tasks"]
+        " for the task runner; future versions can add "
+        [:code ":main"] " or other keys without breaking existing "
         "projects."]
        [:li [:strong "Standalone mode only."]
         " When mino is embedded in a host application, the host "
