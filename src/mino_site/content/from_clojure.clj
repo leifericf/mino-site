@@ -178,15 +178,15 @@
       [:h3 "Isolated runtimes"]
       [:p "For inter-runtime isolation, " [:code "spawn"] " creates "
        "a separate mino runtime with its own state. "
-       [:code "send"] " and " [:code "ask"] " pass immutable messages "
-       "between runtimes:"]
+       [:code "send!"] " passes immutable messages to an actor and "
+       [:code "receive"] " retrieves the next message:"]
       [:pre [:code
-        "(def worker (spawn (receive msg (send (first msg) \"done\"))))\n"
-        "(def reply (ask worker \"go\"))"]]
+        "(def worker (spawn (let [msg (receive)] (send! (first msg) \"done\"))))\n"
+        "(send! worker [*self*])\n"
+        "(receive)"]]
       [:p "Each spawned runtime is fully isolated with its own heap "
-       "and environment. " [:code "send"] " here is inter-runtime "
-       "message passing, not the " [:code "send"] " that dispatches "
-       "to an agent. There are no refs, no STM, no agents."]
+       "and environment. " [:code "send!"] " is inter-runtime "
+       "message passing. There are no refs, no STM, no agents."]
 
       ;; --- Host interop ---
 
@@ -377,8 +377,8 @@
         " semantics. " [:code "(seq ())"] " and " [:code "(seq nil)"]
         " are both " [:code "nil"] "."]
        [:li [:strong "Multimethods."]
-        " " [:code "defmulti"] "/" [:code "defmethod"] " are not "
-        "implemented. Protocols cover the same dispatch patterns."]
+        " " [:code "defmulti"] "/" [:code "defmethod"] " are supported "
+        "with dispatch caching and " [:code "prefer-method"] "."]
        [:li [:strong "Records and types."]
         " " [:code "defrecord"] "/" [:code "deftype"] " do not exist. "
         "Maps are the universal data carrier."]
@@ -420,8 +420,10 @@
          [:td [:code "(spawn ...)"] " (isolated runtime, not a thread)"]]
         [:tr [:td [:code "(thread ...)"]]
          [:td "Not implemented (use " [:code "go"] ")"]]
-        [:tr [:td [:code "defmulti"] " / " [:code "defrecord"]]
-         [:td "Not implemented"]]
+        [:tr [:td [:code "defmulti"] " / " [:code "defmethod"]]
+         [:td "Supported"]]
+        [:tr [:td [:code "defrecord"] " / " [:code "deftype"]]
+         [:td "Not implemented (use maps)"]]
         [:tr [:td [:code "1/2"] " / " [:code "42N"] " / "
          [:code "1.5M"]]
          [:td "Parse but convert to int/float"]]]])))

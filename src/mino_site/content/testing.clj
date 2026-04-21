@@ -13,8 +13,10 @@
        "the same conventions as " [:code "clojure.test"] ": named tests with "
        [:code "deftest"] ", assertions with " [:code "is"] ", and contextual "
        "grouping with " [:code "testing"] "."]
-      [:p "The framework lives in " [:code "tests/test.mino"]
-       " and is loaded via " [:code "(require \"tests/test\")"] " from test files."]
+      [:p "The framework is " [:code "clojure.test"]
+       ", loaded via " [:code "(require '[clojure.test :refer [deftest is testing]])"]
+       " from test files. " [:code "tests/test.mino"] " is a compatibility "
+       "entry point that delegates to " [:code "clojure.test"] "."]
 
       [:h2 "Writing Tests"]
       [:p "A test file is a normal " [:code ".mino"] " file that requires "
@@ -76,7 +78,7 @@
        "failures or errors, " [:code "(exit 0)"] " on success."]
 
       [:h2 "Running Tests"]
-      [:pre [:code "# Run the test suite\n./mino tests/run.mino\n\n# Run under GC stress (collects on every allocation)\nMINO_GC_STRESS=1 ./mino tests/run.mino\n\n# Via Make\nmake test\nmake test-gc-stress"]]
+      [:pre [:code "# Run the test suite\n./mino task test\n\n# Run under GC stress (collects on every allocation)\nMINO_GC_STRESS=1 ./mino tests/run.mino"]]
 
       [:h2 "Test File Organization"]
       [:p "By convention, test files live in " [:code "tests/"] " and are "

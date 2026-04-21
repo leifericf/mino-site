@@ -12,7 +12,7 @@
 ;; --- Configuration ---
 
 (def site-title "mino")
-(def site-description "A tiny embeddable Lisp interpreter in pure ANSI C. Single file, no dependencies, MIT licensed.")
+(def site-description "A tiny embeddable Lisp interpreter in pure ANSI C. Small C99 codebase, no dependencies, MIT licensed.")
 (def site-url "https://mino-lang.org")
 
 (def nav-items

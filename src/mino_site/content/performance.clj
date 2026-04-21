@@ -256,9 +256,7 @@
        "logic, and the interactivity."]
 
       [:h2 "Benchmarking"]
-      [:p "The benchmark program lives at " [:code "bench/perf_profile.c"]
-       " in the mino repository. Build and run it with:"]
+      [:p "Write benchmarks as mino scripts or C programs that "
+       "link against the mino source. Compile and run with:"]
       [:pre [:code
-       "cc -std=c99 -O2 -Isrc -o bench/perf_profile \\\n  bench/perf_profile.c src/*.o -lm\n./bench/perf_profile"]]
-      [:p "The actor scaling benchmark is at "
-       [:code "examples/actor_scale_test.c"] "."])))
+       "cc -std=c99 -O2 -Isrc -o my_bench my_bench.c src/*.c -lm\n./my_bench"]])))

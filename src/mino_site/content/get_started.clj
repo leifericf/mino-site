@@ -16,16 +16,16 @@
       [:p "Or "
        [:a {:href "https://github.com/leifericf/mino/archive/refs/heads/main.zip"}
         "download a zip archive"]
-       ". mino is a handful of C files in " [:code "src/"]
+       ". mino is a small C99 codebase in " [:code "src/"]
        ". Any C99 compiler, no external dependencies."]
 
       [:h2 "2. Build"]
-      [:p "Build the standalone REPL:"]
-      [:pre [:code "cd mino\nmake"]]
+      [:p "Bootstrap the standalone REPL:"]
+      [:pre [:code "cd mino\ncc -std=c99 -O2 -Isrc -o mino src/*.c main.c -lm\n./mino task build"]]
       [:p "Or compile mino directly into your own program:"]
       [:pre [:code "cc -std=c99 -Isrc -o myapp myapp.c src/*.c -lm"]]
       [:p "Run the test suite:"]
-      [:pre [:code "make test"]]
+      [:pre [:code "./mino task test"]]
 
       [:h2 "3. Embed in your C program"]
       [:p "A minimal embedding creates a runtime, registers a host "

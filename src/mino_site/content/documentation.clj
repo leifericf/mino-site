@@ -59,7 +59,25 @@
         [:div.card-desc
          "tree-sitter grammar, LSP server, and nREPL server. "
          "Setup guides for Neovim, Helix, Emacs, VS Code, and "
-         "IntelliJ."]]]
+         "IntelliJ."]]
+
+       [:a.card {:href "/documentation/performance/"}
+        [:div.card-title "Performance"]
+        [:div.card-desc
+         "Numbers, allocation costs, and guidance for keeping "
+         "mino fast. When to move work to C."]]
+
+       [:a.card {:href "/documentation/coming-from-clojure/"}
+        [:div.card-title "Coming from Clojure"]
+        [:div.card-desc
+         "What works the same, what differs, and intentional "
+         "divergences for Clojure programmers."]]
+
+       [:a.card {:href "/examples/bindings/"}
+        [:div.card-title "Language Bindings"]
+        [:div.card-desc
+         "Worked examples of embedding mino from other "
+         "languages via the C API."]]]
 
       [:h2 "References"]
       [:div.card-grid

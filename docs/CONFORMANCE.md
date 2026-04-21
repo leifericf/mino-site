@@ -10,7 +10,7 @@ covering `clojure.core` functions).
 - **2602 / 2850** assertions pass on runnable files (91%)
 - Curated regression runner covers all cleanly passing files (100% pass)
 
-Run `make test-external` to execute the curated regression runner.
+Run `./mino task test-external` to execute the curated regression runner.
 
 ## Intentional Divergences
 
@@ -36,10 +36,10 @@ Arithmetic does not auto-promote to big numbers on overflow.
 `transient`, `persistent!`, and bang variants (`assoc!`, `conj!`, etc.)
 are not implemented. `volatile!` is provided as an alias for `atom`.
 
-### No multimethods or records
+### No records
 
-`defmulti`, `defmethod`, `defrecord`, `deftype` are not implemented.
-Protocol-based dispatch covers current use cases.
+`defrecord` and `deftype` are not implemented.
+Maps are the universal data carrier.
 
 ### No JVM interop
 

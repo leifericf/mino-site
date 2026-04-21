@@ -16,7 +16,9 @@
   Handles ## headings, ### subheadings, bullet lists, inline code,
   and bold text."
   [md-text]
-  (let [lines (str/split-lines md-text)]
+  (let [lines (str/split-lines md-text)
+        ;; Skip everything before the first ## heading (title + intro text)
+        lines (drop-while #(not (str/starts-with? % "## ")) lines)]
     (loop [lines lines
            result []]
       (if (empty? lines)

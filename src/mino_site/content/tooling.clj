@@ -291,9 +291,7 @@
        [:li [:strong "Python"] ": "
         [:a {:href "https://github.com/cemerick/nrepl-python-client"
              :target "_blank" :rel "noopener"} "nrepl-python-client"]]
-       [:li [:strong "JavaScript/TypeScript"] ": "
-        [:a {:href "https://github.com/phelrine/nrepl-client"
-             :target "_blank" :rel "noopener"} "nrepl-client"]]
+       [:li [:strong "JavaScript/TypeScript"] ": any bencode library + TCP socket"]
        [:li [:strong "Go"] ": "
         [:a {:href "https://github.com/nrepl/bencode"
              :target "_blank" :rel "noopener"} "nrepl/bencode"]

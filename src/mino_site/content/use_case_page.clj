@@ -88,9 +88,8 @@
          [:div.use-case-build
           [:strong "Build and run:"]
           [:pre [:code
-            (str "make\n"
-                 "c++ -std=c++17 -Isrc -o examples/use-cases/" slug " \\\n"
-                 "    examples/use-cases/" slug ".cpp src/[a-z]*.o -lm\n"
+            (str "cc -std=c99 -O2 -Isrc -o examples/use-cases/" slug " \\\n"
+                 "    examples/use-cases/" slug ".c src/*.c -lm\n"
                  "./examples/use-cases/" slug)]]]]
 
         ;; Script excerpt
