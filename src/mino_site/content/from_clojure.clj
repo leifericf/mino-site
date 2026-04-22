@@ -160,7 +160,7 @@
        [:code "go-loop"] ", " [:code "<!"] ", " [:code ">!"] ", "
        [:code "<!!"] ", " [:code ">!!"] ", " [:code "alts!"] ", "
        [:code "alts!!"] ", " [:code "timeout"] ", " [:code "pipe"] ", "
-       [:code "merge"] ", " [:code "mult"] "/" [:code "tap"] ", "
+       [:code "merge-chans"] ", " [:code "mult"] "/" [:code "tap"] ", "
        [:code "pub"] "/" [:code "sub"] ", " [:code "mix"] "/" [:code "admix"] ", "
        [:code "pipeline"] ", " [:code "pipeline-async"] ". "
        "Channels support transducers and exception handlers."]

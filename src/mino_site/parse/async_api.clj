@@ -1,7 +1,11 @@
 (ns mino-site.parse.async-api
-  "Parse lib/core/async.mino for the async API reference.
+  "Parse the async API surface for the language reference.
 
-  Extracts public defn and defmacro forms with their docstrings."
+  Reads both `lib/core/channel.mino` (channel/buffer/alts mechanics)
+  and `lib/core/async.mino` (go macro, blocking bridges, combinators),
+  extracting public defn/defmacro forms with their docstrings. Starred
+  internal aliases (chan*, chan-put*, buf-fixed*, ...) and private go-
+  helpers are filtered out."
   (:require
     [clojure.string :as str]))
 
@@ -46,51 +50,63 @@
             (str/replace "\\\"" "\"")
             str/trim)))))
 
+(defn- public-name?
+  "True if name should appear in the public async API reference."
+  [name]
+  (and name
+       (not (str/ends-with? name "*"))
+       (or (= name "go-loop")
+           (not (str/starts-with? name "go-")))
+       (not= name "mix-should-pass?")
+       (not= name "mix-paused?")))
+
+(defn- parse-file
+  "Parse a single .mino file, returning a vector of API forms."
+  [path]
+  (if-not (.exists (java.io.File. path))
+    []
+    (let [lines (str/split-lines (slurp path))]
+      (loop [lines lines forms []]
+        (if (empty? lines)
+          forms
+          (let [line (first lines)]
+            (cond
+              (or (str/starts-with? line "(defn ")
+                  (str/starts-with? line "(defmacro "))
+              (let [[source remaining] (collect-form lines)
+                    kind   (if (str/starts-with? line "(defmacro ") :macro :fn)
+                    name-m (re-find #"\(def(?:n|macro)\s+(\S+)" line)
+                    name   (when name-m (second name-m))
+                    doc    (extract-docstring source)]
+                (if (public-name? name)
+                  (recur (or remaining [])
+                         (conj forms {:name   name
+                                      :kind   kind
+                                      :doc    doc
+                                      :source source}))
+                  (recur (or remaining []) forms)))
+
+              (str/starts-with? line "(def ")
+              (let [[source remaining] (collect-form lines)
+                    name-m (re-find #"\(def\s+(\S+)" line)
+                    name   (when name-m (second name-m))]
+                (if (public-name? name)
+                  (recur (or remaining [])
+                         (conj forms {:name   name
+                                      :kind   :def
+                                      :doc    nil
+                                      :source source}))
+                  (recur (or remaining []) forms)))
+
+              :else
+              (recur (rest lines) forms))))))))
+
 (defn parse
-  "Parse lib/core/async.mino under the given mino root.
+  "Parse the async API surface under the given mino root.
+  Reads lib/core/channel.mino first (channel/buffer/alts mechanics),
+  then lib/core/async.mino (go macro, blocking bridges, combinators).
   Returns a vector of {:name str :kind keyword :doc str :source str}."
   [mino-root]
-  (let [path (str mino-root "/lib/core/async.mino")]
-    (if-not (.exists (java.io.File. path))
-      []
-      (let [lines (str/split-lines (slurp path))]
-        (loop [lines lines
-               forms []]
-          (if (empty? lines)
-            forms
-            (let [line (first lines)]
-              (cond
-                (or (str/starts-with? line "(defn ")
-                    (str/starts-with? line "(defmacro "))
-                (let [[source remaining] (collect-form lines)
-                      kind (if (str/starts-with? line "(defmacro ") :macro :fn)
-                      name-m (re-find #"\(def(?:n|macro)\s+(\S+)" line)
-                      name (when name-m (second name-m))
-                      doc (extract-docstring source)]
-                  (if (and name
-                           (or (= name "go-loop")
-                               (not (str/starts-with? name "go-")))
-                           (not (= name "mix-should-pass?"))
-                           (not (= name "mix-paused?"))
-)
-                    (recur (or remaining [])
-                           (conj forms {:name name
-                                        :kind kind
-                                        :doc doc
-                                        :source source}))
-                    (recur (or remaining []) forms)))
-
-                (str/starts-with? line "(def ")
-                (let [[source remaining] (collect-form lines)
-                      name-m (re-find #"\(def\s+(\S+)" line)
-                      name (when name-m (second name-m))]
-                  (if name
-                    (recur (or remaining [])
-                           (conj forms {:name name
-                                        :kind :def
-                                        :doc nil
-                                        :source source}))
-                    (recur (or remaining []) forms)))
-
-                :else
-                (recur (rest lines) forms)))))))))
+  (vec (concat
+         (parse-file (str mino-root "/lib/core/channel.mino"))
+         (parse-file (str mino-root "/lib/core/async.mino")))))
