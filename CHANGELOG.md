@@ -4,6 +4,10 @@ All notable changes to mino-site are documented here.
 
 ## Unreleased
 
+- Tracking mino v0.42.0: generational + incremental garbage collector,
+  new public GC control API (`mino_gc_collect`, `mino_gc_set_param`,
+  `mino_gc_stats`), five tuning env vars, literal-builder barrier fix.
+  Embedding and performance pages refreshed.
 - Tracking mino v0.39.1 (task runner, `str-replace` primitive,
   `file-mtime` primitive, Windows CI)
 - Added mino-examples submodule for use-case pages (restores 8 pages
