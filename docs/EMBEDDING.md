@@ -73,14 +73,21 @@ an environment it has not freed.
 
 ## Garbage collection
 
-The collector is a conservative mark-and-sweep that runs when cumulative
-allocation crosses a threshold. It also runs during `mino_state_free`.
+The collector is a non-moving generational tracing collector with an
+incremental old-gen mark phase. Short-lived allocations live in a
+young-generation nursery; survivors of a minor collection are promoted
+to old-gen, which is marked in paced slices between mutator
+allocations. A write barrier tracks old-to-young pointers so minor
+collections stay proportional to young reachability. The collector
+also runs during `mino_state_free`.
 
 ### What triggers collection
 
-Any function that allocates a GC-managed object may trigger a sweep. This
-includes all constructors, `mino_eval`, `mino_eval_string`, `mino_read`,
-and `mino_load_file`.
+Any function that allocates a GC-managed object may advance the
+collector. This includes all constructors, `mino_eval`,
+`mino_eval_string`, `mino_read`, and `mino_load_file`. A minor fires
+when young-gen bytes exceed the nursery threshold; a major starts
+when old-gen grows past a multiplier above the last major's baseline.
 
 ### What survives
 
@@ -92,13 +99,52 @@ An object survives if it is reachable from any root:
 - The module cache
 - The metadata table
 - The try/exception stack (during eval)
+- The remembered set (old-gen containers holding young-gen pointers)
 - The conservative stack scan (pointers on the C stack)
+
+### Host-driven collection
+
+Trigger collection at quiescent points (between REPL turns, after
+bulk import, before long-idle) through `mino_gc_collect`:
+
+```c
+mino_gc_collect(S, MINO_GC_MINOR);  /* nursery sweep only        */
+mino_gc_collect(S, MINO_GC_MAJOR);  /* drain or run a major cycle */
+mino_gc_collect(S, MINO_GC_FULL);   /* minor + full STW major    */
+```
+
+### Tuning
+
+Five knobs are exposed via `mino_gc_set_param`. Each setter returns 0
+on success and -1 on bad parameter or out-of-range value.
+
+| Parameter | Default | Range |
+|-----------|---------|-------|
+| `MINO_GC_NURSERY_BYTES` | 1 MiB | 64 KiB .. 256 MiB |
+| `MINO_GC_MAJOR_GROWTH_TENTHS` | 15 (1.5x) | 11 .. 40 |
+| `MINO_GC_PROMOTION_AGE` | 1 | 1 .. 8 |
+| `MINO_GC_INCREMENTAL_BUDGET` | 4096 | 64 .. 65536 |
+| `MINO_GC_STEP_ALLOC_BYTES` | 16 KiB | 1 KiB .. 16 MiB |
+
+### Stats
+
+Query counters via `mino_gc_stats`, which fills a plain out-struct
+without allocating:
+
+```c
+mino_gc_stats_t st;
+mino_gc_stats(S, &st);
+/* st.collections_minor, st.collections_major, st.bytes_live,
+   st.bytes_young, st.bytes_old, st.bytes_alloc, st.bytes_freed,
+   st.total_gc_ns, st.max_gc_ns, st.remset_entries, st.phase */
+```
 
 ### GC stress mode
 
-Set `MINO_GC_STRESS=1` in the environment to force collection on every
-allocation. This is slow but catches any caller that holds an unrooted
-pointer across an allocation boundary. Use it during development.
+Set `MINO_GC_STRESS=1` in the environment to force a full collection
+on every allocation. This is slow but catches any caller that holds
+an unrooted pointer across an allocation boundary. Use it during
+development.
 
 
 ## Error handling

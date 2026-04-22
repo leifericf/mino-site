@@ -188,6 +188,52 @@
        ", and clones the result back to the host takes 4.8 seconds "
        "end to end."]
 
+      [:h2 "Garbage collection"]
+      [:p "mino uses a non-moving two-generation tracing collector. "
+       "Short-lived values live in a young-gen nursery that is swept "
+       "in bounded minor collections. Survivors are promoted to "
+       "old-gen, which is marked incrementally, paced by the "
+       "allocator. A write barrier records old-to-young pointers so "
+       "minors stay proportional to young reachability. The collector "
+       "is stop-the-world at slice boundaries; there are no collector "
+       "threads."]
+      [:p "On realistic multi-subsystem benches the max pause sits at "
+       "~51 ms under the default slice budget, with GC share between "
+       "17 and 28 percent of wall clock. Tail-heavy workloads (deeply "
+       "nested lazy pipelines, large transient vectors, deep recursion) "
+       "were the headline target; the incremental major cut their "
+       "max pause roughly in half versus the previous single-phase "
+       "collector."]
+      [:table
+       [:thead
+        [:tr [:th "Workload"] [:th "GC share"] [:th "Max pause"]]]
+       [:tbody
+        [:tr [:td "Small function calls (empty, identity, let)"]
+             [:td "~9%"]
+             [:td "< 1 ms"]]
+        [:tr [:td "Tight loop 10,000 iters"]
+             [:td "~11%"]
+             [:td "~3 ms"]]
+        [:tr [:td "Build 1,000-element collection"]
+             [:td "~14-18%"]
+             [:td "~5-10 ms"]]
+        [:tr [:td "Build 10,000-element collection"]
+             [:td "~17-22%"]
+             [:td "~12-20 ms"]]
+        [:tr [:td "map/filter/reduce over 50,000"]
+             [:td "~27%"]
+             [:td "~51 ms"]]
+        [:tr [:td "Nested vectors 500x100"]
+             [:td "~26%"]
+             [:td "~51 ms"]]]]
+      [:p "Five tuning knobs are exposed through "
+       [:code "mino_gc_set_param"] ": nursery size, major growth "
+       "multiplier, promotion age, incremental slice budget, and "
+       "allocation quantum between slices. The defaults target "
+       "interactive latency on a general workload; embedders with "
+       "throughput-dominated batches or tighter pause budgets can "
+       "shift the tradeoff without rebuilding."]
+
       [:h2 "Where the time goes"]
       [:p "The cost centers in order of impact:"]
       [:ul

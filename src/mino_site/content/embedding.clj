@@ -295,18 +295,54 @@ mino_actor_free(a);"]]
        "in an event loop, or synchronously in sequence."]
 
       [:h2 "Garbage collection"]
-      [:p "The collector is a conservative mark-and-sweep that runs "
-       "when cumulative allocation crosses a threshold. Any mino "
-       "function that allocates may trigger a sweep, which is why "
+      [:p "The collector is a non-moving generational tracing "
+       "collector with an incremental old-gen mark phase. Short-lived "
+       "allocations live in a young-generation nursery; values that "
+       "survive a minor collection are promoted to old-gen, which is "
+       "marked in paced slices between mutator allocations. A write "
+       "barrier tracks old-to-young pointers so minor collections "
+       "stay proportional to young reachability. Any mino function "
+       "that allocates may advance the collector, which is why "
        "borrowed values can become invalid after the next call."]
       [:p "Objects survive collection if they are reachable from a root: "
        "registered environments, host refs, the intern tables, the "
        "module cache, or the C stack (via conservative scanning)."]
 
+      [:h3 "Host-driven collection"]
+      [:p "The host can trigger collection at quiescent points -- between "
+       "REPL turns, after bulk import, or before long-idle periods -- "
+       "through " [:code "mino_gc_collect"] ":"]
+      [:pre [:code {:data-lang "c"}
+"mino_gc_collect(S, MINO_GC_MINOR);  /* nursery sweep only */
+mino_gc_collect(S, MINO_GC_MAJOR);  /* drain or run a major cycle */
+mino_gc_collect(S, MINO_GC_FULL);   /* minor + full STW major */"]]
+
+      [:h3 "Tuning"]
+      [:p "Five knobs tune the collector. Defaults work for most "
+       "embedders; adjust only with a measurement in hand."]
+      [:pre [:code {:data-lang "c"}
+"mino_gc_set_param(S, MINO_GC_NURSERY_BYTES,       2 * 1024 * 1024);
+mino_gc_set_param(S, MINO_GC_MAJOR_GROWTH_TENTHS, 15);  /* 1.5x */
+mino_gc_set_param(S, MINO_GC_PROMOTION_AGE,        1);
+mino_gc_set_param(S, MINO_GC_INCREMENTAL_BUDGET,   4096);
+mino_gc_set_param(S, MINO_GC_STEP_ALLOC_BYTES,     16 * 1024);"]]
+      [:p "Each setter returns 0 on success and -1 on a bad parameter "
+       "or out-of-range value."]
+
+      [:h3 "Stats"]
+      [:p "Query collector counters via a plain out-struct. No "
+       "allocation is performed."]
+      [:pre [:code {:data-lang "c"}
+"mino_gc_stats_t st;
+mino_gc_stats(S, &st);
+printf(\"live=%zu minor=%zu major=%zu max_pause_ns=%zu\\n\",
+       st.bytes_live, st.collections_minor,
+       st.collections_major, st.max_gc_ns);"]]
+
       [:h3 "GC stress mode"]
       [:p "Set " [:code "MINO_GC_STRESS=1"] " in the environment to "
-       "force collection on every allocation. This is slow but catches "
-       "any code path that holds an unrooted pointer across an "
+       "force a full collection on every allocation. This is slow but "
+       "catches any code path that holds an unrooted pointer across an "
        "allocation boundary. Use it during development."]
 
       [:h2 "Next steps"]
