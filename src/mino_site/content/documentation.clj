@@ -18,7 +18,7 @@
         [:div.card-title "Embedding Guide"]
         [:div.card-desc
          "State lifecycle, value ownership, sandboxing, handles, "
-         "sessions, actors, and threading rules."]]
+         "sessions, and threading rules."]]
 
        [:a.card {:href "/documentation/cookbook/"}
         [:div.card-title "Embedding Cookbook"]

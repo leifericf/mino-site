@@ -266,24 +266,6 @@ mino_repl_free(repl);"]]
        "state boundaries. Functions, environments, atoms, and handles "
        "are not transferable."]
 
-      [:h2 "Actors"]
-      [:p "The actor API (" [:code "spawn"] ", " [:code "send!"]
-       ", " [:code "receive"] ") lives in "
-       [:code "lib/core/actor.mino"] ". There is no C entry point for "
-       "actors; hosts drive them through " [:code "mino_eval_string"]
-       " like any other mino code:"]
-      [:pre [:code {:data-lang "c"}
-"mino_eval_string(S,
-    \"(require \\\"core/actor\\\")\\n\"
-    \"(def worker (spawn (send! *self* :hello)))\\n\"
-    \"(binding [*self* worker] (receive))\", env);"]]
-      [:p "Mino is single-threaded per " [:code "mino_state_t"]
-       ", so actors are co-operative: the body of " [:code "spawn"]
-       " runs to completion inside the caller's evaluation. If you "
-       "need parallelism across cores, run one " [:code "mino_state_t"]
-       " per OS thread and copy messages across with "
-       [:code "mino_clone"] "."]
-
       [:h2 "Garbage collection"]
       [:p "The collector is a non-moving generational tracing "
        "collector with an incremental old-gen mark phase. Short-lived "

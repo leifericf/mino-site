@@ -140,14 +140,14 @@
      "/documentation/embedding/index.html"
      (fn [ctx]
        (render/html-page {:title "Embedding Guide"
-                          :description "State lifecycle, value ownership, sandboxing, handles, sessions, actors, and threading rules for embedding mino in a host application."
+                          :description "State lifecycle, value ownership, sandboxing, handles, sessions, and threading rules for embedding mino in a host application."
                           :active-page :documentation}
          (embedding/embedding-page)))
 
      "/documentation/performance/index.html"
      (fn [ctx]
        (render/html-page {:title "Performance"
-                          :description "Preliminary performance characteristics: per-operation costs, collection throughput, actor scaling, and where the time goes."
+                          :description "Preliminary performance characteristics: per-operation costs, collection throughput, and where the time goes."
                           :active-page :documentation}
          (performance/performance-page)))
 

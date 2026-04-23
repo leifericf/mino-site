@@ -290,7 +290,7 @@ Different states may be used from different threads simultaneously since
 they share no mutable data.
 
 Refs, environments, and values belong to their state. Do not pass raw
-pointers between states; use `mino_clone` or a mailbox instead.
+pointers between states; use `mino_clone` to deep-copy instead.
 
 
 ## Value cloning
@@ -308,42 +308,6 @@ with an error on the destination state.
 
 Nested collections are cloned recursively. A single non-transferable
 element anywhere in the tree fails the entire clone.
-
-
-## Actors
-
-The actor API is defined in `lib/core/actor.mino` and exposed through
-three names: `spawn`, `send!`, and `receive`. An actor is an atom
-wrapping a mailbox vector; `*self*` is a dynamic binding scoped to the
-spawn body.
-
-There is no C entry point for actors. Hosts drive them through
-`mino_eval_string` like any other mino code:
-
-```c
-mino_eval_string(S,
-    "(require \"core/actor\")\n"
-    "(def worker (spawn (send! *self* :hello) (receive)))",
-    env);
-```
-
-Since mino is single-threaded per `mino_state_t`, actors are
-co-operative. The body of `spawn` runs to completion inside the
-caller's evaluation; `send!` is a plain vector append; `receive`
-pulls the front value off. For parallelism across cores, run one
-`mino_state_t` per OS thread and use `mino_clone` to copy data
-between them.
-
-### Actor API summary
-
-- `(spawn & body)` creates an actor and evaluates the body with
-  `*self*` bound to it. Returns the actor. Example:
-  `(spawn (def handler (fn [m] (* m m))))`.
-- `(send! actor val)` appends `val` to the actor's mailbox. Returns nil.
-- `(receive)` pops the front message from `*self*`'s mailbox, or nil
-  if empty. Throws if `*self*` is not bound.
-- `(actor? x)`, `(mailbox-count a)` are predicates for test and
-  introspection.
 
 
 ## Concurrency primitives
@@ -554,10 +518,6 @@ runtime state.
 | Function | Description |
 |----------|-------------|
 | `mino_clone(dst, src, val)` | Deep-copy a value between states |
-
-(Actors live in `lib/core/actor.mino`; there is no C-level actor API.
-Drive them through `mino_eval_string` on `(require "core/actor")`
-followed by `(spawn ...)` / `(send! ...)` / `(receive)` source.)
 
 ### REPL
 

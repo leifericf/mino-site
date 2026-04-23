@@ -128,8 +128,7 @@
        [:code "mino_clone"] " is the only cross-state primitive in C; "
        "hosts that manage more than one " [:code "mino_state_t"]
        " (for example, one state per OS thread) use it to move "
-       "immutable data across. Actor mailboxes live entirely in mino "
-       "and do not cross state boundaries."]
+       "immutable data across."]
       [:table
        [:thead
         [:tr [:th "Operation"] [:th "Cost"] [:th "Notes"]]]
@@ -142,18 +141,11 @@
              [:td "Linear in element count"]]
         [:tr [:td "Clone: nested map"]
              [:td "1.2 \u00b5s"]
-             [:td "Recursive traversal"]]
-        [:tr [:td "Actor send! + receive (integer)"]
-             [:td "~1.2 \u00b5s"]
-             [:td "Atom swap! over a persistent vector mailbox"]]
-        [:tr [:td "Actor send! with 5-element vector payload"]
-             [:td "~1.4 \u00b5s"]
-             [:td "Values are immutable; no deep copy across send!"]]]]
+             [:td "Recursive traversal"]]]]
 
       [:h2 "Lifecycle"]
       [:p "Cost of creating and destroying runtime objects. These "
-       "matter most for actor-heavy architectures where each actor "
-       "gets its own runtime instance."]
+       "matter most for hosts that create many short-lived runtimes."]
       [:table
        [:thead
         [:tr [:th "Operation"] [:th "Cost"] [:th "Notes"]]]
@@ -167,27 +159,6 @@
         [:tr [:td [:code "mino_env_clone"]]
              [:td "90 \u00b5s"]
              [:td "Copy all bindings, share values"]]]]
-
-      [:h2 "Actor scaling"]
-      [:p "Actors are mino values: an atom wrapping a mailbox vector "
-       "plus a " [:code "*self*"] " dynamic binding. "
-       [:code "spawn"] " does not create a new runtime instance; the "
-       "body runs in the caller's environment and returns once. The "
-       "table below shows wall-clock time for spawning N actors and "
-       "sending one integer message to each."]
-      [:table
-       [:thead
-        [:tr [:th "Actors"] [:th "Spawn"] [:th "Send (one per actor)"] [:th "Total"]]]
-       [:tbody
-        [:tr [:td "100"]    [:td "~0.9 ms"]  [:td "~0.15 ms"]  [:td "~1.1 ms"]]
-        [:tr [:td "1,000"]  [:td "~9 ms"]    [:td "~1.5 ms"]   [:td "~11 ms"]]
-        [:tr [:td "10,000"] [:td "~90 ms"]   [:td "~15 ms"]    [:td "~105 ms"]]]]
-      [:p "Spawn cost is ~10 \u00b5s per actor. The previous "
-       "C-backed actor allocated a fresh " [:code "mino_state_t"]
-       " with a full core library and cost ~1.2 ms each; demoting "
-       "the actor system into " [:code "lib/core/actor.mino"] " in "
-       "v0.43.0 cut that by two orders of magnitude. Messaging is a "
-       "single atom " [:code "swap!"] " per send."]
 
       [:h2 "Garbage collection"]
       [:p "mino uses a non-moving two-generation tracing collector. "

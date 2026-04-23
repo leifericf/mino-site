@@ -175,25 +175,6 @@
        [:li "Nested parks in function call arguments require explicit "
         [:code "let"] " bindings"]]
 
-      [:h3 "Actors"]
-      [:p [:code "(require \"core/actor\")"] " brings in "
-       [:code "spawn"] ", " [:code "send!"] ", and "
-       [:code "receive"] ". An actor is an atom wrapping a mailbox; "
-       [:code "*self*"] " is a dynamic binding the " [:code "spawn"]
-       " macro sets for the body's scope."]
-      [:pre [:code
-        "(require \"core/actor\")\n"
-        "(def worker (spawn\n"
-        "              (let [msg (receive)]\n"
-        "                (send! (first msg) \"done\"))))\n"
-        "(send! worker [*self*])\n"
-        "(binding [*self* worker] (receive))"]]
-      [:p "mino is single-threaded per runtime, so actors are "
-       "co-operative: the body of " [:code "spawn"] " runs to "
-       "completion synchronously. For parallelism, run one "
-       [:code "mino_state_t"] " per OS thread from the host. "
-       "There are no refs, no STM, and no agents."]
-
       ;; --- Host interop ---
 
       [:h2 "Host interop"]
@@ -423,7 +404,7 @@
         [:tr [:td [:code "(dosync ...)"] " / " [:code "(ref ...)"]]
          [:td "Not applicable (use atoms)"]]
         [:tr [:td [:code "(future ...)"]]
-         [:td [:code "(spawn ...)"] " (isolated runtime, not a thread)"]]
+         [:td "Not implemented (use " [:code "go"] ")"]]
         [:tr [:td [:code "(thread ...)"]]
          [:td "Not implemented (use " [:code "go"] ")"]]
         [:tr [:td [:code "defmulti"] " / " [:code "defmethod"]]

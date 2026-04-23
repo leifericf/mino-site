@@ -261,8 +261,8 @@
        " eliminate thunk overhead for tight loops. Creating a new "
        "runtime with the full standard library takes about 0.5 ms."]
       [:p "For detailed benchmarks covering core operations, "
-       "collection throughput, cross-state cloning, actor scaling, "
-       "and where the time goes, see the "
+       "collection throughput, cross-state cloning, and where the "
+       "time goes, see the "
        [:a {:href "/documentation/performance/"} "Performance"]
        " page."]
 
