@@ -259,40 +259,30 @@ mino_repl_free(repl);"]]
        "time. Different states can be used from different threads "
        "simultaneously since they share nothing."]
       [:p "To move values between states (which may live on different "
-       "threads), use " [:code "mino_clone"] " for one-shot copies or "
-       "a mailbox for ongoing communication:"]
+       "threads), use " [:code "mino_clone"] ":"]
       [:pre [:code {:data-lang "c"}
-"/* One-shot copy */
-mino_val_t *copy = mino_clone(dst_state, src_state, val);
-
-/* Ongoing communication via mailbox */
-mino_mailbox_t *mb = mino_mailbox_new();
-mino_mailbox_send(mb, state_a, val);          /* thread A */
-mino_val_t *msg = mino_mailbox_recv(mb, state_b);  /* thread B */
-mino_mailbox_free(mb);"]]
+"mino_val_t *copy = mino_clone(dst_state, src_state, val);"]]
       [:p "Only data values (numbers, strings, collections) can cross "
        "state boundaries. Functions, environments, atoms, and handles "
        "are not transferable."]
 
       [:h2 "Actors"]
-      [:p "An actor bundles a state, environment, and mailbox into one "
-       "entity. It is the primary abstraction for isolated concurrent "
-       "work:"]
+      [:p "The actor API (" [:code "spawn"] ", " [:code "send!"]
+       ", " [:code "receive"] ") lives in "
+       [:code "lib/core/actor.mino"] ". There is no C entry point for "
+       "actors; hosts drive them through " [:code "mino_eval_string"]
+       " like any other mino code:"]
       [:pre [:code {:data-lang "c"}
-"mino_actor_t *a = mino_actor_new();
-
-/* Send a value from the host state to the actor */
-mino_actor_send(a, host_state, mino_int(host_state, 42));
-
-/* Receive and process in the actor's context */
-mino_val_t *msg = mino_actor_recv(a);
-mino_eval_string(mino_actor_state(a), \"(+ msg 1)\", mino_actor_env(a));
-
-mino_actor_free(a);"]]
-      [:p "No background thread is started. The host drives the actor "
-       "by sending messages and calling eval. This gives the host "
-       "complete control over scheduling: run actors in a thread pool, "
-       "in an event loop, or synchronously in sequence."]
+"mino_eval_string(S,
+    \"(require \\\"core/actor\\\")\\n\"
+    \"(def worker (spawn (send! *self* :hello)))\\n\"
+    \"(binding [*self* worker] (receive))\", env);"]]
+      [:p "Mino is single-threaded per " [:code "mino_state_t"]
+       ", so actors are co-operative: the body of " [:code "spawn"]
+       " runs to completion inside the caller's evaluation. If you "
+       "need parallelism across cores, run one " [:code "mino_state_t"]
+       " per OS thread and copy messages across with "
+       [:code "mino_clone"] "."]
 
       [:h2 "Garbage collection"]
       [:p "The collector is a non-moving generational tracing "

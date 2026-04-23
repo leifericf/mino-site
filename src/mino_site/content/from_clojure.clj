@@ -175,18 +175,24 @@
        [:li "Nested parks in function call arguments require explicit "
         [:code "let"] " bindings"]]
 
-      [:h3 "Isolated runtimes"]
-      [:p "For inter-runtime isolation, " [:code "spawn"] " creates "
-       "a separate mino runtime with its own state. "
-       [:code "send!"] " passes immutable messages to an actor and "
-       [:code "receive"] " retrieves the next message:"]
+      [:h3 "Actors"]
+      [:p [:code "(require \"core/actor\")"] " brings in "
+       [:code "spawn"] ", " [:code "send!"] ", and "
+       [:code "receive"] ". An actor is an atom wrapping a mailbox; "
+       [:code "*self*"] " is a dynamic binding the " [:code "spawn"]
+       " macro sets for the body's scope."]
       [:pre [:code
-        "(def worker (spawn (let [msg (receive)] (send! (first msg) \"done\"))))\n"
+        "(require \"core/actor\")\n"
+        "(def worker (spawn\n"
+        "              (let [msg (receive)]\n"
+        "                (send! (first msg) \"done\"))))\n"
         "(send! worker [*self*])\n"
-        "(receive)"]]
-      [:p "Each spawned runtime is fully isolated with its own heap "
-       "and environment. " [:code "send!"] " is inter-runtime "
-       "message passing. There are no refs, no STM, no agents."]
+        "(binding [*self* worker] (receive))"]]
+      [:p "mino is single-threaded per runtime, so actors are "
+       "co-operative: the body of " [:code "spawn"] " runs to "
+       "completion synchronously. For parallelism, run one "
+       [:code "mino_state_t"] " per OS thread from the host. "
+       "There are no refs, no STM, and no agents."]
 
       ;; --- Host interop ---
 

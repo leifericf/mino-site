@@ -310,87 +310,40 @@ Nested collections are cloned recursively. A single non-transferable
 element anywhere in the tree fails the entire clone.
 
 
-## Mailbox
-
-A mailbox is a thread-safe FIFO queue for passing values between states
-that may live on different threads:
-
-```c
-mino_mailbox_t *mb = mino_mailbox_new();
-
-/* Thread A: send a value */
-mino_mailbox_send(mb, state_a, val);
-
-/* Thread B: receive into a different state */
-mino_val_t *msg = mino_mailbox_recv(mb, state_b);
-
-mino_mailbox_free(mb);
-```
-
-The mailbox serializes values on send and deserializes on receive, so no
-cross-state pointers ever exist. The same transferability rules apply as
-for `mino_clone`. `mino_mailbox_recv` returns NULL when the queue is empty.
-
-The mailbox is the one place in mino that uses a mutex. It is safe to call
-`send` and `recv` from different threads concurrently. The mailbox is owned
-by the host, not by any state.
-
-
 ## Actors
 
-An actor bundles a state, an environment (with core bindings installed),
-and a mailbox into a single entity. Actors provide the isolation model:
-each actor is a failure domain with its own GC, its own bindings, and
-no shared mutable state.
+The actor API is defined in `lib/core/actor.mino` and exposed through
+three names: `spawn`, `send!`, and `receive`. An actor is an atom
+wrapping a mailbox vector; `*self*` is a dynamic binding scoped to the
+spawn body.
+
+There is no C entry point for actors. Hosts drive them through
+`mino_eval_string` like any other mino code:
 
 ```c
-mino_actor_t *a = mino_actor_new();
+mino_eval_string(S,
+    "(require \"core/actor\")\n"
+    "(def worker (spawn (send! *self* :hello) (receive)))",
+    env);
 ```
 
-The host drives the actor by sending messages and calling eval. No
-background thread is started; the host controls scheduling entirely.
+Since mino is single-threaded per `mino_state_t`, actors are
+co-operative. The body of `spawn` runs to completion inside the
+caller's evaluation; `send!` is a plain vector append; `receive`
+pulls the front value off. For parallelism across cores, run one
+`mino_state_t` per OS thread and use `mino_clone` to copy data
+between them.
 
-```c
-/* Send a value from the host's state to the actor. */
-mino_actor_send(a, host_state, val);
+### Actor API summary
 
-/* Receive the next message in the actor's state. */
-mino_val_t *msg = mino_actor_recv(a);
-
-/* Evaluate code in the actor's context. */
-mino_eval_string(mino_actor_state(a), src, mino_actor_env(a));
-```
-
-The actor's state, environment, and mailbox are accessible individually
-when the host needs fine-grained control:
-
-```c
-mino_state_t   *s  = mino_actor_state(a);
-mino_env_t     *e  = mino_actor_env(a);
-mino_mailbox_t *mb = mino_actor_mailbox(a);
-```
-
-Free the actor when done. This frees the mailbox, environment, and state:
-
-```c
-mino_actor_free(a);
-```
-
-### Actors from mino code
-
-Three forms expose the actor model to mino code:
-
-- `(spawn & body)` creates a new actor, evaluates the body forms in its
-  own state, and returns an opaque actor handle. The body is serialized
-  to source text at macro-expansion time. Example:
-  `(spawn (def handler (fn (msg) (* msg msg))))`
-- `(send! actor val)` sends a value to an actor's mailbox.
-- `(receive)` receives the next message from the current actor's mailbox.
-  Requires that `*self*` is bound to an actor handle in the current
-  environment (set automatically by `spawn`).
-
-The underlying C primitive `spawn*` accepts a source string directly
-for cases where the host constructs actor source programmatically.
+- `(spawn & body)` creates an actor and evaluates the body with
+  `*self*` bound to it. Returns the actor. Example:
+  `(spawn (def handler (fn [m] (* m m))))`.
+- `(send! actor val)` appends `val` to the actor's mailbox. Returns nil.
+- `(receive)` pops the front message from `*self*`'s mailbox, or nil
+  if empty. Throws if `*self*` is not bound.
+- `(actor? x)`, `(mailbox-count a)` are predicates for test and
+  introspection.
 
 
 ## Concurrency primitives
@@ -602,26 +555,9 @@ runtime state.
 |----------|-------------|
 | `mino_clone(dst, src, val)` | Deep-copy a value between states |
 
-### Mailbox
-
-| Function | Description |
-|----------|-------------|
-| `mino_mailbox_new()` | Create a thread-safe message queue |
-| `mino_mailbox_send(mb, S, val)` | Serialize and enqueue a value |
-| `mino_mailbox_recv(mb, S)` | Dequeue and deserialize (NULL if empty) |
-| `mino_mailbox_free(mb)` | Free the mailbox and queued messages |
-
-### Actors
-
-| Function | Description |
-|----------|-------------|
-| `mino_actor_new()` | Create an actor (state + env + mailbox) |
-| `mino_actor_state(a)` | Get the actor's runtime state |
-| `mino_actor_env(a)` | Get the actor's environment |
-| `mino_actor_mailbox(a)` | Get the actor's mailbox |
-| `mino_actor_send(a, S, val)` | Send a value to the actor's mailbox |
-| `mino_actor_recv(a)` | Receive next message (NULL if empty) |
-| `mino_actor_free(a)` | Free the actor and all its resources |
+(Actors live in `lib/core/actor.mino`; there is no C-level actor API.
+Drive them through `mino_eval_string` on `(require "core/actor")`
+followed by `(spawn ...)` / `(send! ...)` / `(receive)` source.)
 
 ### REPL
 

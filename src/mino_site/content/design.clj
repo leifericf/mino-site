@@ -87,11 +87,11 @@
        "cannot cross runtime boundaries."]
 
       [:h3 "Message purity"]
-      [:p "Messages between runtimes are pure data. The serialization "
-       "boundary at the mailbox enforces this: if a value contains a "
-       "function or a mutable reference, the send fails. This "
-       "guarantees that message passing cannot create hidden "
-       "dependencies between runtimes."]
+      [:p "Messages that cross runtime boundaries are pure data. "
+       [:code "mino_clone"] " enforces this: if a value contains a "
+       "function or a mutable reference, the clone fails. This "
+       "guarantees that cross-runtime communication cannot create "
+       "hidden dependencies between runtimes."]
 
       [:h3 "Host controls orchestration"]
       [:p "The host decides when code runs, how long it runs, what "
