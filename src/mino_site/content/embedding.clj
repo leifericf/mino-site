@@ -257,14 +257,79 @@ mino_repl_free(repl);"]]
       [:p "A " [:code "mino_state_t"] " is not thread-safe. The host "
        "must not call into a state from multiple threads at the same "
        "time. Different states can be used from different threads "
-       "simultaneously since they share nothing."]
+       "simultaneously since they share nothing: each state owns its "
+       "own GC heap, scheduler, intern tables, module cache, PRNG, and "
+       "error reporting buffer. No mutable process-global state lives "
+       "inside the runtime."]
+      [:p "The one call safe to make from a non-owning thread is "
+       [:code "mino_interrupt(S)"] ". It only writes a volatile flag "
+       "that the owning thread observes at the next eval step."]
+
+      [:h3 "Running many states across threads"]
+      [:p "Host a fleet of isolated runtimes by giving each OS thread "
+       "its own state. The orchestrator lives in the host application; "
+       "mino itself starts no threads and holds no shared data."]
+      [:pre [:code {:data-lang "c"}
+"/* One pthread per state. */
+void *worker(void *arg) {
+    mino_state_t *S   = mino_state_new();
+    mino_env_t   *env = mino_new(S);
+    mino_load_file(S, \"bot.mino\", env);
+    mino_state_free(S);
+    return NULL;
+}"]]
+      [:p "Because the two intern tables and the PRNG live on the "
+       "state, two workers running at the same instant never touch a "
+       "shared memory location inside the runtime."]
+
+      [:h3 "Cross-state values"]
       [:p "To move values between states (which may live on different "
        "threads), use " [:code "mino_clone"] ":"]
       [:pre [:code {:data-lang "c"}
 "mino_val_t *copy = mino_clone(dst_state, src_state, val);"]]
       [:p "Only data values (numbers, strings, collections) can cross "
        "state boundaries. Functions, environments, atoms, and handles "
-       "are not transferable."]
+       "are not transferable. Clone is safe only when both states are "
+       "quiescent on their owning threads: call from the thread that "
+       "owns the destination, after synchronising with the thread that "
+       "owns the source."]
+
+      [:h3 "Delivering messages from a non-owning thread"]
+      [:p "For ongoing cross-thread delivery (a network thread pushing "
+       "messages into a mino worker, for example), let the host own a "
+       "lock-free or mutex-protected queue per state. The owning "
+       "thread drains the queue from inside mino code by calling a "
+       "host-registered primitive that translates messages into mino "
+       "values and hands them to a channel:"]
+      [:pre [:code {:data-lang "c"}
+"/* Per-thread pointer: each thread runs exactly one state. */
+static _Thread_local host_inbox_t *current_inbox;
+
+static mino_val_t *prim_inbox_drain(mino_state_t *S,
+                                    mino_val_t *args,
+                                    mino_env_t *env) {
+    host_msg_t m;
+    (void)args; (void)env;
+    while (host_inbox_try_pop(current_inbox, &m)) {
+        mino_val_t *v = host_msg_to_mino_val(S, &m);
+        /* push v onto a channel held on the mino side */
+        (void)v;
+    }
+    return mino_nil(S);
+}
+
+mino_register_fn(S, env, \"host-inbox-drain\", prim_inbox_drain);"]]
+      [:p "The contract is unchanged: the mino side is touched only on "
+       "the owning thread. The host's inbox is a thread-safe handoff "
+       "surface sitting outside the runtime."]
+
+      [:h3 "Resolvers must be reentrant"]
+      [:p "The CLI binary ships a CWD-relative module resolver that "
+       "uses file-scope static buffers. That resolver is not safe for "
+       "use from multiple threads. Hosts should register their own "
+       "resolver via " [:code "mino_set_resolver"] " and, in a "
+       "multi-threaded context, write results into a caller-provided "
+       "or per-state buffer rather than a function-scope static."]
 
       [:h2 "Garbage collection"]
       [:p "The collector is a non-moving generational tracing "
