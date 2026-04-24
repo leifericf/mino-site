@@ -24,6 +24,7 @@
     [mino-site.content.testing :as testing]
     [mino-site.content.embedding :as embedding]
     [mino-site.content.garbage-collection :as garbage-collection]
+    [mino-site.content.platforms :as platforms]
     [mino-site.content.performance :as performance]
     [mino-site.content.from-clojure :as from-clojure]
     [mino-site.parse.use-cases :as parse.use-cases]
@@ -158,6 +159,13 @@
                           :description "Preliminary performance characteristics: per-operation costs, collection throughput, and where the time goes."
                           :active-page :documentation}
          (performance/performance-page)))
+
+     "/documentation/platforms/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Platform Support"
+                          :description "Supported operating systems, compilers, and language floors. Platforms covered by CI and minimum versions for building mino."
+                          :active-page :documentation}
+         (platforms/platforms-page)))
 
      "/documentation/coming-from-clojure/index.html"
      (fn [ctx]

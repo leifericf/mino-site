@@ -26,6 +26,38 @@
        " section of the Embedding Guide for how to keep host-held "
        "values reachable across collection."]
 
+      [:h2 "Design"]
+      [:p "Four choices shape the collector:"]
+      [:ul
+       [:li [:strong "Two generations. "]
+        "Most allocations in a running program die young: intermediate "
+        "sequence results, destructured bindings, closure arguments, "
+        "temporary strings. A nursery collection walks only the young "
+        "reachability set, which stays small even when the total heap "
+        "is large. Promotion to old-gen happens once a value has "
+        "survived a configurable number of minor cycles."]
+       [:li [:strong "Non-moving. "]
+        "Host code holds raw " [:code "mino_val_t *"] " pointers. A "
+        "copying collector would have to update every live reference "
+        "at every collection, which means either a read barrier on "
+        "the host side or extremely careful pinning. Non-moving keeps "
+        "addresses stable, which keeps the embedding API simple and "
+        "the FFI story honest."]
+       [:li [:strong "Incremental major. "]
+        "Old-gen tracing is paced across many slices interleaved with "
+        "the mutator, with a tunable work budget per slice. Pause "
+        "time under a growing old-gen stays bounded instead of "
+        "scaling with total heap size. The final sweep is one short "
+        "stop-the-world phase."]
+       [:li [:strong "Two barriers, always armed. "]
+        "A remembered-set barrier tracks old-to-young pointer stores, "
+        "so a minor cycle does not have to scan the whole old-gen to "
+        "find young reachability. A snapshot-at-the-beginning (SATB) "
+        "barrier captures slot values overwritten during major mark, "
+        "so values that were reachable at cycle start stay marked "
+        "even if the mutator unlinks them mid-cycle. Both reduce to "
+        "a dirty-bit check per store in the common case."]]
+
       [:h2 "Phases"]
       [:p "The collector runs in one of four phases, reported as the "
        [:code ":phase"] " key of " [:code "(gc-stats)"] " and the "
@@ -47,6 +79,38 @@
        "old-to-young edges, and the SATB barrier that captures "
        "overwritten values during major mark -- are always armed. "
        "Their cost is one dirty-bit check per store in the common case."]
+
+      [:p "Transitions between phases:"]
+      [:pre [:code {:data-lang "text"}
+"                    nursery full
+                   or explicit MINOR
+             +------------------------+
+             |                        v
+          [idle] <-----------+    [minor]
+             |               |        |
+             |               +--------+ sweep done
+             |
+             | threshold reached
+             | or explicit MAJOR/FULL
+             v
+       [major-mark] <--+
+             |         |
+             | slice   | more work
+             +---------+
+             |
+             | mark drained
+             v
+       [major-sweep]
+             |
+             | sweep done
+             v
+          [idle]"]]
+      [:p "A minor cycle can nest safely inside major-mark: when the "
+       "nursery fills during an in-flight major, minor runs to "
+       "completion and returns to major-mark without disturbing the "
+       "mark stack or the SATB snapshot. "
+       [:code "MINO_GC_FULL"] " from the idle state runs a minor, "
+       "then a complete major cycle back-to-back."]
 
       [:h2 "Host-driven collection"]
       [:p "The host can trigger collection at quiescent points -- between "

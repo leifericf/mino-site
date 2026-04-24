@@ -74,6 +74,13 @@
          "Numbers, allocation costs, and guidance for keeping "
          "mino fast. When to move work to C."]]
 
+       [:a.card {:href "/documentation/platforms/"}
+        [:div.card-title "Platform Support"]
+        [:div.card-desc
+         "Operating systems, compilers, and language floors. "
+         "What CI tests and the minimums below which nothing "
+         "is exercised."]]
+
        [:a.card {:href "/documentation/coming-from-clojure/"}
         [:div.card-title "Coming from Clojure"]
         [:div.card-desc
