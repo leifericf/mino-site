@@ -262,10 +262,6 @@
         "with structural sharing"]]
       [:p "Differences:"]
       [:ul
-       [:li "Transients are only exposed through the C embedding API "
-        "today (" [:code "mino_transient"] ", " [:code "mino_persistent"]
-        "); the mino-level " [:code "transient"] "/"
-        [:code "persistent!"] " names are not yet bound"]
        [:li [:code "array-map"] " is an alias for " [:code "hash-map"]
         " (HAMT is used at all sizes)"]]
 
@@ -380,13 +376,6 @@
        [:li [:strong "Records and types."]
         " " [:code "defrecord"] "/" [:code "deftype"] " do not exist. "
         "Maps are the universal data carrier."]
-       [:li [:strong "Transient collections at the mino level."]
-        " Embedders can build vectors, maps, and sets through the C "
-        "transient API (" [:code "mino_transient"] ", "
-        [:code "mino_persistent"] ", " [:code "mino_assoc_bang"]
-        "), but the mino-level " [:code "transient"] "/"
-        [:code "persistent!"] "/" [:code "assoc!"]
-        " names are not yet exposed."]
        [:li [:strong "Shared-memory STM."]
         " No refs, no " [:code "dosync"] ". Runtime isolation and "
         "message passing replace shared-memory coordination."]
