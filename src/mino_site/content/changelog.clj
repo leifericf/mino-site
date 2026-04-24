@@ -73,10 +73,30 @@
             (str/blank? line)
             (recur rest-lines result)
 
-            ;; Plain paragraph
+            ;; Plain paragraph. Accumulate consecutive non-blank lines
+            ;; into a single <p>; markdown soft-wrap should not render
+            ;; as one <p> per source line. Inner exit conditions must
+            ;; match the outer cond's branch triggers exactly (blank,
+            ;; heading variants, list start) -- otherwise outer falls
+            ;; back to :else with the same line and the loop spins.
             :else
-            (recur rest-lines
-                   (conj result [:p (hu/raw-string (fmt/inline line))]))))))))
+            (let [[para-lines remaining]
+                  (loop [ls (cons line rest-lines)
+                         acc []]
+                    (let [l (first ls)]
+                      (cond
+                        (nil? l) [acc ls]
+                        (or (str/blank? l)
+                            (str/starts-with? l "# ")
+                            (str/starts-with? l "## ")
+                            (str/starts-with? l "### ")
+                            (str/starts-with? l "- "))
+                        [acc ls]
+                        :else (recur (rest ls) (conj acc l)))))]
+              (recur remaining
+                     (conj result
+                           [:p (hu/raw-string
+                                 (fmt/inline (str/join " " para-lines)))])))))))))
 
 (defn changelog-page
   "Generates the Changelog page HTML body."
