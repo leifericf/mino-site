@@ -262,9 +262,25 @@
         "with structural sharing"]]
       [:p "Differences:"]
       [:ul
-       [:li "No transient collections (all mutation is through atoms)"]
+       [:li "Transients are only exposed through the C embedding API "
+        "today (" [:code "mino_transient"] ", " [:code "mino_persistent"]
+        "); the mino-level " [:code "transient"] "/"
+        [:code "persistent!"] " names are not yet bound"]
        [:li [:code "array-map"] " is an alias for " [:code "hash-map"]
         " (HAMT is used at all sizes)"]]
+
+      ;; --- Characters ---
+
+      [:h2 "Characters"]
+      [:p "Character literals (" [:code "\\A"] ", " [:code "\\space"]
+       ", " [:code "\\uNNNN"] ", literal UTF-8 like " [:code "\\☃"]
+       ") parse to a distinct character type holding a Unicode "
+       "codepoint. " [:code "char?"] " returns " [:code "true"] " for "
+       "chars and only for chars; " [:code "string?"] " returns "
+       [:code "false"] ". " [:code "(int \\A)"] " is " [:code "65"]
+       " and " [:code "(str \\A)"] " is " [:code "\"A\""] ". Chars "
+       "hash and compare distinctly from single-character strings, "
+       "so they can live cleanly as map keys or set members."]
 
       ;; --- Sequences ---
 
@@ -302,9 +318,11 @@
         "integers. " [:code "decimal?"] " always returns false."]
        [:li "BigDec literals (" [:code "1.5M"] ") parse as regular "
         "floats."]
-       [:li "Integer overflow wraps silently (C semantics). "
-        [:code "(+ Long/MAX_VALUE 1)"] " wraps to a negative number "
-        "rather than auto-promoting to BigInt."]
+       [:li "Integer overflow throws. " [:code "(+ Long/MAX_VALUE 1)"]
+        " raises an " [:code ":eval/overflow"] " exception (code "
+        [:code "MOV001"] ") rather than silently wrapping or promoting "
+        "to BigInt. Catch it with " [:code "try"] "/" [:code "catch"]
+        " the same way you would any other diagnostic."]
        [:li "Float arithmetic follows IEEE 754 without exact rational "
         "arithmetic."]]
       [:p "All standard arithmetic, comparison, and math functions work. "
@@ -351,13 +369,6 @@
         " No BigInt, BigDecimal, or exact ratio types. Ratio, N, "
         "and M literals parse but convert to int/float. This keeps "
         "the runtime small and avoids a library dependency."]
-       [:li [:strong "Distinct character type."]
-        " Character literals (" [:code "\\A"] ", " [:code "\\space"]
-        ") are represented as single-character strings. "
-        [:code "char?"] " returns false, " [:code "string?"]
-        " returns true. This simplifies the value model at the "
-        "cost of " [:code "char?"] "/" [:code "string?"] " predicate "
-        "divergence."]
        [:li [:strong "Distinct empty list."]
         " " [:code "(list)"] " returns " [:code "nil"] ", not an "
         "empty list object. " [:code "rest"] " has " [:code "next"]
@@ -369,13 +380,13 @@
        [:li [:strong "Records and types."]
         " " [:code "defrecord"] "/" [:code "deftype"] " do not exist. "
         "Maps are the universal data carrier."]
-       [:li [:strong "Transient collections."]
-        " All mutation goes through atoms. "
-        [:code "transient"] "/" [:code "persistent!"] " are not "
-        "implemented."]
-       [:li [:strong "Integer overflow detection."]
-        " Arithmetic wraps silently per C semantics rather than "
-        "throwing or auto-promoting."]
+       [:li [:strong "Transient collections at the mino level."]
+        " Embedders can build vectors, maps, and sets through the C "
+        "transient API (" [:code "mino_transient"] ", "
+        [:code "mino_persistent"] ", " [:code "mino_assoc_bang"]
+        "), but the mino-level " [:code "transient"] "/"
+        [:code "persistent!"] "/" [:code "assoc!"]
+        " names are not yet exposed."]
        [:li [:strong "Shared-memory STM."]
         " No refs, no " [:code "dosync"] ". Runtime isolation and "
         "message passing replace shared-memory coordination."]
