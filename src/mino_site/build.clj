@@ -23,6 +23,7 @@
     [mino-site.content.tooling :as tooling]
     [mino-site.content.testing :as testing]
     [mino-site.content.embedding :as embedding]
+    [mino-site.content.garbage-collection :as garbage-collection]
     [mino-site.content.performance :as performance]
     [mino-site.content.from-clojure :as from-clojure]
     [mino-site.parse.use-cases :as parse.use-cases]
@@ -143,6 +144,13 @@
                           :description "State lifecycle, value ownership, sandboxing, handles, sessions, and threading rules for embedding mino in a host application."
                           :active-page :documentation}
          (embedding/embedding-page)))
+
+     "/documentation/garbage-collection/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Garbage Collection"
+                          :description "Two-generation tracing collector with incremental old-gen mark: phases, tuning knobs, stats fields, and environment variables."
+                          :active-page :documentation}
+         (garbage-collection/garbage-collection-page)))
 
      "/documentation/performance/index.html"
      (fn [ctx]

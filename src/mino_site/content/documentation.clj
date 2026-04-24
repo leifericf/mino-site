@@ -20,6 +20,13 @@
          "State lifecycle, value ownership, sandboxing, handles, "
          "sessions, and threading rules."]]
 
+       [:a.card {:href "/documentation/garbage-collection/"}
+        [:div.card-title "Garbage Collection"]
+        [:div.card-desc
+         "Two-generation tracing collector with incremental old-gen "
+         "mark: phases, tuning knobs, stats fields, and environment "
+         "variables."]]
+
        [:a.card {:href "/documentation/cookbook/"}
         [:div.card-title "Embedding Cookbook"]
         [:div.card-desc
