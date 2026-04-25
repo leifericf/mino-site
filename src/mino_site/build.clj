@@ -27,6 +27,8 @@
     [mino-site.content.platforms :as platforms]
     [mino-site.content.performance :as performance]
     [mino-site.content.from-clojure :as from-clojure]
+    [mino-site.content.compatibility-matrix :as compatibility-matrix]
+    [mino-site.content.intentional-divergences :as intentional-divergences]
     [mino-site.parse.use-cases :as parse.use-cases]
     [mino-site.parse.async-api :as parse.async]
     [mino-site.content.use-case-page :as use-case-page]
@@ -173,6 +175,21 @@
                           :description "How mino differs from Clojure: syntax, namespaces, concurrency, interop, and what is intentionally absent."
                           :active-page :documentation}
          (from-clojure/from-clojure-page)))
+
+     "/documentation/compatibility-matrix/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Clojure Compatibility Matrix"
+                          :description "Item-by-item table of Clojure core functions and macros: supported, differs, or absent in mino."
+                          :active-page :documentation
+                          :wide true}
+         (compatibility-matrix/compatibility-matrix-page)))
+
+     "/documentation/intentional-divergences/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Intentional Divergences"
+                          :description "Where mino deliberately differs from Clojure and what it offers in place of each divergence."
+                          :active-page :documentation}
+         (intentional-divergences/intentional-divergences-page)))
 
      "/documentation/dependencies/index.html"
      (fn [ctx]

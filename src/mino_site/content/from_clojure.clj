@@ -11,9 +11,16 @@
       [:h1 "Coming from Clojure"]
 
       [:p "mino aspires to become a proper Clojure dialect. "
-       "It's a work in progress. If you know Clojure, most mino "
-       "code will look familiar. This page documents where "
-       "mino differs and why."]
+       "If you know Clojure, most mino code will look familiar. "
+       "This page is the higher-level tour of where mino differs "
+       "and why; for an item-by-item table of supported / differs / "
+       "absent forms, see the "
+       [:a {:href "/documentation/compatibility-matrix/"}
+        "compatibility matrix"]
+       ", and for the longer-form rationale behind each divergence, "
+       "see "
+       [:a {:href "/documentation/intentional-divergences/"}
+        "intentional divergences"] "."]
 
       ;; --- Rules of thumb ---
 
@@ -305,25 +312,35 @@
       ;; --- Numeric tower ---
 
       [:h2 "Numbers"]
-      [:p "mino has 64-bit integers and 64-bit IEEE 754 floats."]
+      [:p "mino has the full Clojure numeric tower: 64-bit "
+       [:code "Long"] ", 64-bit IEEE 754 " [:code "Double"] ", "
+       "arbitrary-precision " [:code "BigInt"] ", exact "
+       [:code "Ratio"] ", and arbitrary-precision "
+       [:code "BigDec"] ". The bignum tier is backed by vendored "
+       "MIT-licensed " [:a {:href "https://github.com/creachadair/imath"}
+        "imath"] "."]
       [:ul
-       [:li "Ratio literals (" [:code "1/2"] ") parse but convert "
-        "to int (when exact) or float. " [:code "ratio?"] " always "
-        "returns false."]
-       [:li "BigInt literals (" [:code "42N"] ") parse as regular "
-        "integers. " [:code "decimal?"] " always returns false."]
-       [:li "BigDec literals (" [:code "1.5M"] ") parse as regular "
-        "floats."]
-       [:li "Integer overflow throws. " [:code "(+ Long/MAX_VALUE 1)"]
-        " raises an " [:code ":eval/overflow"] " exception (code "
-        [:code "MOV001"] ") rather than silently wrapping or promoting "
-        "to BigInt. Catch it with " [:code "try"] "/" [:code "catch"]
-        " the same way you would any other diagnostic."]
-       [:li "Float arithmetic follows IEEE 754 without exact rational "
-        "arithmetic."]]
-      [:p "All standard arithmetic, comparison, and math functions work. "
-       "The difference is in type predicates and overflow behavior, "
-       "not in the operations themselves."]
+       [:li "Ratio literals (" [:code "1/2"] ") parse to a real "
+        [:code "Ratio"] " value. " [:code "ratio?"] " is "
+        [:code "true"] " for non-integer ratios; an exact "
+        "integer ratio reduces to its long or bigint value."]
+       [:li "BigInt literals (" [:code "42N"] ") parse to "
+        [:code "MINO_BIGINT"] ". Cross-tier equality matches "
+        "Clojure: " [:code "(= 1 1N)"] " is " [:code "true"]
+        ", " [:code "(= 1.0 1)"] " is " [:code "false"] "."]
+       [:li "BigDec literals (" [:code "1.5M"] ") parse to "
+        [:code "MINO_BIGDEC"] ". " [:code "(with-precision n)"]
+        " controls division rounding."]
+       [:li "Plain " [:code "+"] " / " [:code "-"] " / "
+        [:code "*"] " / " [:code "inc"] " / " [:code "dec"]
+        " throw " [:code ":eval/overflow"] " (code "
+        [:code "MOV001"] ") on long overflow rather than "
+        "auto-promoting. Use " [:code "+'"] " / " [:code "-'"]
+        " / " [:code "*'"] " / " [:code "inc'"] " / "
+        [:code "dec'"] " for Clojure's auto-promote semantics. "
+        "Mixed-type tower dispatch (long × bigint, ratio × "
+        "bigdec, etc.) follows the standard promotion order."]
+       [:li "Float arithmetic follows IEEE 754."]]
 
       ;; --- Error handling ---
 
@@ -359,29 +376,50 @@
       ;; --- What is intentionally absent ---
 
       [:h2 "Intentionally absent"]
-      [:p "These are design decisions, not missing features:"]
+      [:p "These are design decisions, not missing features. See "
+       [:a {:href "/documentation/intentional-divergences/"}
+        "intentional divergences"] " for the full rationale "
+       "behind each:"]
       [:ul
-       [:li [:strong "Arbitrary-precision numbers."]
-        " No BigInt, BigDecimal, or exact ratio types. Ratio, N, "
-        "and M literals parse but convert to int/float. This keeps "
-        "the runtime small and avoids a library dependency."]
+       [:li [:strong "JVM interop surface."]
+        " " [:code "Class/forName"] ", " [:code "bean"] ", "
+        [:code "gen-class"] ", " [:code ".."] ", "
+        [:code "*warn-on-reflection*"] ", and host-array "
+        "literals all assume a JVM. mino's host-method syntax "
+        "(" [:code "(.next obj)"] ", " [:code "Type/static"]
+        ") goes through a capability registry the embedder "
+        "controls."]
+       [:li [:strong "Records and types."]
+        " " [:code "defrecord"] " / " [:code "deftype"]
+        " / " [:code "reify"] " / " [:code "proxy"]
+        " / " [:code "definterface"]
+        " do not exist. Use maps and "
+        [:code "defprotocol"] " + " [:code "extend-type"] "."]
+       [:li [:strong "Host-thread primitives."]
+        " " [:code "future"] " / " [:code "promise"]
+        " / " [:code "pmap"] " / " [:code "thread"] " / "
+        [:code "agent"] " require host OS threads. Use "
+        [:code "core.async"] " inside a runtime or run "
+        "multiple isolated runtimes on host threads."]
+       [:li [:strong "Shared-memory STM."]
+        " No refs, no " [:code "dosync"] ". Atoms cover "
+        "mino's concurrency model."]
+       [:li [:strong "Chunked sequences."]
+        " mino's lazy seqs are element-at-a-time. Use "
+        "transducers when throughput matters."]
        [:li [:strong "Distinct empty list."]
         " " [:code "(list)"] " returns " [:code "nil"] ", not an "
         "empty list object. " [:code "rest"] " has " [:code "next"]
-        " semantics. " [:code "(seq ())"] " and " [:code "(seq nil)"]
-        " are both " [:code "nil"] "."]
-       [:li [:strong "Multimethods."]
-        " " [:code "defmulti"] "/" [:code "defmethod"] " are supported "
-        "with dispatch caching and " [:code "prefer-method"] "."]
-       [:li [:strong "Records and types."]
-        " " [:code "defrecord"] "/" [:code "deftype"] " do not exist. "
-        "Maps are the universal data carrier."]
-       [:li [:strong "Shared-memory STM."]
-        " No refs, no " [:code "dosync"] ". Runtime isolation and "
-        "message passing replace shared-memory coordination."]
+        " semantics."]
        [:li [:strong "Auto-resolved keywords."]
         " " [:code "::key"] " and " [:code "::alias/key"]
-        " are not supported."]]
+        " are not supported. Spell the namespace out."]
+       [:li [:strong "Plain-arithmetic auto-promote."]
+        " Plain " [:code "+"] " / " [:code "-"] " / " [:code "*"]
+        " throw on long overflow; use " [:code "+'"] " / "
+        [:code "-'"] " / " [:code "*'"] " for Clojure's "
+        "auto-promoting semantics. The numeric tower itself "
+        "(BigInt, Ratio, BigDec) is complete."]]
 
       ;; --- Quick reference ---
 
@@ -413,5 +451,9 @@
          [:td "Not implemented (use maps)"]]
         [:tr [:td [:code "1/2"] " / " [:code "42N"] " / "
          [:code "1.5M"]]
-         [:td "Parse but convert to int/float"]]]])))
+         [:td "Real Ratio / BigInt / BigDec"]]
+        [:tr [:td "Plain " [:code "+"] " / " [:code "-"] " / "
+         [:code "*"] " on long overflow"]
+         [:td "Throws (use " [:code "+'"] " / " [:code "-'"]
+          " / " [:code "*'"] " to auto-promote)"]]]])))
 

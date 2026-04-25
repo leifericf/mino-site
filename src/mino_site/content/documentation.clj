@@ -87,6 +87,18 @@
          "What works the same, what differs, and intentional "
          "divergences for Clojure programmers."]]
 
+       [:a.card {:href "/documentation/compatibility-matrix/"}
+        [:div.card-title "Compatibility Matrix"]
+        [:div.card-desc
+         "Item-by-item table of Clojure core functions and "
+         "macros: supported, differs, or absent in mino."]]
+
+       [:a.card {:href "/documentation/intentional-divergences/"}
+        [:div.card-title "Intentional Divergences"]
+        [:div.card-desc
+         "Where mino deliberately differs from Clojure and what "
+         "it offers in place of each divergence."]]
+
        [:a.card {:href "/examples/bindings/"}
         [:div.card-title "Language Bindings"]
         [:div.card-desc
