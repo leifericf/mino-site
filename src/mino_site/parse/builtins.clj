@@ -1,95 +1,112 @@
 (ns mino-site.parse.builtins
-  "Parse mino.c for built-in functions, stdlib macros, and I/O primitives.
+  "Build Language Reference data by booting mino and introspecting
+  every binding via apropos / doc.
 
-  Extracts:
-  - Primitive registrations from mino_install_core (with section comments)
-  - Stdlib macro source from stdlib_mino_src
-  - I/O primitives from mino_install_io
-  - Categorization from the mino_install_core docstring in mino.h"
+  The previous implementation regex-scraped src/prim.c. Phase A of
+  the C-Core Refactor reorganized the C tree into per-subsystem
+  subdirectories and split prim.c into prim/*.c, so the regex
+  parser broke. Runtime introspection makes the live runtime the
+  source of truth and works uniformly for C primitives and forms
+  defined in core.mino.
+
+  Curated metadata that is not derivable from runtime values
+  (category grouping, special-form list, I/O primitive set) lives
+  here as data.
+
+  Source extraction for the \"show source\" panel still parses
+  core.mino text — that's a different concern from naming the
+  bindings."
   (:require
+    [clojure.edn :as edn]
+    [clojure.java.io :as io]
+    [clojure.java.shell :as shell]
     [clojure.string :as str]))
 
-;; --- Category map from mino.h docstring ---
+;; --- Curated category map ---
 
 (def ^:private category-order
-  "Authoritative category ordering and membership from the
-  mino_install_core docstring in mino.h (lines 196-217)."
-  [{:name "arithmetic"  :fns #{"+" "-" "*" "/" "mod" "rem" "quot"}}
-   {:name "comparison"  :fns #{"=" "<" "<=" ">" ">=" "not=" "compare"}}
-   {:name "math"        :fns #{"math-floor" "math-ceil" "math-round" "math-sqrt"
-                                "math-pow" "math-log" "math-exp" "math-sin"
-                                "math-cos" "math-tan" "math-atan2"}}
-   {:name "bitwise"     :fns #{"bit-and" "bit-or" "bit-xor" "bit-not"
-                                "bit-shift-left" "bit-shift-right"}}
-   {:name "list"        :fns #{"car" "cdr" "cons" "list"}}
-   {:name "collection"  :fns #{"count" "nth" "first" "rest" "vector" "hash-map"
-                                "assoc" "dissoc" "get" "conj" "update" "keys" "vals"
-                                "hash"}}
-   {:name "sets"        :fns #{"hash-set" "set?" "contains?" "disj"}}
-   {:name "atoms"       :fns #{"atom" "deref" "reset!" "swap!" "atom?"}}
-   {:name "sequences"   :fns #{"map" "filter" "reduce" "take" "drop" "range"
-                                "repeat" "concat" "into" "apply" "reverse" "sort"}}
-   {:name "predicates"  :fns #{"cons?" "nil?" "string?" "number?" "keyword?"
-                                "symbol?" "vector?" "map?" "set?" "fn?" "empty?"
-                                "seq?"}}
-   {:name "utility"     :fns #{"not" "not=" "identity" "some" "every?"
-                                "rand" "eval"}}
-   {:name "reflection"  :fns #{"type" "name" "symbol" "keyword" "doc" "source"
-                                "apropos"}}
-   {:name "strings"     :fns #{"str" "pr-str" "format" "subs" "split" "join"
-                                "starts-with?" "ends-with?" "includes?"
-                                "upper-case" "lower-case" "trim" "char-at"
-                                "read-string"}}
-   {:name "regex"       :fns #{"re-find" "re-matches"}}
-   {:name "type coercion" :fns #{"int" "float"}}
-   {:name "exceptions"  :fns #{"throw" "last-error" "error?"}}
-   {:name "modules"     :fns #{"require"}}
-   {:name "macros"      :fns #{"macroexpand" "macroexpand-1" "gensym"}}
-   {:name "definitions" :fns #{"defn"}}])
+  "Authoritative category ordering and membership. Each :fns is a
+  vector to preserve curated display order."
+  [{:name "arithmetic"  :fns ["+" "-" "*" "/" "mod" "rem" "quot"
+                              "inc" "dec" "+'" "-'" "*'" "inc'" "dec'"]}
+   {:name "comparison"  :fns ["=" "<" "<=" ">" ">=" "not=" "compare"]}
+   {:name "math"        :fns ["math-floor" "math-ceil" "math-round" "math-sqrt"
+                              "math-pow" "math-log" "math-exp" "math-sin"
+                              "math-cos" "math-tan" "math-atan2"]}
+   {:name "bitwise"     :fns ["bit-and" "bit-or" "bit-xor" "bit-not"
+                              "bit-shift-left" "bit-shift-right"]}
+   {:name "list"        :fns ["car" "cdr" "cons" "list"]}
+   {:name "collection"  :fns ["count" "nth" "first" "rest" "vector" "hash-map"
+                              "assoc" "dissoc" "get" "conj" "update" "keys" "vals"
+                              "hash"]}
+   {:name "sets"        :fns ["hash-set" "set?" "contains?" "disj"]}
+   {:name "atoms"       :fns ["atom" "deref" "reset!" "swap!" "atom?"]}
+   {:name "sequences"   :fns ["map" "filter" "reduce" "take" "drop" "range"
+                              "repeat" "concat" "into" "apply" "reverse" "sort"]}
+   {:name "predicates"  :fns ["cons?" "nil?" "string?" "number?" "keyword?"
+                              "symbol?" "vector?" "map?" "set?" "fn?" "empty?"
+                              "seq?"]}
+   {:name "utility"     :fns ["not" "not=" "identity" "some" "every?"
+                              "rand" "eval"]}
+   {:name "reflection"  :fns ["type" "name" "symbol" "keyword" "doc" "source"
+                              "apropos"]}
+   {:name "strings"     :fns ["str" "pr-str" "format" "subs" "split" "join"
+                              "starts-with?" "ends-with?" "includes?"
+                              "upper-case" "lower-case" "trim" "char-at"
+                              "read-string"]}
+   {:name "regex"       :fns ["re-find" "re-matches"]}
+   {:name "type coercion" :fns ["int" "float"]}
+   {:name "exceptions"  :fns ["throw" "last-error" "error?"]}
+   {:name "modules"     :fns ["require"]}
+   {:name "macros"      :fns ["macroexpand" "macroexpand-1" "gensym"]}
+   {:name "definitions" :fns ["defn"]}])
 
 (def ^:private special-forms
-  "Special forms recognized directly by the evaluator."
+  "Special forms recognized directly by the evaluator. Not real
+  bindings, so apropos does not see them."
   ["quote" "quasiquote" "unquote" "unquote-splicing"
    "def" "defmacro" "if" "do" "let" "fn" "loop" "recur" "try"])
 
-;; --- Primitive extraction from mino_install_core ---
+(def ^:private io-prim-names
+  "Primitives installed by mino_install_io. Listed here so the
+  page can render them in their own section, since the host may
+  call mino_install_core without mino_install_io."
+  #{"println" "prn" "print" "pr" "newline"
+    "slurp" "spit" "exit" "time-ms" "nano-time" "file-seq"
+    "getenv" "getcwd" "chdir" "gc-stats" "gc!"})
 
-(defn- extract-primitives
-  "Extract DEF_PRIM calls from mino_install_core.
-  Returns a seq of {:name \"...\" :doc \"...\"}."
-  [c-text]
-  (let [install-re #"(?s)void mino_install_core\(mino_state_t \*S, mino_env_t \*env\)\s*\{(.+?)\n\}"
-        m (re-find install-re c-text)]
-    (when m
-      (let [body (nth m 1)]
-        (->> (re-seq #"DEF_PRIM\(env,\s*\"([^\"]+)\"[^\"]*\"([^\"]+)\"\)" body)
-             (mapv (fn [[_ name doc]] {:name name :doc doc})))))))
+;; --- Runtime introspection ---
 
-;; --- I/O primitives ---
+(defn- introspect-bindings
+  "Run the introspection script against the mino binary at
+  <mino-root>/mino. Returns a vector of {:name :kind :doc} maps
+  read from the script's EDN output."
+  [mino-root script-path]
+  (let [bin (str mino-root "/mino")]
+    (when-not (.exists (io/file bin))
+      (throw (ex-info (str "mino binary not found at " bin
+                           " — run the bootstrap compile in the "
+                           "submodule first")
+                      {:bin bin})))
+    (let [{:keys [exit out err]} (shell/sh bin script-path)]
+      (when-not (zero? exit)
+        (throw (ex-info "mino introspection script failed"
+                        {:exit exit :stderr err :stdout out})))
+      (edn/read-string out))))
 
-(defn- extract-io-primitives
-  "Extract DEF_PRIM calls from mino_install_io."
-  [c-text]
-  (let [io-re #"(?s)void mino_install_io\(mino_state_t \*S, mino_env_t \*env\)\s*\{(.+?)\n\}"
-        m (re-find io-re c-text)]
-    (when m
-      (let [body (nth m 1)]
-        (->> (re-seq #"DEF_PRIM\(env,\s*\"([^\"]+)\"[^\"]*\"([^\"]+)\"\)" body)
-             (mapv (fn [[_ name doc]] {:name name :doc doc})))))))
-
-;; --- Stdlib macros ---
+;; --- Stdlib source extraction (parses core.mino text for "show source") ---
 
 (defn- read-stdlib-source
-  "Read core.mino from the src/ directory (sibling of prim.c)."
-  [prim-c-path]
-  (let [dir  (.getParent (java.io.File. prim-c-path))
-        path (str dir "/core.mino")]
-    (when (.exists (java.io.File. path))
+  "Read core.mino from the mino source tree."
+  [mino-root]
+  (let [path (str mino-root "/src/core.mino")]
+    (when (.exists (io/file path))
       (slurp path))))
 
 (defn- parse-stdlib-forms
-  "Parse the unescaped stdlib source into individual form definitions.
-  Returns [{:name \"when\" :kind :macro :source \"(defmacro when ...)\"}]."
+  "Walk the unescaped stdlib source line-by-line. Returns
+  [{:name :kind :doc :source} ...] for each top-level defmacro
+  or def. Used to populate the \"show source\" panel."
   [source]
   (let [lines (str/split-lines source)]
     (loop [lines lines
@@ -98,11 +115,9 @@
         forms
         (let [line (first lines)]
           (cond
-            ;; defmacro
             (str/starts-with? line "(defmacro ")
             (let [name-m (re-find #"\(defmacro\s+(\S+)" line)
-                  name (when name-m (second name-m))
-                  ;; Collect until balanced parens
+                  nm    (when name-m (second name-m))
                   form-lines
                   (loop [ls lines collected [] depth 0]
                     (if (empty? ls)
@@ -118,15 +133,14 @@
                   doc-m (re-find #"(?s)\(defmacro\s+\S+\s+\"([^\"]+)\"" source)
                   doc (when doc-m (second doc-m))]
               (recur (drop (count form-lines) lines)
-                     (conj forms {:name name
+                     (conj forms {:name nm
                                   :kind :macro
                                   :doc doc
                                   :source source})))
 
-            ;; def (for comp, partial, complement)
             (str/starts-with? line "(def ")
             (let [name-m (re-find #"\(def\s+(\S+)" line)
-                  name (when name-m (second name-m))
+                  nm    (when name-m (second name-m))
                   form-lines
                   (loop [ls lines collected [] depth 0]
                     (if (empty? ls)
@@ -142,55 +156,55 @@
                   doc-m (re-find #"(?s)\(def\s+\S+\s+\"([^\"]+)\"" source)
                   doc (when doc-m (second doc-m))]
               (recur (drop (count form-lines) lines)
-                     (conj forms {:name name
+                     (conj forms {:name nm
                                   :kind :function
                                   :doc doc
                                   :source source})))
 
-            ;; Blank or other
             :else
             (recur (rest lines) forms)))))))
 
-;; --- Categorize primitives ---
-
-(defn- categorize-primitive
-  "Returns the category name for a given primitive, or \"uncategorized\"."
-  [prim-name]
-  (or (some (fn [{:keys [name fns]}]
-              (when (contains? fns prim-name) name))
-            category-order)
-      "uncategorized"))
-
 ;; --- Public API ---
 
-(defn parse
-  "Parse prim.c for built-in functions and return structured data.
-  Takes the path to prim.c (which contains mino_install_core/io).
+(defn introspect
+  "Boot mino at mino-root, run script-path against it, and return
+  Language Reference page data.
+
   Returns:
-    {:categories [{:name \"arithmetic\" :primitives [\"+ \" \"-\" ...]} ...]
-     :stdlib [{:name \"when\" :kind :macro :source \"...\"} ...]
-     :io-primitives [\"println\" \"prn\" \"slurp\"]
-     :special-forms [\"quote\" \"def\" ...]}"
-  [path]
-  (let [c-text (slurp path)
-        prims (or (extract-primitives c-text) [])
-        io-prims (or (extract-io-primitives c-text) [])
-        prim-names (mapv :name prims)
-        prim-docs (into {} (map (fn [{:keys [name doc]}] [name doc]) prims))
-        io-docs (into {} (map (fn [{:keys [name doc]}] [name doc]) io-prims))
-        all-docs (merge prim-docs io-docs)
-        stdlib-src (read-stdlib-source path)
-        stdlib-forms (when stdlib-src (parse-stdlib-forms stdlib-src))]
-    {:categories
-     (mapv (fn [{:keys [name fns]}]
-             {:name name
-              :primitives (filterv #(contains? fns %) prim-names)})
-           category-order)
+    {:categories     [{:name \"arithmetic\" :primitives [\"+\" \"-\" ...]} ...]
+     :prim-docs      {\"+\" \"...\" ...}
+     :stdlib         [{:name :kind :doc :source} ...]
+     :io-primitives  [\"println\" \"prn\" ...]
+     :special-forms  [\"quote\" \"def\" ...]}"
+  [mino-root script-path]
+  (let [bindings     (introspect-bindings mino-root script-path)
+        binding-docs (into {} (map (juxt :name :doc)) bindings)
+        stdlib-src   (read-stdlib-source mino-root)
+        stdlib       (when stdlib-src (parse-stdlib-forms stdlib-src))
+        stdlib-names (into #{} (map :name) stdlib)
+        binding-names (into #{} (map :name) bindings)
+        ;; Anything bound that is not defined in core.mino is a C primitive.
+        prim-names   (into #{}
+                           (remove stdlib-names)
+                           binding-names)
+        curated-cats (mapv (fn [{:keys [name fns]}]
+                             {:name name
+                              :primitives (filterv #(contains? prim-names %) fns)})
+                           category-order)
+        curated-set  (into #{} (mapcat :primitives) curated-cats)
+        other-prims  (->> (sort prim-names)
+                          (remove curated-set)
+                          (remove io-prim-names)
+                          vec)
+        cats         (cond-> curated-cats
+                       (seq other-prims)
+                       (conj {:name "other" :primitives other-prims}))]
+    {:categories cats
 
-     :prim-docs all-docs
+     :prim-docs binding-docs
 
-     :stdlib (or stdlib-forms [])
+     :stdlib (or stdlib [])
 
-     :io-primitives (mapv :name io-prims)
+     :io-primitives (filterv io-prim-names (sort prim-names))
 
      :special-forms special-forms}))

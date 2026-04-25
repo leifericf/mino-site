@@ -38,6 +38,19 @@ jobs:
             ~/.gitlibs
           key: m2-${{ hashFiles('deps.edn') }}
 
+      - name: Bootstrap mino binary
+        working-directory: mino
+        run: |
+          cc -std=c99 -O2 \
+            -Isrc -Isrc/public -Isrc/runtime -Isrc/gc -Isrc/eval \
+            -Isrc/collections -Isrc/prim -Isrc/async -Isrc/interop \
+            -Isrc/diag -Isrc/vendor/imath \
+            -o mino \
+            src/public/*.c src/runtime/*.c src/gc/*.c src/eval/*.c \
+            src/collections/*.c src/prim/*.c src/async/*.c src/interop/*.c \
+            src/regex/*.c src/diag/*.c src/vendor/imath/*.c \
+            main.c -lm
+
       - name: Build site
         run: clojure -X:build
 
