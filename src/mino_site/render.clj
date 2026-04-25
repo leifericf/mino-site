@@ -35,7 +35,7 @@
     :wide        — use wider container (for docs with sidebar)"
   [{:keys [title description active-page wide]} & body]
   (let [page-title (if title
-                     (str title " \u2014 " site-title)
+                     (str title " | " site-title)
                      site-title)
         desc       (or description site-description)]
     (str

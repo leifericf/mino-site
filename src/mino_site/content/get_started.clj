@@ -20,10 +20,44 @@
        ". Any C99 compiler, no external dependencies."]
 
       [:h2 "2. Build"]
-      [:p "Bootstrap the standalone REPL:"]
-      [:pre [:code "cd mino\ncc -std=c99 -O2 -Isrc -o mino src/*.c main.c -lm\n./mino task build"]]
-      [:p "Or compile mino directly into your own program:"]
-      [:pre [:code "cc -std=c99 -Isrc -o myapp myapp.c src/*.c -lm"]]
+      [:p "The C tree is split into per-subsystem subdirectories "
+       "under " [:code "src/"] ". Bootstrap the standalone REPL by "
+       "generating the embedded core source header, then compiling "
+       "every subsystem in one cc invocation:"]
+      [:pre
+       [:code
+"cd mino
+printf 'static const char *core_mino_src =\\n' > src/core_mino.h
+sed 's/\\\\/\\\\\\\\/g; s/\"/\\\\\"/g; s/^/    \"/; s/$/\\\\n\"/' src/core.mino >> src/core_mino.h
+printf '    ;\\n' >> src/core_mino.h
+cc -std=c99 -O2 \\
+  -Isrc -Isrc/public -Isrc/runtime -Isrc/gc -Isrc/eval \\
+  -Isrc/collections -Isrc/prim -Isrc/async -Isrc/interop \\
+  -Isrc/diag -Isrc/vendor/imath \\
+  -o mino \\
+  src/public/*.c src/runtime/*.c src/gc/*.c src/eval/*.c \\
+  src/collections/*.c src/prim/*.c src/async/*.c src/interop/*.c \\
+  src/regex/*.c src/diag/*.c src/vendor/imath/*.c \\
+  main.c -lm
+./mino task build"]]
+      [:p "After the bootstrap, " [:code "./mino task build"] " takes "
+       "over for incremental rebuilds."]
+      [:p "Or compile mino directly into your own program (use the "
+       "same " [:code "-I"] " flags and the same per-subsystem "
+       "source globs):"]
+      [:pre
+       [:code
+"cc -std=c99 -O2 \\
+  -Imino/src -Imino/src/public -Imino/src/runtime -Imino/src/gc \\
+  -Imino/src/eval -Imino/src/collections -Imino/src/prim \\
+  -Imino/src/async -Imino/src/interop -Imino/src/diag \\
+  -Imino/src/vendor/imath \\
+  -o myapp myapp.c \\
+  mino/src/public/*.c mino/src/runtime/*.c mino/src/gc/*.c \\
+  mino/src/eval/*.c mino/src/collections/*.c mino/src/prim/*.c \\
+  mino/src/async/*.c mino/src/interop/*.c mino/src/regex/*.c \\
+  mino/src/diag/*.c mino/src/vendor/imath/*.c \\
+  -lm"]]
       [:p "Run the test suite:"]
       [:pre [:code "./mino task test"]]
 
@@ -90,7 +124,7 @@ int main(void)
       [:pre
        [:code {:data-lang "mino"}
 "$ ./mino
-mino 0.48.0
+mino 0.70.0
 mino> (def greet (fn [name] (str \"hello, \" name \"!\")))
 #<fn>
 mino> (greet \"world\")

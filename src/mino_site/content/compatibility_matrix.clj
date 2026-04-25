@@ -29,14 +29,14 @@
 
       [:h2 "Reading the table"]
       [:ul
-       [:li [:strong "Supported"] " — the function or macro behaves "
+       [:li [:strong "Supported"] " - the function or macro behaves "
         "the way Clojure does for the inputs mino accepts."]
-       [:li [:strong "Differs"] " — the name exists and is callable, "
+       [:li [:strong "Differs"] " - the name exists and is callable, "
         "but the behavior diverges deliberately. The note column "
         "explains the divergence and links to "
         [:a {:href "/documentation/intentional-divergences/"}
          "intentional divergences"] " where appropriate."]
-       [:li [:strong "Absent"] " — the name is not provided. "
+       [:li [:strong "Absent"] " - the name is not provided. "
         "Calling it raises a resolution error. The note explains "
         "the replacement (atoms instead of refs, protocols instead "
         "of " [:code "reify"] ", etc.) or links the divergence."]]
@@ -182,7 +182,7 @@
               [:code "seq"] " / " [:code "first"] " / "
               [:code "next"] " / " [:code "rest"]]
          [:td "Supported"]
-         [:td [:code "rest"] " has " [:code "next"] " semantics — "
+         [:td [:code "rest"] " has " [:code "next"] " semantics - "
           "it returns " [:code "nil"] " when exhausted."]]
         [:tr [:td [:code "(list)"]]
          [:td "Differs"]
@@ -366,7 +366,7 @@
               [:code "reset!"] " / " [:code "compare-and-set!"]
               " / " [:code "deref"] " / " [:code "@"]]
          [:td "Supported"] [:td]]
-        [:tr [:td [:code "core.async"] " — "
+        [:tr [:td [:code "core.async"] " - "
               [:code "chan"] " / " [:code "go"] " / "
               [:code "go-loop"] " / " [:code "<!"] " / "
               [:code ">!"] " / " [:code "<!!"] " / "
@@ -404,7 +404,7 @@
         [:tr [:td [:code "agent"] " / " [:code "send"] " / "
               [:code "send-off"] " / " [:code "await"]]
          [:td "Absent"]
-         [:td "Same reason — agents are host-thread backed."]]
+         [:td "Same reason - agents are host-thread backed."]]
         [:tr [:td [:code "locking"] " / " [:code "monitor-enter"]
               " / " [:code "monitor-exit"]]
          [:td "Absent"]

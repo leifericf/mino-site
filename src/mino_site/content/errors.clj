@@ -126,13 +126,25 @@
         [:tr [:td [:code "MCT"]] [:td "Contract"]
          [:td "Precondition or invariant violation"]]
         [:tr [:td [:code "MHO"]] [:td "Host"]
-         [:td "File I/O, capability denied, host callback failure"]]
+         [:td "Capability denied, host callback failure"]]
+        [:tr [:td [:code "MIO"]] [:td "I/O"]
+         [:td [:code "slurp"] ", " [:code "spit"] ", " [:code "sh"]
+          ", file-system access failures"]]
+        [:tr [:td [:code "MOM"]] [:td "Out of memory"]
+         [:td "Allocator exhausted during a user-visible computation "
+          "(e.g. bignum arithmetic)"]]
+        [:tr [:td [:code "MOV"]] [:td "Overflow"]
+         [:td "Integer overflow on " [:code "+"] " / " [:code "-"]
+          " / " [:code "*"] " / " [:code "inc"] " / " [:code "dec"]
+          " when the bignum-promoting variant ("
+          [:code "+'"] " etc.) was not used"]]
         [:tr [:td [:code "MLM"]] [:td "Limit"]
          [:td "Step limit, heap limit, recursion depth exceeded"]]
         [:tr [:td [:code "MUS"]] [:td "User"]
          [:td "User-thrown exception"]]
         [:tr [:td [:code "MIN"]] [:td "Internal"]
-         [:td "Out of memory, runtime bug"]]]]
+         [:td "Runtime invariant violation or unhandled "
+          "internal-state error"]]]]
 
       [:h2 "C API"]
       [:p "Embedders have structured access to the last error:"]

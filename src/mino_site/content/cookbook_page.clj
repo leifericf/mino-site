@@ -33,7 +33,7 @@
         [:strong "Build: "]
         [:code build]])
      [:details.cookbook-source {:open true}
-      [:summary (str filename " \u2014 full source")]
+      [:summary (str filename " - full source")]
       [:pre [:code {:data-lang "c"} source]]]]))
 
 ;; --- Sidebar ---

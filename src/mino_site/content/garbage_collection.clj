@@ -164,8 +164,21 @@ printf(\"live=%zu minor=%zu major=%zu max_pause_ns=%zu\\n\",
         " -- lifetime cycle counters."]
        [:li [:code ":bytes-live"] " / " [:code ":bytes-young"] " / "
         [:code ":bytes-old"] " -- current heap breakdown."]
-       [:li [:code ":bytes-alloc"] " / " [:code ":bytes-freed"]
-        " -- lifetime totals."]
+       [:li [:code ":bytes-freed"]
+        " -- monotonic lifetime total of bytes reclaimed by the "
+        "collector."]
+       [:li [:code ":bytes-alloc"]
+        " -- bytes currently outstanding on the bump path. "
+        "This field is " [:strong "not"] " a monotonic total: minor "
+        "GC decrements it by the bytes it sweeps, and major GC "
+        "resets it to " [:code ":bytes-live"] ". To recover a true "
+        "allocation total over a window, sum "
+        [:code "(Δ :bytes-alloc + Δ :bytes-freed)"] " "
+        "across the window. " [:code ":bytes-freed"] " is monotonic, "
+        "so its delta is the bytes the collector swept; "
+        [:code ":bytes-alloc"] "'s delta captures the change in "
+        "outstanding bump-path bytes. The perf-gate's allocation "
+        "tracker uses this same formula."]
        [:li [:code ":total-gc-ns"] " / " [:code ":max-gc-ns"]
         " -- cumulative and worst-case collection wall time."]
        [:li [:code ":nursery-bytes"] " -- configured nursery size, "

@@ -33,7 +33,7 @@
        "methods. " [:code "(.next obj)"] ", "
        [:code "(.-field obj)"] ", "
        [:code "(Type/static-call ...)"] ", and "
-       [:code "(new Type ...)"] " all work — but they dispatch "
+       [:code "(new Type ...)"] " all work - but they dispatch "
        "through a capability registry the embedder controls. "
        "Each method, getter, and constructor is opted in by "
        "the host. There is no ambient access to system resources, "
@@ -53,7 +53,7 @@
        ") is single-threaded by contract: one mutator at a time, "
        "no shared mutable state across runtimes, no implicit "
        "thread pool. The embedder runs as many runtimes as it "
-       "wants on as many host threads as it wants — but that "
+       "wants on as many host threads as it wants - but that "
        "shape is decided by the host, not by mino."]
       [:p "What mino offers in their place:"]
       [:ul
@@ -102,7 +102,7 @@
        "is part of the public seq surface."]
       [:p "mino's sequences are element-at-a-time. The chunk "
        "throughput win matters most when a JVM's per-call overhead "
-       "is high relative to per-element work — which is a "
+       "is high relative to per-element work - which is a "
        "reasonable tradeoff for JVM Clojure but not load-bearing "
        "for embedded-scale workloads where mino lives. mino's "
        "lazy seqs are GC-traceable, allocate cheaply, and "
@@ -150,7 +150,7 @@
        [:code "dec"] " throw an " [:code ":eval/overflow"]
        " exception with code " [:code "MOV001"] " when the result "
        "exceeds " [:code "Long/MAX_VALUE"] " or "
-       [:code "Long/MIN_VALUE"] " — like Clojure's "
+       [:code "Long/MIN_VALUE"] " - like Clojure's "
        [:code "unchecked-*"] " family but with a diagnostic "
        "instead of silent wraparound."]
       [:p [:strong "Use " [:code "+'"] " / " [:code "-'"] " / "
@@ -171,7 +171,7 @@
       [:p [:code "::name"] " and " [:code "::alias/name"] " are "
        "not supported. The reader does not maintain a per-namespace "
        "alias map for keyword resolution because mino has a single "
-       "global definition env per runtime — there is no "
+       "global definition env per runtime - there is no "
        "\"current namespace\" for the keyword to resolve relative "
        "to."]
       [:p [:strong "Use the fully spelled keyword."] " "
@@ -186,7 +186,7 @@
       [:p "Clojure's " [:code "(list)"] " is an empty "
        [:code "PersistentList$EmptyList"] " instance. mino's "
        [:code "(list)"] " is " [:code "nil"] ", and "
-       [:code "rest"] " has " [:code "next"] " semantics — it "
+       [:code "rest"] " has " [:code "next"] " semantics - it "
        "returns " [:code "nil"] " when exhausted, not an empty "
        "list. " [:code "(seq nil)"] " and " [:code "(seq ())"]
        " are both " [:code "nil"] "."]
@@ -241,7 +241,7 @@
        "(" [:code "1N"] ", " [:code "1M"] ", " [:code "1/2"]
        ") and reader-conditional " [:code "#?"] " / "
        [:code "#?@"] "."]
-      [:p "This is a soft divergence — the same end (custom "
+      [:p "This is a soft divergence - the same end (custom "
        "data carriers from text) is reachable via "
        [:code "read-string"] " plus a normalizing " [:code "fn"]
        ". A future cycle may add a small "
@@ -256,20 +256,20 @@
        [:code "*ns*"] " dynamic var are not provided. "
        [:code "ns"] " forms parse, " [:code "require"]
        " loads code, and " [:code ":as"] " / " [:code ":refer"]
-       " resolve symbols at read time — but there is no first-"
+       " resolve symbols at read time - but there is no first-"
        "class namespace object you can introspect at runtime."]
       [:p "Each runtime has a single global definition env. "
        "Isolation between subsystems happens at the runtime "
        "boundary (one " [:code "mino_state_t"] " per concern), "
        "not at the namespace boundary. This is the same trade "
-       "Lua makes — and it keeps the embedding contract simple."]
+       "Lua makes - and it keeps the embedding contract simple."]
 
       ;; ----------------------------------------------------------------
 
       [:h2 {:id "regex-reader-literal"} "No #\"...\" regex literal"]
       [:p "The reader does not provide a " [:code "#\"...\""]
        " shorthand for regular expressions. Use "
-       [:code "(re-pattern \"...\")"] " — the engine itself "
+       [:code "(re-pattern \"...\")"] " - the engine itself "
        "(" [:code "re-find"] ", " [:code "re-matches"] ", "
        [:code "re-seq"] ") behaves the same as Clojure for the "
        "POSIX feature set mino's regex compiler covers."]
@@ -277,10 +277,10 @@
       ;; ----------------------------------------------------------------
 
       [:h2 "What is in scope for future cycles"]
-      [:p "Several deferrals on this page are queued — not "
-       "rejected — for later cycles:"]
+      [:p "Several deferrals on this page are queued - not "
+       "rejected - for later cycles:"]
       [:ul
-       [:li [:strong "Host-thread extension"] " — an opt-in "
+       [:li [:strong "Host-thread extension"] " - an opt-in "
         "OS-thread runtime that surfaces " [:code "future"]
         ", " [:code "promise"] ", " [:code "thread"] ", and "
         [:code "<!!"] " backed by real thread pools. Coordinated "
@@ -290,7 +290,7 @@
         "numeric-tower type tags (" [:code "MINO_BIGINT"]
         ", " [:code "MINO_RATIO"] ", " [:code "MINO_BIGDEC"]
         ") sit under the same evolving-API umbrella."]
-       [:li [:strong "Tagged-literal hook"] " — a small "
+       [:li [:strong "Tagged-literal hook"] " - a small "
         [:code "*data-readers*"] "-style table for user-extensible "
         "reader tags."]]
       [:p "The remaining items above (no JVM interop, no STM, no "

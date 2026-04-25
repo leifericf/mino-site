@@ -275,6 +275,16 @@
 
       [:h2 "Benchmarking"]
       [:p "Write benchmarks as mino scripts or C programs that "
-       "link against the mino source. Compile and run with:"]
+       "link against the mino source. Compile and run with the "
+       "same per-subsystem flags the standalone build uses:"]
       [:pre [:code
-       "cc -std=c99 -O2 -Isrc -o my_bench my_bench.c src/*.c -lm\n./my_bench"]])))
+"cc -std=c99 -O2 \\
+  -Isrc -Isrc/public -Isrc/runtime -Isrc/gc -Isrc/eval \\
+  -Isrc/collections -Isrc/prim -Isrc/async -Isrc/interop \\
+  -Isrc/diag -Isrc/vendor/imath \\
+  -o my_bench my_bench.c \\
+  src/public/*.c src/runtime/*.c src/gc/*.c src/eval/*.c \\
+  src/collections/*.c src/prim/*.c src/async/*.c src/interop/*.c \\
+  src/regex/*.c src/diag/*.c src/vendor/imath/*.c \\
+  -lm
+./my_bench"]])))
