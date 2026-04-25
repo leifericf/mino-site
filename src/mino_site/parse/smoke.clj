@@ -33,8 +33,9 @@
 (defn- matching-close
   "Index of the delimiter that closes the opener at `start`, or -1.
   Tracks depth of the specific open/close pair, skipping string
-  literals and ;-comments. Correct for well-formed source where
-  different bracket types are properly nested."
+  literals, ;-comments, and \\X character literals. Correct for
+  well-formed source where different bracket types are properly
+  nested."
   ^long [^String text ^long start]
   (let [len (.length text)
         open (.charAt text start)
@@ -48,6 +49,10 @@
             in-str                  (if (= c \")
                                      (recur (inc i) depth false false)
                                      (recur (inc i) depth true false))
+            ;; Character literal outside string — \( \) \" \; \\ etc.
+            ;; Skip both \ and the payload char so they cannot count
+            ;; as delimiters / string quotes / comment starts.
+            (= c \\)               (recur (+ i 2) depth false false)
             (= c \")               (recur (inc i) depth true false)
             (= c \;)               (let [nl (.indexOf text "\n" (int i))]
                                      (if (neg? nl) -1
