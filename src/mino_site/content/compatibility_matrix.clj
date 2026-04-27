@@ -252,7 +252,7 @@
          [:td "Absent"]
          [:td "Fork-join reducers depend on host threads. See "
           [:a {:href "/documentation/intentional-divergences/#host-threads"}
-           "no host threads"] "."]]]]
+           "host-grant-gated host threads"] "."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Higher-order
@@ -308,21 +308,17 @@
          [:td "Supported"]
          [:td "Stored as " [:code "{unscaled scale}"] " over "
           [:code "MINO_BIGINT"] "."]]
-        [:tr [:td "Auto-promoting " [:code "+'"] " / " [:code "-'"]
-              " / " [:code "*'"] " / " [:code "inc'"] " / "
-              [:code "dec'"]]
-         [:td "Supported"]
-         [:td "Long-overflow promotes to bigint; bigint arithmetic "
-          "stays in bigint."]]
         [:tr [:td "Plain " [:code "+"] " / " [:code "-"] " / "
               [:code "*"] " / " [:code "inc"] " / " [:code "dec"]]
-         [:td "Differs"]
-         [:td "Throw on long overflow with code "
-          [:code "MOV001"] ". Mino does not silently wrap. Use "
-          [:code "+'"] " / " [:code "-'"] " / " [:code "*'"]
-          " to promote. See "
-          [:a {:href "/documentation/intentional-divergences/#overflow"}
-           "overflow throws"] "."]]
+         [:td "Supported"]
+         [:td "Auto-promotes to bigint on long overflow, matching "
+          "Clojure canon."]]
+        [:tr [:td [:code "unchecked-+"] " / " [:code "unchecked--"]
+              " / " [:code "unchecked-*"] " / "
+              [:code "unchecked-inc"] " / " [:code "unchecked-dec"]]
+         [:td "Supported"]
+         [:td "Fast int64 path with wraparound semantics, matching "
+          "Clojure's " [:code "unchecked-*"] " family."]]
         [:tr [:td [:code "rational?"] " / " [:code "ratio?"] " / "
               [:code "decimal?"] " / " [:code "integer?"] " / "
               [:code "number?"]]
@@ -379,11 +375,8 @@
           [:code "re-matcher"] " returns a stateful iterator that "
           [:code "re-find"] " advances; " [:code "re-groups"]
           " reads the last match. Reader literal "
-          [:code "#\"...\""] " is read but routes patterns through "
-          "the same string-escape path, so " [:code "\\d"] " loses "
-          "its backslash before the engine sees it; pass patterns "
-          "as strings (" [:code "\"\\\\d+\""] ") until a regex-aware "
-          "reader escape mode lands."]]]]
+          [:code "#\"...\""] " bypasses string-escape processing "
+          "so " [:code "\\d"] " reaches the engine intact."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Concurrency
@@ -411,18 +404,30 @@
          [:td "Single-threaded cooperative scheduling. Channels "
           "carry transducers and exception handlers. See "
           [:a {:href "/documentation/intentional-divergences/#host-threads"}
-           "no host threads"] " for what changes from the JVM "
-          "implementation."]]
+           "host-grant-gated host threads"] " for what changes "
+          "from the JVM implementation."]]
         [:tr [:td [:code "alt!"] " macro"]
          [:td "Absent"]
          [:td "Use " [:code "alts!"] " (the function form)."]]
         [:tr [:td [:code "future"] " / " [:code "promise"] " / "
-              [:code "deliver"] " / " [:code "pmap"] " / "
-              [:code "thread"]]
-         [:td "Absent"]
-         [:td "All require host OS threads. See "
+              [:code "deliver"] " / " [:code "thread"] " / "
+              [:code "future-cancel"] " / " [:code "future-done?"]
+              " / " [:code "future-cancelled?"]]
+         [:td "Host-grant-gated"]
+         [:td "API surface ships in v0.84.0; the runtime that backs "
+          "the surface lands across upcoming versions. Embedded "
+          "states default to " [:code "thread_limit = 1"] " and "
+          "throw " [:code ":mino/unsupported"] " until the host "
+          "calls " [:code "mino_set_thread_limit"] "; standalone "
+          [:code "./mino"] " grants " [:code "cpu_count"] " by "
+          "default. See "
           [:a {:href "/documentation/intentional-divergences/#host-threads"}
-           "no host threads"] "."]]
+           "host-grant-gated host threads"] " for the contract."]]
+        [:tr [:td [:code "pmap"]]
+         [:td "Absent"]
+         [:td "Layered on host threads in canonical Clojure. See "
+          [:a {:href "/documentation/intentional-divergences/#host-threads"}
+           "host-grant-gated host threads"] "."]]
         [:tr [:td [:code "ref"] " / " [:code "ref-set"] " / "
               [:code "alter"] " / " [:code "commute"] " / "
               [:code "dosync"]]

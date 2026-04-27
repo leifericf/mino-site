@@ -415,17 +415,21 @@
         ") goes through a capability registry the embedder "
         "controls."]
        [:li [:strong "Records and types."]
-        " " [:code "defrecord"] " / " [:code "deftype"]
-        " / " [:code "reify"] " / " [:code "proxy"]
-        " / " [:code "definterface"]
-        " do not exist. Use maps and "
-        [:code "defprotocol"] " + " [:code "extend-type"] "."]
-       [:li [:strong "Host-thread primitives."]
-        " " [:code "future"] " / " [:code "promise"]
-        " / " [:code "pmap"] " / " [:code "thread"] " / "
-        [:code "agent"] " require host OS threads. Use "
-        [:code "core.async"] " inside a runtime or run "
-        "multiple isolated runtimes on host threads."]
+        " " [:code "proxy"] " and " [:code "definterface"]
+        " do not exist (no JVM classes to materialize). "
+        [:code "defrecord"] ", " [:code "deftype"] ", "
+        [:code "reify"] ", and " [:code "instance?"] " ship as "
+        "real value types — see the records section above."]
+       [:li [:strong "Host-thread primitives are grant-gated."]
+        " " [:code "future"] " / " [:code "promise"] " / "
+        [:code "deliver"] " / " [:code "thread"] " throw "
+        [:code ":mino/unsupported"] " until the host calls "
+        [:code "mino_set_thread_limit(S, n>1)"] ". Standalone "
+        [:code "./mino"] " grants " [:code "cpu_count"] " by "
+        "default, so REPL/script users see the canon surface "
+        "without configuration. " [:code "agent"] " / "
+        [:code "send"] " / " [:code "send-off"] " / "
+        [:code "pmap"] " stay absent."]
        [:li [:strong "Shared-memory STM."]
         " No refs, no " [:code "dosync"] ". Atoms cover "
         "mino's concurrency model."]
@@ -435,13 +439,7 @@
        [:li [:strong "Distinct empty list."]
         " " [:code "(list)"] " returns " [:code "nil"] ", not an "
         "empty list object. " [:code "rest"] " has " [:code "next"]
-        " semantics."]
-       [:li [:strong "Plain-arithmetic auto-promote."]
-        " Plain " [:code "+"] " / " [:code "-"] " / " [:code "*"]
-        " throw on long overflow; use " [:code "+'"] " / "
-        [:code "-'"] " / " [:code "*'"] " for Clojure's "
-        "auto-promoting semantics. The numeric tower itself "
-        "(BigInt, Ratio, BigDec) is complete."]]
+        " semantics."]]
 
       ;; --- Quick reference ---
 
@@ -463,19 +461,21 @@
          [:td "Same (single-threaded scheduling)"]]
         [:tr [:td [:code "(dosync ...)"] " / " [:code "(ref ...)"]]
          [:td "Not applicable (use atoms)"]]
-        [:tr [:td [:code "(future ...)"]]
-         [:td "Not implemented (use " [:code "go"] ")"]]
-        [:tr [:td [:code "(thread ...)"]]
-         [:td "Not implemented (use " [:code "go"] ")"]]
+        [:tr [:td [:code "(future ...)"] " / "
+              [:code "(promise)"] " / " [:code "(thread ...)"]]
+         [:td "Same when host grants threads (default in standalone)"]]
         [:tr [:td [:code "defmulti"] " / " [:code "defmethod"]]
          [:td "Supported"]]
-        [:tr [:td [:code "defrecord"] " / " [:code "deftype"]]
-         [:td "Not implemented (use maps)"]]
+        [:tr [:td [:code "defrecord"] " / " [:code "deftype"]
+              " / " [:code "reify"] " / " [:code "instance?"]]
+         [:td "Same"]]
         [:tr [:td [:code "1/2"] " / " [:code "42N"] " / "
          [:code "1.5M"]]
          [:td "Real Ratio / BigInt / BigDec"]]
         [:tr [:td "Plain " [:code "+"] " / " [:code "-"] " / "
          [:code "*"] " on long overflow"]
-         [:td "Throws (use " [:code "+'"] " / " [:code "-'"]
-          " / " [:code "*'"] " to auto-promote)"]]]])))
+         [:td "Same — auto-promotes to BigInt"]]
+        [:tr [:td [:code "unchecked-+"] " / " [:code "unchecked--"]
+              " / " [:code "unchecked-*"]]
+         [:td "Same"]]]])))
 

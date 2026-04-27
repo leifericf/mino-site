@@ -43,37 +43,55 @@
 
       ;; ----------------------------------------------------------------
 
-      [:h2 {:id "host-threads"} "No host threads"]
-      [:p [:code "future"] ", " [:code "promise"] ", "
-       [:code "deliver"] ", " [:code "pmap"] ", "
-       [:code "thread"] ", " [:code "agent"] ", "
-       [:code "send"] ", and " [:code "send-off"] " all "
-       "depend on a thread pool that schedules host OS threads "
-       "preemptively. Each mino runtime (" [:code "mino_state_t"]
-       ") is single-threaded by contract: one mutator at a time, "
-       "no shared mutable state across runtimes, no implicit "
-       "thread pool. The embedder runs as many runtimes as it "
-       "wants on as many host threads as it wants - but that "
-       "shape is decided by the host, not by mino."]
-      [:p "What mino offers in their place:"]
-      [:ul
-       [:li [:strong "core.async"] " channels and " [:code "go"]
-        " blocks for cooperative concurrency inside a runtime. "
-        [:code "go"] " parking, channel composition, transducer-"
-        "carrying channels, " [:code "alts!"] ", "
-        [:code "timeout"] ", " [:code "mult"] " / " [:code "tap"]
-        ", " [:code "pub"] " / " [:code "sub"] ", and "
-        [:code "pipeline"] " all work as expected."]
-       [:li "Multiple isolated runtimes, each driven by its own "
-        "host thread. The embedder picks the threading model. "
-        "Cross-runtime communication uses message passing through "
-        "host channels, not shared memory."]]
-      [:p [:code "<!!"] " and " [:code ">!!"] " exist but block "
-       "the calling " [:em "fiber"] ", not a host thread; they are "
-       "compile-time errors only inside a " [:code "go"] " block "
-       "(use " [:code "<!"] " / " [:code ">!"] " there). Outside "
-       "a " [:code "go"] " they pump the scheduler until the "
-       "operation completes."]
+      [:h2 {:id "host-threads"} "Host-grant-gated host threads"]
+      [:p "Threading is a per-state runtime " [:em "capability"]
+       " the host grants, not a build-time feature. Each "
+       [:code "mino_state_t"] " starts at "
+       [:code "thread_limit = 1"] " (single-threaded). Embedders "
+       "raise the limit via " [:code "mino_set_thread_limit(S, n)"]
+       "; while the limit is " [:code "<= 1"]
+       ", " [:code "future"] ", " [:code "promise"] ", "
+       [:code "deliver"] ", " [:code "thread"] ", and the blocking "
+       [:code "<!!"] " / " [:code ">!!"] " / " [:code "alts!!"]
+       " ops throw " [:code ":mino/unsupported"] " with a message "
+       "naming the policy."]
+      [:p "Standalone " [:code "./mino"] " grants "
+       [:code "cpu_count"] " right after " [:code "mino_install_all"]
+       ", so REPL/script users see the canon surface working out of "
+       "the box. Embedders that want sandboxed scripts withhold the "
+       "grant; embedders that want canon parity make the same call "
+       "the standalone binary does."]
+      [:p [:strong "Status."] " The API surface (" [:code "mino_set_thread_limit"]
+       " / " [:code "mino_get_thread_limit"] " / "
+       [:code "mino_thread_count"] " / " [:code "mino_quiesce_threads"]
+       ") shipped in v0.84.0 alongside the script-side throw stubs. "
+       "The runtime that backs them — per-thread context refactor, "
+       "atom CAS upgrade, GC STW machinery, real "
+       [:code "pthread_create"] " plumbing — lands across upcoming "
+       "versions. The " [:code "(mino-thread-limit)"] " primitive "
+       "exposes the current limit so library code can branch on it."]
+      [:p [:strong "Embed-distinctive value-add."] " "
+       [:code "mino_set_thread_pool"] " lets the host hand mino an "
+       "existing pool (Tokio runtime, libuv worker pool, ASIO io_context, "
+       "custom pthread pool); workers from that pool service "
+       [:code "future"] " spawns. The work item carries the state pointer, "
+       "not the thread, so the same N-worker pool can service an "
+       "unbounded number of isolated " [:code "mino_state_t"]
+       " runtimes — multi-tenant by construction. JVM Clojure cannot "
+       "offer this because the JVM forces one global heap; mino's "
+       "per-state isolation makes it natural."]
+      [:p [:strong "Cooperative concurrency without threading."] " "
+       [:code "core.async"] " channels and " [:code "go"]
+       " blocks remain the inside-one-runtime story. " [:code "go"]
+       " parking, channel composition, transducer-carrying channels, "
+       [:code "alts!"] ", " [:code "timeout"] ", "
+       [:code "mult"] " / " [:code "tap"] ", "
+       [:code "pub"] " / " [:code "sub"] ", and "
+       [:code "pipeline"] " all work without threads. Inside a "
+       [:code "go"] " block " [:code "<!"] " / " [:code ">!"]
+       " park the fiber; outside, the blocking variants pump the "
+       "scheduler. The grant gates only the OS-thread shape, not "
+       "the cooperative shape."]
 
       ;; ----------------------------------------------------------------
 
@@ -114,56 +132,23 @@
 
       ;; ----------------------------------------------------------------
 
-      [:h2 {:id "records"} "No defrecord / deftype"]
-      [:p "Records and types compile to JVM classes implementing "
-       "host interfaces, with field-access protocol bridging and "
-       "implicit constructors. None of that translates to mino's "
-       "runtime."]
-      [:p [:strong "Use maps and protocols."] " mino's "
-       [:code "defprotocol"] " + " [:code "extend-type"] " covers "
-       "polymorphic dispatch on user data; maps cover record-shaped "
-       "data carriers. " [:code "extend-type"] " takes a type tag "
-       "(" [:code "::Point"] " keyword by convention, or one of the "
-       "built-in keys like " [:code "::map"] " / " [:code "::vector"]
-       ") and registers method implementations."]
-
-      ;; ----------------------------------------------------------------
-
-      [:h2 {:id "reify-proxy"} "No reify, proxy, definterface"]
-      [:p [:code "reify"] " and " [:code "proxy"] " materialize "
-       "anonymous JVM objects implementing host interfaces. "
-       [:code "definterface"] " declares a host interface. All "
-       "three are JVM shapes."]
-      [:p [:strong "Use defprotocol + extend-type."] " For the "
-       "reify case where you want a one-off polymorphic value, "
-       "mino's idiom is to " [:code "extend-type"] " a fresh "
-       "type tag with the methods you need. " [:code "definterface"]
-       " in particular throws an informative error pointing at "
-       [:code "defprotocol"] "."]
-
-      ;; ----------------------------------------------------------------
-
-      [:h2 {:id "overflow"} "Plain + / - / * throw on overflow"]
-      [:p "Clojure's plain " [:code "+"] " on Long values silently "
-       "promotes to BigInt. mino's plain " [:code "+"] ", "
-       [:code "-"] ", " [:code "*"] ", " [:code "inc"] ", and "
-       [:code "dec"] " throw an " [:code ":eval/overflow"]
-       " exception with code " [:code "MOV001"] " when the result "
-       "exceeds " [:code "Long/MAX_VALUE"] " or "
-       [:code "Long/MIN_VALUE"] " - like Clojure's "
-       [:code "unchecked-*"] " family but with a diagnostic "
-       "instead of silent wraparound."]
-      [:p [:strong "Use " [:code "+'"] " / " [:code "-'"] " / "
-        [:code "*'"] " / " [:code "inc'"] " / " [:code "dec'"]
-        " to auto-promote."] " These behave like Clojure's plain "
-       "arithmetic: long-overflow promotes to BigInt, BigInt math "
-       "stays in BigInt, and the rest of the numeric tower (Ratio, "
-       "BigDec) participates in dispatch."]
-      [:p "The throw-by-default rule keeps every-day integer "
-       "arithmetic on the fast int64 path; promotion is opt-in "
-       "via the prime variants. The numeric tower itself is "
-       "complete (BigInt, Ratio, BigDec all real types backed "
-       "by vendored MIT-licensed imath)."]
+      [:h2 {:id "reify-proxy"} "No proxy, definterface"]
+      [:p [:code "defrecord"] ", " [:code "deftype"] ", "
+       [:code "reify"] ", and " [:code "instance?"] " all ship as "
+       "real value types — see the "
+       [:a {:href "/documentation/from-clojure/"} "Coming from Clojure"]
+       " page for the canonical surface and the embed-distinctive "
+       "C-side construction API."]
+      [:p [:code "proxy"] " materializes an anonymous JVM object "
+       "implementing host interfaces; " [:code "definterface"] " "
+       "declares one. Both are JVM shapes that don't translate to "
+       "mino's ANSI-C runtime."]
+      [:p [:strong "Use defprotocol + extend-type."]
+       " For one-off polymorphic values, mino has real "
+       [:code "reify"] " (cycle F). For static interface declaration, "
+       [:code "defprotocol"] " is the analogue. "
+       [:code "definterface"] " throws an informative error pointing "
+       "at " [:code "defprotocol"] "."]
 
       ;; ----------------------------------------------------------------
 
@@ -235,24 +220,39 @@
       ;; ----------------------------------------------------------------
 
       [:h2 "What is in scope for future cycles"]
-      [:p "Several deferrals on this page are queued - not "
-       "rejected - for later cycles:"]
+      [:p "Two queued items remain on the roadmap:"]
       [:ul
-       [:li [:strong "Host-thread extension"] " - an opt-in "
-        "OS-thread runtime that surfaces " [:code "future"]
-        ", " [:code "promise"] ", " [:code "thread"] ", and "
-        [:code "<!!"] " backed by real thread pools. Coordinated "
-        "with the embedding contract, not bolted on."]
+       [:li [:strong "Host-thread runtime"] " — the API surface "
+        "shipped in v0.84.0 and the throw stubs are in place; the "
+        "runtime that backs them (per-thread context refactor, "
+        "GC STW machinery, atom CAS upgrade, real "
+        [:code "pthread_create"] " plumbing) lands across upcoming "
+        "versions. The grant model is final."]
        [:li [:strong "ABI freeze"] " at v1.0. Until then "
         [:code "src/mino.h"] " is labelled evolving and the "
         "numeric-tower type tags (" [:code "MINO_BIGINT"]
         ", " [:code "MINO_RATIO"] ", " [:code "MINO_BIGDEC"]
-        ") sit under the same evolving-API umbrella."]
-       [:li [:strong "Tagged-literal hook"] " - a small "
-        [:code "*data-readers*"] "-style table for user-extensible "
-        "reader tags."]]
+        ") sit under the same evolving-API umbrella."]]
+      [:p "Items that shipped since the previous version of this "
+       "page: regex literal escapes (cycle A), the "
+       [:code "*out*"] " / " [:code "*err*"] " / " [:code "*in*"]
+       " print pipeline (cycle B), REPL specials and "
+       [:code "clojure.repl"] " / " [:code "clojure.stacktrace"]
+       " (cycle C), " [:code "clojure.core.protocols"] " and "
+       [:code "clojure.datafy"] " (cycle D), auto-promoting "
+       [:code "+"] " / " [:code "-"] " / " [:code "*"] " / "
+       [:code "inc"] " / " [:code "dec"] " plus the "
+       [:code "unchecked-*"] " family (cycle E), real "
+       [:code "defrecord"] " / " [:code "deftype"] " / "
+       [:code "reify"] " / " [:code "instance?"] " (cycle F), "
+       "bundled stdlib + per-group install hooks (cycle G0), "
+       [:code "clojure.template"] " + " [:code "clojure.instant"]
+       " (cycle G1), " [:code "*data-readers*"] " reader hook "
+       "(cycle G2), " [:code "clojure.spec.alpha"] " + "
+       [:code "clojure.core.specs.alpha"] " (cycle G3), the "
+       "host-thread API surface and capability metadata "
+       "(cycles G4 + G0.5)."]
       [:p "The remaining items above (no JVM interop, no STM, no "
-       "chunked seqs, no records / reify / proxy, "
-       [:code "(list)"] " is " [:code "nil"] ", plain "
-       [:code "+"] " throws on overflow) are stable design "
+       "chunked seqs, no proxy / definterface, "
+       [:code "(list)"] " is " [:code "nil"] ") are stable design "
        "choices, not deferrals."])))
