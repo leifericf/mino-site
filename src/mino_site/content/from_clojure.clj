@@ -252,9 +252,9 @@
          " / " [:code "8r77"]]
          [:td "Same (radix and hex integer literals)"]]
         [:tr [:td [:code "#\"regex\""]]
-         [:td "Read but routes through the string-escape path "
-          "(use " [:code "\"\\\\d+\""] " for "
-          [:code "\\d+"] ")"]]
+         [:td "Same (body bytes pass to the regex engine "
+          "verbatim; " [:code "\\d"] " reaches the engine "
+          "as backslash and d)"]]
         [:tr [:td [:code "::keyword"] " / "
               [:code "::alias/keyword"]]
          [:td "Same (auto-resolved at read time)"]]

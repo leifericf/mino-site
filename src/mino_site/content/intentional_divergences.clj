@@ -234,24 +234,6 @@
 
       ;; ----------------------------------------------------------------
 
-      [:h2 {:id "regex-reader-escapes"} "Regex literal escapes route through string-escape"]
-      [:p "The reader accepts " [:code "#\"...\""] " literals, "
-       "but the body runs through the same string-escape pass "
-       "that " [:code "\"...\""] " strings do, so "
-       [:code "\\d"] " / " [:code "\\s"] " / " [:code "\\w"]
-       " lose their backslash before the regex engine sees them. "
-       "Real Clojure passes the unescaped text through so the "
-       "regex engine receives " [:code "\\d"] " verbatim."]
-      [:p [:strong "Pass patterns as strings until a regex-aware "
-        "reader escape mode lands."] " "
-       [:code "(re-find \"\\\\d+\" s)"] " (note the doubled "
-       "backslash) compiles the same pattern that real Clojure "
-       "would compile from " [:code "#\"\\d+\""] ". The engine "
-       "itself has full POSIX-class support, capture groups, "
-       "anchors, and alternation."]
-
-      ;; ----------------------------------------------------------------
-
       [:h2 "What is in scope for future cycles"]
       [:p "Several deferrals on this page are queued - not "
        "rejected - for later cycles:"]
