@@ -202,7 +202,7 @@ mino_set_limit(S, MINO_LIMIT_HEAP, 8 * 1024 * 1024);  /* 8 MB */"]]
       [:pre [:code {:data-lang "c"}
 "const char *my_resolver(const char *name, void *ctx) {
     static char path[256];
-    snprintf(path, sizeof(path), \"scripts/%s.mino\", name);
+    snprintf(path, sizeof(path), \"scripts/%s.clj\", name);
     return path;
 }
 mino_set_resolver(S, my_resolver, NULL);"]]
@@ -274,7 +274,7 @@ mino_repl_free(repl);"]]
 void *worker(void *arg) {
     mino_state_t *S   = mino_state_new();
     mino_env_t   *env = mino_new(S);
-    mino_load_file(S, \"bot.mino\", env);
+    mino_load_file(S, \"bot.clj\", env);
     mino_state_free(S);
     return NULL;
 }"]]

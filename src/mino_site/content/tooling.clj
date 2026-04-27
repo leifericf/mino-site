@@ -43,13 +43,13 @@
       [:h3 "Neovim"]
       [:p "Add mino to your nvim-treesitter configuration:"]
       [:pre [:code
-"local parser_config = require(\"nvim-treesitter.parsers\").get_parser_configs()\nparser_config.mino = {\n  install_info = {\n    url = \"https://github.com/leifericf/tree-sitter-mino\",\n    files = { \"src/parser.c\" },\n    branch = \"main\",\n  },\n  filetype = \"mino\",\n}\n\nvim.filetype.add({ extension = { mino = \"mino\" } })"]]
+"local parser_config = require(\"nvim-treesitter.parsers\").get_parser_configs()\nparser_config.mino = {\n  install_info = {\n    url = \"https://github.com/leifericf/tree-sitter-mino\",\n    files = { \"src/parser.c\" },\n    branch = \"main\",\n  },\n  filetype = \"mino\",\n}\n\nvim.filetype.add({ extension = { clj = \"mino\", cljc = \"mino\" } })"]]
       [:p "Then run " [:code ":TSInstall mino"] "."]
 
       [:h3 "Helix"]
       [:p "Add to " [:code "~/.config/helix/languages.toml"] ":"]
       [:pre [:code
-"[[language]]\nname = \"mino\"\nscope = \"source.mino\"\nfile-types = [\"mino\"]\ncomment-token = \";\"\nindent = { tab-width = 2, unit = \"  \" }\n\n[[grammar]]\nname = \"mino\"\nsource = { git = \"https://github.com/leifericf/tree-sitter-mino\", rev = \"main\" }"]]
+"[[language]]\nname = \"mino\"\nscope = \"source.mino\"\nfile-types = [\"clj\", \"cljc\"]\ncomment-token = \";\"\nindent = { tab-width = 2, unit = \"  \" }\n\n[[grammar]]\nname = \"mino\"\nsource = { git = \"https://github.com/leifericf/tree-sitter-mino\", rev = \"main\" }"]]
       [:p "Then run " [:code "hx --grammar fetch && hx --grammar build"] "."]
 
       [:h3 "Emacs (29+)"]

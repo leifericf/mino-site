@@ -133,21 +133,38 @@
       ;; --- Namespaces ---
 
       [:h2 "Namespaces"]
-      [:p "mino supports " [:code "ns"] " forms and "
-       [:code "require"] " with " [:code ":as"] " and "
-       [:code ":refer"] ". Namespace-qualified and aliased symbols "
-       "resolve correctly across files."]
+      [:p "Namespaces are first-class. Each namespace owns its "
+       "own root binding table, so " [:code "(ns a) (def x 1)"]
+       " and " [:code "(ns b) (def x 2)"] " are independent. "
+       [:code "clojure.core"] " is the bundled-core namespace; "
+       "every other namespace's root env chains to it via a parent "
+       "pointer, so unqualified " [:code "if"] ", " [:code "map"]
+       ", " [:code "let"] " keep working without an explicit refer."]
       [:pre [:code
         "(ns myapp.core\n"
         "  (:require [clojure.string :as str]))\n"
         "\n"
         "(str/blank? \"\")  ;=> true"]]
+      [:p "The full " [:code "ns"] " surface is here: "
+       [:code ":require"] " (with " [:code ":as"] ", "
+       [:code ":as-alias"] ", " [:code ":refer"] ", "
+       [:code ":refer :all"] ", " [:code ":only"] ", "
+       [:code ":exclude"] ", " [:code ":rename"] ", and prefix "
+       "lists), " [:code ":use"] ", and " [:code ":refer-clojure"]
+       ". Vars are first-class — " [:code "(def x 1)"] " returns "
+       [:code "#'<ns>/x"] ", " [:code "intern"] ", "
+       [:code "find-var"] ", " [:code "var-get"] ", "
+       [:code "var-set"] ", " [:code "alter-var-root"] ", and "
+       [:code "with-redefs"] " all work, and " [:code "^:private"]
+       " is enforced on cross-namespace qualified access."]
       [:p "Module resolution uses a host-supplied resolver. The "
-       "default standalone resolver searches relative paths with "
-       [:code ".mino"] " and " [:code ".cljc"] " extensions. "
-       "All definitions go into a single global environment per "
-       "runtime. Isolation between runtimes replaces isolation "
-       "between namespaces."]
+       "default standalone resolver searches " [:code ".cljc"]
+       ", " [:code ".clj"] ", and " [:code ".cljs"] " in that "
+       "order. A loaded file's first " [:code "(ns ...)"]
+       " form must declare the requested module name (dash and "
+       "underscore are equivalent), so accidental misnaming fails "
+       "loud rather than silently. Isolation between runtimes "
+       "still gives you full per-state isolation when you want it."]
 
       ;; --- Concurrency ---
 
@@ -224,7 +241,8 @@
          " / " [:code "^Type"]]
          [:td "Same"]]
         [:tr [:td [:code "#?(:clj ... :default ...)"]]
-         [:td "Same (dialect key is " [:code ":mino"] ")"]]
+         [:td "Same (active dialect keys are " [:code ":mino"]
+          " and " [:code ":clj"] ")"]]
         [:tr [:td [:code "#?@(...)"]]
          [:td "Same (splice reader conditional)"]]
         [:tr [:td [:code "'()"] " / " [:code "`(~x ~@xs)"]
@@ -234,9 +252,16 @@
          " / " [:code "8r77"]]
          [:td "Same (radix and hex integer literals)"]]
         [:tr [:td [:code "#\"regex\""]]
-         [:td "Use " [:code "(re-pattern \"regex\")"]]]
-        [:tr [:td [:code "::keyword"]]
-         [:td "Not supported (no auto-resolved keywords)"]]]]
+         [:td "Read but routes through the string-escape path "
+          "(use " [:code "\"\\\\d+\""] " for "
+          [:code "\\d+"] ")"]]
+        [:tr [:td [:code "::keyword"] " / "
+              [:code "::alias/keyword"]]
+         [:td "Same (auto-resolved at read time)"]]
+        [:tr [:td [:code "#:foo{:b 1}"] " / "
+              [:code "#::{:b 1}"] " / "
+              [:code "#::alias{...}"]]
+         [:td "Same (namespaced map literals)"]]]]
 
       ;; --- Data structures ---
 
@@ -411,9 +436,6 @@
         " " [:code "(list)"] " returns " [:code "nil"] ", not an "
         "empty list object. " [:code "rest"] " has " [:code "next"]
         " semantics."]
-       [:li [:strong "Auto-resolved keywords."]
-        " " [:code "::key"] " and " [:code "::alias/key"]
-        " are not supported. Spell the namespace out."]
        [:li [:strong "Plain-arithmetic auto-promote."]
         " Plain " [:code "+"] " / " [:code "-"] " / " [:code "*"]
         " throw on long overflow; use " [:code "+'"] " / "

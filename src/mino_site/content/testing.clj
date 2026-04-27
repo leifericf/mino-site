@@ -15,11 +15,11 @@
        "grouping with " [:code "testing"] "."]
       [:p "The framework is " [:code "clojure.test"]
        ", loaded via " [:code "(require '[clojure.test :refer [deftest is testing]])"]
-       " from test files. " [:code "tests/test.mino"] " is a compatibility "
+       " from test files. " [:code "tests/test.clj"] " is a compatibility "
        "entry point that delegates to " [:code "clojure.test"] "."]
 
       [:h2 "Writing Tests"]
-      [:p "A test file is a normal " [:code ".mino"] " file that requires "
+      [:p "A test file is a normal " [:code ".clj"] " file that requires "
        "the framework and defines tests:"]
       [:pre [:code {:data-lang "mino"}
 "(require \"tests/test\")
@@ -78,14 +78,14 @@
        "failures or errors, " [:code "(exit 0)"] " on success."]
 
       [:h2 "Running Tests"]
-      [:pre [:code "# Run the test suite\n./mino task test\n\n# Run under GC stress (collects on every allocation)\nMINO_GC_STRESS=1 ./mino tests/run.mino"]]
+      [:pre [:code "# Run the test suite\n./mino task test\n\n# Run under GC stress (collects on every allocation)\nMINO_GC_STRESS=1 ./mino tests/run.clj"]]
 
       [:h2 "Test File Organization"]
       [:p "By convention, test files live in " [:code "tests/"] " and are "
-       "named " [:code "*_test.mino"] ". A runner file loads all test "
+       "named " [:code "*_test.clj"] ". A runner file loads all test "
        "modules and calls " [:code "run-tests"] ":"]
       [:pre [:code {:data-lang "mino"}
-";; tests/run.mino
+";; tests/run.clj
 (require \"tests/test\")
 (require \"tests/arithmetic_test\")
 (require \"tests/string_test\")

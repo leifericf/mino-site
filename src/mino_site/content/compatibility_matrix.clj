@@ -23,8 +23,8 @@
        " gives a higher-level tour."]
 
       [:p "Coverage tracks the test suites under "
-       [:code "tests/clj_*_test.mino"] " and "
-       [:code "tests/compat_test.mino"] ". If a function or macro "
+       [:code "tests/clj_*_test.clj"] " and "
+       [:code "tests/compat_test.clj"] ". If a function or macro "
        "is listed as supported, the test suite exercises it."]
 
       [:h2 "Reading the table"]
@@ -80,12 +80,27 @@
         [:tr [:td "Reader conditionals "
               [:code "#?"] " / " [:code "#?@"]]
          [:td "Supported"]
-         [:td "Dialect key is " [:code ":mino"] "; "
-          [:code ":default"] " honored."]]
-        [:tr [:td [:code "::keyword"]]
-         [:td "Absent"]
-         [:td "Auto-resolved keywords are not supported. Use the "
-          "fully spelled keyword."]]]]
+         [:td "Active dialect keys are " [:code ":mino"] " and "
+          [:code ":clj"] " (so " [:code ":clj"] "/"
+          [:code ":cljs"] "-only libraries read on the "
+          [:code ":clj"] " branch); "
+          [:code ":default"] " is honored. "
+          [:code "read-string"] " accepts an opts map "
+          "with " [:code ":read-cond :preserve"] " to keep the "
+          "form unevaluated."]]
+        [:tr [:td [:code "::keyword"] " / "
+              [:code "::alias/keyword"]]
+         [:td "Supported"]
+         [:td "Auto-resolved keywords resolve at read time using "
+          "the current namespace and alias table."]]
+        [:tr [:td "Namespaced map literals "
+              [:code "#:foo{:b 1}"] " / " [:code "#::{:b 1}"]
+              " / " [:code "#::alias{...}"]]
+         [:td "Supported"]
+         [:td "Bare keys are qualified with the named, current, or "
+          "aliased namespace; " [:code ":_/x"] " strips the prefix "
+          "leaving a bare key. Duplicate keys after qualification "
+          "error at read time."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Destructuring & bindings
@@ -103,9 +118,14 @@
          [:td "Supported"] [:td "Including nested destructuring."]]
         [:tr [:td "Namespaced map destructuring "
               [:code "{:keys [::ns/x]}"]]
-         [:td "Absent"]
-         [:td "Auto-resolved keywords absent; spell the namespace "
-          "out."]]]]
+         [:td "Supported"]
+         [:td "Auto-resolved keywords resolve at read time, so "
+          "namespaced " [:code ":keys"] " entries work."]]
+        [:tr [:td [:code "destructure"] " function"]
+         [:td "Supported"]
+         [:td "Returns the flat " [:code "[name init ...]"]
+          " vector for a binding pairs vector, ready to feed to "
+          [:code "let"] "."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Collections
@@ -350,10 +370,20 @@
          [:td "Supported"] [:td]]
         [:tr [:td "Regex: " [:code "re-find"] " / "
               [:code "re-matches"] " / " [:code "re-seq"]
-              " / " [:code "re-pattern"]]
+              " / " [:code "re-pattern"] " / "
+              [:code "re-matcher"] " / " [:code "re-groups"]]
          [:td "Supported"]
-         [:td "Reader literal " [:code "#\"...\""] " is absent; "
-          "use " [:code "(re-pattern \"...\")"] "."]]]]
+         [:td [:code "re-find"] " and " [:code "re-matches"]
+          " return " [:code "[whole g1 g2 ...]"] " for grouped "
+          "patterns and the matched substring otherwise. "
+          [:code "re-matcher"] " returns a stateful iterator that "
+          [:code "re-find"] " advances; " [:code "re-groups"]
+          " reads the last match. Reader literal "
+          [:code "#\"...\""] " is read but routes patterns through "
+          "the same string-escape path, so " [:code "\\d"] " loses "
+          "its backslash before the engine sees it; pass patterns "
+          "as strings (" [:code "\"\\\\d+\""] ") until a regex-aware "
+          "reader escape mode lands."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Concurrency
@@ -504,9 +534,23 @@
          [:td "Including " [:code "^{:k v}"] ", " [:code "^:k"]
           ", " [:code "^Type"] " reader syntax."]]
         [:tr [:td [:code "var?"] " / " [:code "var-get"]
-              " / " [:code "alter-var-root"] " / "
-              [:code "with-redefs"]]
-         [:td "Supported"] [:td]]]]
+              " / " [:code "var-set"] " / "
+              [:code "alter-var-root"] " / "
+              [:code "with-redefs"] " / " [:code "with-redefs-fn"]
+              " / " [:code "with-local-vars"] " / "
+              [:code "intern"] " / " [:code "find-var"] " / "
+              [:code "bound?"]]
+         [:td "Supported"]
+         [:td "Vars are first-class: " [:code "(def x 1)"]
+          " returns the var, " [:code "(meta #'foo)"] " returns "
+          [:code "{:ns ... :name ... :private ... :dynamic ...}"]
+          ", and " [:code "(def x)"] " creates an unbound var that "
+          [:code "bound?"] " reports as " [:code "false"] "."]]
+        [:tr [:td [:code "bound-fn"] " / " [:code "bound-fn*"]
+              " / " [:code "get-thread-bindings"] " / "
+              [:code "with-bindings*"]]
+         [:td "Supported"]
+         [:td "Capture and replay dynamic bindings around a thunk."]]]]
 
       ;; ----------------------------------------------------------------
       ;; I/O & system
@@ -525,13 +569,25 @@
           [:code "(defmethod print-method MyType ...)"] "."]]
         [:tr [:td [:code "slurp"] " / " [:code "spit"]]
          [:td "Supported"] [:td]]
-        [:tr [:td [:code "read"] " / " [:code "read-string"]]
+        [:tr [:td [:code "read"] " / " [:code "read-string"]
+              " / " [:code "clojure.edn/read"] " / "
+              [:code "clojure.edn/read-string"]]
          [:td "Supported"]
-         [:td "Reads the mino subset of EDN."]]
-        [:tr [:td [:code "*data-readers*"] " / "
-              [:code "tagged-literal"]]
-         [:td "Absent"]
-         [:td "User tagged-literal extension is not provided."]]]]
+         [:td "Both accept an opts map with " [:code ":read-cond"]
+          " (" [:code ":allow"] " default, " [:code ":preserve"]
+          ", " [:code ":disallow"] "). " [:code "clojure.edn/*"]
+          " forces " [:code ":preserve"] " so untrusted text never "
+          "auto-evaluates a reader conditional. Stream-shaped "
+          [:code "java.io.PushbackReader"] " arguments are not "
+          "applicable; mino accepts strings only."]]
+        [:tr [:td [:code "tagged-literal"] " / "
+              [:code "tagged-literal?"] " / "
+              [:code "reader-conditional"] " / "
+              [:code "reader-conditional?"]]
+         [:td "Supported"]
+         [:td "Constructors and predicates for the reader-record "
+          "shapes. " [:code "*data-readers*"] " for user-defined "
+          "tag dispatch is not yet provided."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Namespaces & host
@@ -541,16 +597,34 @@
        [:thead [:tr [:th "Form"] [:th "Status"] [:th "Note"]]]
        [:tbody
         [:tr [:td [:code "ns"] " / " [:code "require"]
-              " / " [:code ":as"] " / " [:code ":refer"]]
+              " / " [:code ":as"] " / " [:code ":as-alias"]
+              " / " [:code ":refer"] " / " [:code ":use"]
+              " / " [:code ":refer-clojure"]]
          [:td "Supported"]
-         [:td "All definitions go into a single global env per "
-          "runtime; runtime isolation replaces namespace "
-          "isolation."]]
-        [:tr [:td [:code "in-ns"] " / " [:code "create-ns"]
-              " / " [:code "all-ns"]]
-         [:td "Differs"]
-         [:td "mino has no first-class namespace registry. These "
-          "are not provided."]]
+         [:td "Each namespace owns a root binding table; "
+          "unqualified lookup walks lexical, then current-ns, then "
+          [:code "clojure.core"] " parent. Modifiers: "
+          [:code ":only"] ", " [:code ":exclude"] ", "
+          [:code ":rename"] ", " [:code ":refer :all"] " (skips "
+          "privates). Prefix lists work in " [:code ":require"]
+          ". A loaded file's first " [:code "(ns ...)"] " must "
+          "declare the requested module name."]]
+        [:tr [:td [:code "in-ns"] " / " [:code "find-ns"]
+              " / " [:code "the-ns"] " / " [:code "create-ns"]
+              " / " [:code "remove-ns"] " / " [:code "ns-name"]
+              " / " [:code "ns-publics"] " / " [:code "ns-interns"]
+              " / " [:code "ns-refers"] " / " [:code "ns-aliases"]
+              " / " [:code "ns-map"] " / " [:code "ns-unmap"]
+              " / " [:code "ns-unalias"] " / " [:code "alias"]
+              " / " [:code "all-ns"] " / " [:code "loaded-libs"]
+              " / " [:code "ns-resolve"] " / "
+              [:code "requiring-resolve"] " / " [:code "*ns*"]]
+         [:td "Supported"]
+         [:td "Full first-class namespace registry. "
+          [:code "*ns*"] " is interned as a dynamic var that "
+          "tracks user-visible namespace switches. Namespaces "
+          "carry metadata (docstring, attribute map). Privacy is "
+          "enforced on cross-namespace qualified access."]]
         [:tr [:td "Java interop "
               [:code "(.method obj)"] " / "
               [:code "(.-field obj)"] " / "
@@ -576,8 +650,8 @@
       [:p {:style "margin-top:2.5rem;font-size:0.9em;color:#666"}
        "Items marked " [:em "supported"] " round-trip through "
        "the test suite; an entry's existence here is a claim that "
-       [:code "tests/clj_*_test.mino"] " or "
-       [:code "tests/compat_test.mino"] " exercises it. If you "
+       [:code "tests/clj_*_test.clj"] " or "
+       [:code "tests/compat_test.clj"] " exercises it. If you "
        "find a divergence not documented above, file an issue at "
        [:a {:href "https://github.com/leifericf/mino/issues"}
         "github.com/leifericf/mino/issues"] "."])))

@@ -43,7 +43,7 @@
   mino-root is the path to the mino source tree (submodule or local)."
   [mino-root]
   (let [api-data       (parse.header/parse (str mino-root "/src/mino.h"))
-        builtin-data   (parse.builtins/introspect mino-root "scripts/intro.mino")
+        builtin-data   (parse.builtins/introspect mino-root "scripts/intro.clj")
         cookbook-data   (parse.cookbook/parse "mino-examples/src")
         smoke-data     (parse.smoke/parse mino-root)
         async-data     (parse.async/parse mino-root)

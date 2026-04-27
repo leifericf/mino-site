@@ -167,21 +167,6 @@
 
       ;; ----------------------------------------------------------------
 
-      [:h2 {:id "auto-resolved-keywords"} "No auto-resolved keywords"]
-      [:p [:code "::name"] " and " [:code "::alias/name"] " are "
-       "not supported. The reader does not maintain a per-namespace "
-       "alias map for keyword resolution because mino has a single "
-       "global definition env per runtime - there is no "
-       "\"current namespace\" for the keyword to resolve relative "
-       "to."]
-      [:p [:strong "Use the fully spelled keyword."] " "
-       [:code ":myapp.core/name"] " is unambiguous and works "
-       "everywhere a Clojure auto-resolved keyword would. "
-       "Namespaced map shorthand (" [:code "{::ns/x 1}"] ") is "
-       "not supported either; spell it out."]
-
-      ;; ----------------------------------------------------------------
-
       [:h2 {:id "list-empty"} "(list) is nil"]
       [:p "Clojure's " [:code "(list)"] " is an empty "
        [:code "PersistentList$EmptyList"] " instance. mino's "
@@ -249,30 +234,21 @@
 
       ;; ----------------------------------------------------------------
 
-      [:h2 {:id "namespace-registry"} "No first-class namespace registry"]
-      [:p [:code "in-ns"] ", " [:code "create-ns"] ", "
-       [:code "all-ns"] ", " [:code "ns-publics"] ", "
-       [:code "ns-interns"] ", " [:code "ns-resolve"] ", and the "
-       [:code "*ns*"] " dynamic var are not provided. "
-       [:code "ns"] " forms parse, " [:code "require"]
-       " loads code, and " [:code ":as"] " / " [:code ":refer"]
-       " resolve symbols at read time - but there is no first-"
-       "class namespace object you can introspect at runtime."]
-      [:p "Each runtime has a single global definition env. "
-       "Isolation between subsystems happens at the runtime "
-       "boundary (one " [:code "mino_state_t"] " per concern), "
-       "not at the namespace boundary. This is the same trade "
-       "Lua makes - and it keeps the embedding contract simple."]
-
-      ;; ----------------------------------------------------------------
-
-      [:h2 {:id "regex-reader-literal"} "No #\"...\" regex literal"]
-      [:p "The reader does not provide a " [:code "#\"...\""]
-       " shorthand for regular expressions. Use "
-       [:code "(re-pattern \"...\")"] " - the engine itself "
-       "(" [:code "re-find"] ", " [:code "re-matches"] ", "
-       [:code "re-seq"] ") behaves the same as Clojure for the "
-       "POSIX feature set mino's regex compiler covers."]
+      [:h2 {:id "regex-reader-escapes"} "Regex literal escapes route through string-escape"]
+      [:p "The reader accepts " [:code "#\"...\""] " literals, "
+       "but the body runs through the same string-escape pass "
+       "that " [:code "\"...\""] " strings do, so "
+       [:code "\\d"] " / " [:code "\\s"] " / " [:code "\\w"]
+       " lose their backslash before the regex engine sees them. "
+       "Real Clojure passes the unescaped text through so the "
+       "regex engine receives " [:code "\\d"] " verbatim."]
+      [:p [:strong "Pass patterns as strings until a regex-aware "
+        "reader escape mode lands."] " "
+       [:code "(re-find \"\\\\d+\" s)"] " (note the doubled "
+       "backslash) compiles the same pattern that real Clojure "
+       "would compile from " [:code "#\"\\d+\""] ". The engine "
+       "itself has full POSIX-class support, capture groups, "
+       "anchors, and alternation."]
 
       ;; ----------------------------------------------------------------
 
@@ -295,6 +271,6 @@
         "reader tags."]]
       [:p "The remaining items above (no JVM interop, no STM, no "
        "chunked seqs, no records / reify / proxy, "
-       [:code "(list)"] " is " [:code "nil"] ", auto-resolved "
-       "keywords, plain " [:code "+"] " throws on overflow) are "
-       "stable design choices, not deferrals."])))
+       [:code "(list)"] " is " [:code "nil"] ", plain "
+       [:code "+"] " throws on overflow) are stable design "
+       "choices, not deferrals."])))

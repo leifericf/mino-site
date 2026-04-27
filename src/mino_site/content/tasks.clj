@@ -84,7 +84,7 @@
       [:pre [:code {:data-lang "mino"}
 "{:paths [\"src\" \"lib\"]
  :tasks
- {gen-core-header {:doc  \"Escape src/core.mino into src/core_mino.h\"
+ {gen-core-header {:doc  \"Escape src/core.clj into src/core_mino.h\"
                    :task mino.tasks.builtin/gen-core-header}
   build           {:doc  \"Compile and link the mino binary\"
                    :deps [gen-core-header]
@@ -105,10 +105,10 @@
        "tree is split across per-subsystem subdirectories under "
        [:code "src/"] ", and the embedded core source header "
        [:code "src/core_mino.h"] " is regenerated from "
-       [:code "src/core.mino"] " before compilation:"]
+       [:code "src/core.clj"] " before compilation:"]
       [:pre [:code {:data-lang "bash"}
 "printf 'static const char *core_mino_src =\\n' > src/core_mino.h
-sed 's/\\\\/\\\\\\\\/g; s/\"/\\\\\"/g; s/^/    \"/; s/$/\\\\n\"/' src/core.mino >> src/core_mino.h
+sed 's/\\\\/\\\\\\\\/g; s/\"/\\\\\"/g; s/^/    \"/; s/$/\\\\n\"/' src/core.clj >> src/core_mino.h
 printf '    ;\\n' >> src/core_mino.h
 cc -std=c99 -O2 \\
   -Isrc -Isrc/public -Isrc/runtime -Isrc/gc -Isrc/eval \\

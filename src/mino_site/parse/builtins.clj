@@ -7,14 +7,14 @@
   subdirectories and split prim.c into prim/*.c, so the regex
   parser broke. Runtime introspection makes the live runtime the
   source of truth and works uniformly for C primitives and forms
-  defined in core.mino.
+  defined in core.clj.
 
   Curated metadata that is not derivable from runtime values
   (category grouping, special-form list, I/O primitive set) lives
   here as data.
 
   Source extraction for the \"show source\" panel still parses
-  core.mino text — that's a different concern from naming the
+  core.clj text — that's a different concern from naming the
   bindings."
   (:require
     [clojure.edn :as edn]
@@ -94,12 +94,12 @@
                         {:exit exit :stderr err :stdout out})))
       (edn/read-string out))))
 
-;; --- Stdlib source extraction (parses core.mino text for "show source") ---
+;; --- Stdlib source extraction (parses core.clj text for "show source") ---
 
 (defn- read-stdlib-source
-  "Read core.mino from the mino source tree."
+  "Read core.clj from the mino source tree."
   [mino-root]
-  (let [path (str mino-root "/src/core.mino")]
+  (let [path (str mino-root "/src/core.clj")]
     (when (.exists (io/file path))
       (slurp path))))
 
@@ -183,7 +183,7 @@
         stdlib       (when stdlib-src (parse-stdlib-forms stdlib-src))
         stdlib-names (into #{} (map :name) stdlib)
         binding-names (into #{} (map :name) bindings)
-        ;; Anything bound that is not defined in core.mino is a C primitive.
+        ;; Anything bound that is not defined in core.clj is a C primitive.
         prim-names   (into #{}
                            (remove stdlib-names)
                            binding-names)

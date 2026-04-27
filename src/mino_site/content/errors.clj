@@ -20,7 +20,7 @@
        "and a snippet of the source with a caret pointer:"]
       [:pre [:code {:data-lang "text"}
 "error[MTY001]: count: expected a collection, got int
-  --> app.mino:18:3
+  --> app.clj:18:3
    |
  18 |   (count 42)
     |   ^"]]
@@ -28,7 +28,7 @@
       [:p "Reader errors show the exact position:"]
       [:pre [:code {:data-lang "text"}
 "error[MRE001]: unterminated string literal
-  --> app.mino:7:8
+  --> app.clj:7:8
    |
   7 | (def y \"unterminated
    |        ^"]]

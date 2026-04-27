@@ -1,7 +1,7 @@
 (ns mino-site.parse.smoke
   "Parse mino test files for usage examples.
 
-  Extracts (is (= expected actual)) assertions from *_test.mino files
+  Extracts (is (= expected actual)) assertions from *_test.clj files
   as raw text, preserving mino-specific syntax like backtick, @, and ~."
   (:require
     [clojure.java.io :as io]
@@ -227,7 +227,7 @@
                           (recur (inc idx) results))))))))))))))
 
 (defn- parse-test-file
-  "Parse a *_test.mino file and return extracted examples as raw text."
+  "Parse a *_test.clj file and return extracted examples as raw text."
   [^String text]
   (let [len (.length text)]
     (loop [i 0, results []]
@@ -252,6 +252,6 @@
   (let [test-dir (io/file (str path "/tests"))
         test-files (when (.isDirectory test-dir)
                      (->> (.listFiles test-dir)
-                          (filter #(str/ends-with? (.getName %) "_test.mino"))
+                          (filter #(str/ends-with? (.getName %) "_test.clj"))
                           (sort-by #(.getName %))))]
     {:examples (vec (mapcat #(parse-test-file (slurp %)) test-files))}))

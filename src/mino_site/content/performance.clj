@@ -155,7 +155,7 @@
              [:td "Bare state with no bindings"]]
         [:tr [:td [:code "mino_new"] " (state + core + I/O)"]
              [:td "524 \u00b5s"]
-             [:td "Parses and evaluates ~800 lines of core.mino"]]
+             [:td "Parses and evaluates ~800 lines of core.clj"]]
         [:tr [:td [:code "mino_env_clone"]]
              [:td "90 \u00b5s"]
              [:td "Copy all bindings, share values"]]]]
@@ -222,7 +222,7 @@
         "when laziness is not needed."]
        [:li [:strong "Core library initialization."]
         " Every new " [:code "mino_state_t"] " evaluates "
-        [:code "core.mino"] " from source (~524 \u00b5s). Parsed "
+        [:code "core.clj"] " from source (~524 \u00b5s). Parsed "
         "forms are cached per state, so creating multiple "
         "environments within one state avoids re-parsing."]
        [:li [:strong "Cons-list argument passing."]
@@ -242,7 +242,7 @@
       [:ul
        [:li [:strong "Core library initialization (0.5 ms per runtime)."]
         " Every new runtime instance evaluates ~800 lines of "
-        [:code "core.mino"] " from source text. Parsed forms are "
+        [:code "core.clj"] " from source text. Parsed forms are "
         "cached per state, so creating multiple environments within "
         "one state avoids re-parsing. Cross-state sharing is not "
         "possible because parsed forms contain state-specific "

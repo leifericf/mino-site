@@ -27,7 +27,7 @@
       [:pre [:code {:data-lang "mino"}
 "(require '[utils.core :as u])
 (u/some-function)"]]
-      [:p "That is it. When you run " [:code "mino file.mino"]
+      [:p "That is it. When you run " [:code "mino file.clj"]
        " or start the REPL, the resolver automatically finds "
        "modules in your " [:code ":paths"] " directories and "
        "fetched dependencies."]
@@ -71,9 +71,9 @@
       [:h2 "Using pure libraries from other ecosystems"]
       [:p "Libraries written in pure functional style, without "
        "platform-specific interop, can be used as git dependencies "
-       "directly. The module resolver searches " [:code ".cljc"]
-       " and " [:code ".clj"] " files in addition to "
-       [:code ".mino"] " files."]
+       "directly. The module resolver searches " [:code ".cljc"] ", "
+       [:code ".clj"] ", and " [:code ".cljs"] " in that order, so "
+       "portable Clojure libraries load directly."]
       [:p "Reader conditionals are supported:"]
       [:pre [:code {:data-lang "mino"}
 "#?(:mino (mino-specific-code)
@@ -103,7 +103,7 @@
       [:p "When " [:code "mino.edn"] " exists in the working directory, "
        "the mino binary automatically adds " [:code ":paths"]
        " and dependency directories to the module resolver. This "
-       "applies to " [:code "mino file.mino"] " and the REPL. "
+       "applies to " [:code "mino file.clj"] " and the REPL. "
        "No extra flags needed."]
       [:p "Projects without " [:code "mino.edn"] " behave exactly "
        "as before."]

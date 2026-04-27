@@ -8,12 +8,13 @@
 (let [names (sort (apropos ""))]
   (println "[")
   (doseq [s names]
-    (let [v (eval s)
-          k (type v)
-          d (doc s)]
-      (println
-        (str "  {:name "  (pr-str (name s))
-             " :kind "    k
-             " :doc "     (pr-str d)
-             "}"))))
+    (let [v (try (eval s) (catch _ ::unresolved))]
+      (when (not= v ::unresolved)
+        (let [k (type v)
+              d (doc s)]
+          (println
+            (str "  {:name "  (pr-str (str s))
+                 " :kind "    k
+                 " :doc "     (pr-str d)
+                 "}"))))))
   (println "]"))
