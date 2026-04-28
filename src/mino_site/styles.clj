@@ -245,7 +245,24 @@
                   :margin-bottom "0.5rem"}]
    [:.card-desc {:color       (:text-muted colors)
                  :font-size   "0.9rem"
-                 :line-height "1.6"}]])
+                 :line-height "1.6"}]
+   ;; Role chips on the documentation hub
+   [:.role-chips {:display      "flex"
+                  :flex-wrap    "wrap"
+                  :gap          "0.5rem"
+                  :margin-top   "1.5rem"
+                  :margin-bottom "1rem"}]
+   [:.role-chip {:display         "inline-block"
+                 :padding         "0.4rem 0.9rem"
+                 :border          (str "1px solid " (:border colors))
+                 :border-radius   "999px"
+                 :font-size       "0.85rem"
+                 :color           (:text-muted colors)
+                 :text-decoration "none"
+                 :transition      "border-color 0.15s, color 0.15s"}]
+   ["a.role-chip:hover" {:color           (:text colors)
+                         :border-color    (:text-muted colors)
+                         :text-decoration "none"}]])
 
 ;; --- Docs sidebar ---
 

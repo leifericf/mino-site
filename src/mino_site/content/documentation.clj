@@ -1,5 +1,9 @@
 (ns mino-site.content.documentation
-  "Documentation hub page content."
+  "Documentation hub page content.
+
+  Three-section layout (Embed / Script / Reference) plus an
+  Internals row. Role chips at the top let readers jump to the
+  section that matches their role."
   (:require
     [hiccup2.core :as h]))
 
@@ -9,10 +13,17 @@
   (str
     (h/html
       [:h1 "Documentation"]
-      [:p "Guides and references for embedding mino and using "
-       "the language."]
+      [:p "Pick the path that matches what you are doing."]
 
-      [:h2 "Guides"]
+      [:div.role-chips
+       [:a.role-chip {:href "#embed"} "Embed mino in a host"]
+       [:a.role-chip {:href "#script"} "Write mino code"]
+       [:a.role-chip {:href "#reference"} "Look something up"]]
+
+      [:h2 {:id "embed"} "Embed"]
+      [:p "Drop the runtime into a C, C++, or Rust process. State "
+       "lifecycle, capability registration, and the embedder's "
+       "operational surface."]
       [:div.card-grid
        [:a.card {:href "/documentation/embedding/"}
         [:div.card-title "Embedding Guide"]
@@ -20,19 +31,18 @@
          "State lifecycle, value ownership, sandboxing, handles, "
          "sessions, and threading rules."]]
 
-       [:a.card {:href "/documentation/garbage-collection/"}
-        [:div.card-title "Garbage Collection"]
-        [:div.card-desc
-         "Two-generation tracing collector with incremental old-gen "
-         "mark: phases, tuning knobs, stats fields, and environment "
-         "variables."]]
-
        [:a.card {:href "/documentation/cookbook/"}
         [:div.card-title "Embedding Cookbook"]
         [:div.card-desc
          "Six worked examples: config loader, rules engine, "
          "REPL on socket, plugin host, data pipeline, and "
          "game scripting console."]]
+
+       [:a.card {:href "/examples/bindings/"}
+        [:div.card-title "Language Bindings"]
+        [:div.card-desc
+         "Worked examples of embedding mino from C, C++, Java, "
+         "Zig, Rust, C#, Go, and Swift via the C API."]]
 
        [:a.card {:href "/documentation/errors/"}
         [:div.card-title "Error Diagnostics"]
@@ -66,21 +76,13 @@
         [:div.card-desc
          "tree-sitter grammar, LSP server, and nREPL server. "
          "Setup guides for Neovim, Helix, Emacs, VS Code, and "
-         "IntelliJ."]]
+         "IntelliJ."]]]
 
-       [:a.card {:href "/documentation/performance/"}
-        [:div.card-title "Performance"]
-        [:div.card-desc
-         "Numbers, allocation costs, and guidance for keeping "
-         "mino fast. When to move work to C."]]
-
-       [:a.card {:href "/documentation/platforms/"}
-        [:div.card-title "Platform Support"]
-        [:div.card-desc
-         "Operating systems, compilers, and language floors. "
-         "What CI tests and the minimums below which nothing "
-         "is exercised."]]
-
+      [:h2 {:id "script"} "Script"]
+      [:p "Write mino code. The language as it lands for someone "
+       "coming from Clojure, with a side-by-side compatibility table "
+       "and a list of intentional divergences."]
+      [:div.card-grid
        [:a.card {:href "/documentation/coming-from-clojure/"}
         [:div.card-title "Coming from Clojure"]
         [:div.card-desc
@@ -97,15 +99,11 @@
         [:div.card-title "Intentional Divergences"]
         [:div.card-desc
          "Where mino deliberately differs from Clojure and what "
-         "it offers in place of each divergence."]]
+         "it offers in place of each divergence."]]]
 
-       [:a.card {:href "/examples/bindings/"}
-        [:div.card-title "Language Bindings"]
-        [:div.card-desc
-         "Worked examples of embedding mino from other "
-         "languages via the C API."]]]
-
-      [:h2 "References"]
+      [:h2 {:id "reference"} "Reference"]
+      [:p "API reference material, auto-generated from source so it "
+       "stays in sync with the runtime."]
       [:div.card-grid
        [:a.card {:href "/documentation/api/"}
         [:div.card-title "C API Reference"]
@@ -117,4 +115,28 @@
         [:div.card-title "Language Reference"]
         [:div.card-desc
          "Every built-in function, special form, and macro. "
-         "Organized by category with usage examples."]]])))
+         "Organized by category with usage examples."]]]
+
+      [:h2 {:id "internals"} "Internals"]
+      [:p "How the runtime works under the hood. Skim if you are "
+       "tuning, profiling, or porting."]
+      [:div.card-grid
+       [:a.card {:href "/documentation/garbage-collection/"}
+        [:div.card-title "Garbage Collection"]
+        [:div.card-desc
+         "Two-generation tracing collector with incremental old-gen "
+         "mark: phases, tuning knobs, stats fields, and environment "
+         "variables."]]
+
+       [:a.card {:href "/documentation/performance/"}
+        [:div.card-title "Performance"]
+        [:div.card-desc
+         "Numbers, allocation costs, and guidance for keeping "
+         "mino fast. When to move work to C."]]
+
+       [:a.card {:href "/documentation/platforms/"}
+        [:div.card-title "Platform Support"]
+        [:div.card-desc
+         "Operating systems, compilers, and language floors. "
+         "What CI tests and the minimums below which nothing "
+         "is exercised."]]])))
