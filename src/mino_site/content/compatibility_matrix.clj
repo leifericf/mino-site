@@ -250,9 +250,10 @@
          [:td "Supported"] [:td]]
         [:tr [:td [:code "clojure.core.reducers"]]
          [:td "Absent"]
-         [:td "Fork-join reducers depend on host threads. See "
-          [:a {:href "/documentation/intentional-divergences/#host-threads"}
-           "host-grant-gated host threads"] "."]]]]
+         [:td "Fork-join reducers are not provided. Transducers "
+          "cover the throughput shape; "
+          [:code "future"] " plus partitioning covers ad-hoc "
+          "parallelism when threading is granted."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Higher-order
@@ -401,33 +402,41 @@
               [:code "mix"] " / " [:code "pipeline"] " / "
               [:code "pipeline-async"]]
          [:td "Supported"]
-         [:td "Single-threaded cooperative scheduling. Channels "
-          "carry transducers and exception handlers. See "
+         [:td "Cooperative scheduling for "
+          [:code "go"] " blocks; "
+          [:code "<!!"] " / " [:code ">!!"] " / "
+          [:code "alts!!"] " park across OS threads when the host "
+          "grants threading. Channels carry transducers and "
+          "exception handlers. See "
           [:a {:href "/documentation/intentional-divergences/#host-threads"}
-           "host-grant-gated host threads"] " for what changes "
-          "from the JVM implementation."]]
+           "host-grant-gated host threads"] " for the embed contract."]]
         [:tr [:td [:code "alt!"] " macro"]
          [:td "Absent"]
          [:td "Use " [:code "alts!"] " (the function form)."]]
         [:tr [:td [:code "future"] " / " [:code "promise"] " / "
               [:code "deliver"] " / " [:code "thread"] " / "
               [:code "future-cancel"] " / " [:code "future-done?"]
-              " / " [:code "future-cancelled?"]]
-         [:td "Host-grant-gated"]
-         [:td "API surface ships in v0.84.0; the runtime that backs "
-          "the surface lands across upcoming versions. Embedded "
-          "states default to " [:code "thread_limit = 1"] " and "
-          "throw " [:code ":mino/unsupported"] " until the host "
-          "calls " [:code "mino_set_thread_limit"] "; standalone "
+              " / " [:code "future-cancelled?"] " / "
+              [:code "realized?"] " / " [:code "future?"]]
+         [:td "Same when host grants threads"]
+         [:td "Real OS-thread futures and promises backed by "
+          [:code "pthread_create"] " (CreateThread on Windows). "
+          "Embedded states default to "
+          [:code "thread_limit = 1"] " and throw "
+          [:code ":mino/unsupported"] " until the host calls "
+          [:code "mino_set_thread_limit"] "; standalone "
           [:code "./mino"] " grants " [:code "cpu_count"] " by "
-          "default. See "
+          "default, so the REPL surface matches canonical Clojure "
+          "out of the box. See "
           [:a {:href "/documentation/intentional-divergences/#host-threads"}
-           "host-grant-gated host threads"] " for the contract."]]
+           "host-grant-gated host threads"] " for the embed contract "
+          "and the multi-tenant pool surface."]]
         [:tr [:td [:code "pmap"]]
          [:td "Absent"]
-         [:td "Layered on host threads in canonical Clojure. See "
-          [:a {:href "/documentation/intentional-divergences/#host-threads"}
-           "host-grant-gated host threads"] "."]]
+         [:td "Not provided. When threading is granted, the same "
+          "shape is reachable as a small composition of "
+          [:code "future"] " and " [:code "deref"]
+          " over a partitioned input."]]
         [:tr [:td [:code "ref"] " / " [:code "ref-set"] " / "
               [:code "alter"] " / " [:code "commute"] " / "
               [:code "dosync"]]
@@ -439,17 +448,21 @@
         [:tr [:td [:code "agent"] " / " [:code "send"] " / "
               [:code "send-off"] " / " [:code "await"]]
          [:td "Absent"]
-         [:td "Same reason - agents are host-thread backed."]]
+         [:td "Not provided. Atoms cover mino's mutation shape; "
+          "cross-runtime coordination uses message passing."]]
         [:tr [:td [:code "locking"] " / " [:code "monitor-enter"]
               " / " [:code "monitor-exit"]]
          [:td "Absent"]
-         [:td "Each runtime is single-threaded; there is nothing "
-          "to lock against from inside mino."]]
+         [:td "Each runtime serializes mutator threads under a "
+          "per-state lock; user code does not see preemption "
+          "inside one runtime, so there is nothing to lock against "
+          "from inside mino."]]
         [:tr [:td [:code "volatile!"] " / " [:code "vswap!"]
               " / " [:code "vreset!"]]
          [:td "Absent"]
-         [:td "Without preemptive threads, atoms are equivalent. "
-          "See "
+         [:td "The per-state lock means atom updates do not contend "
+          "with another mutator inside one runtime; volatile would "
+          "be a synonym. See "
           [:a {:href "/documentation/intentional-divergences/#volatile"}
            "no volatile!"] "."]]]]
 

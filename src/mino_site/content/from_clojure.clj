@@ -151,7 +151,7 @@
        [:code ":refer :all"] ", " [:code ":only"] ", "
        [:code ":exclude"] ", " [:code ":rename"] ", and prefix "
        "lists), " [:code ":use"] ", and " [:code ":refer-clojure"]
-       ". Vars are first-class — " [:code "(def x 1)"] " returns "
+       ". Vars are first-class. " [:code "(def x 1)"] " returns "
        [:code "#'<ns>/x"] ", " [:code "intern"] ", "
        [:code "find-var"] ", " [:code "var-get"] ", "
        [:code "var-set"] ", " [:code "alter-var-root"] ", and "
@@ -169,7 +169,8 @@
       ;; --- Concurrency ---
 
       [:h2 "Concurrency"]
-      [:p "mino provides two concurrency models:"]
+      [:p "mino provides two concurrency models. Cooperative async "
+       "runs by default; host-granted threading layers on top."]
 
       [:h3 "core.async"]
       [:p [:code "core.async"] " channels and go blocks work as expected:"]
@@ -190,14 +191,46 @@
        "Channels support transducers and exception handlers."]
       [:p "Differences from the JVM implementation:"]
       [:ul
-       [:li "Single-threaded cooperative scheduling (no OS threads)"]
-       [:li "No " [:code "thread"] " or " [:code "thread-call"] " (use "
-        [:code "go"] " blocks instead)"]
+       [:li [:code "go"] " blocks use cooperative scheduling on the "
+        "calling thread (no fiber pool). " [:code "<!!"] " / "
+        [:code ">!!"] " / " [:code "alts!!"] " park across OS "
+        "threads when the host has granted them. See the "
+        [:a {:href "/documentation/intentional-divergences/#host-threads"}
+         "host-threads contract"] "."]
        [:li [:code "alt!"] " macro is not implemented (use " [:code "alts!"] ")"]
        [:li "Parks in " [:code "catch"] "/" [:code "finally"] " bodies "
         "are not supported"]
        [:li "Nested parks in function call arguments require explicit "
         [:code "let"] " bindings"]]
+
+      [:h3 "Futures, promises, threads"]
+      [:p [:code "future"] ", " [:code "promise"] ", "
+       [:code "deliver"] ", " [:code "thread"] ", "
+       [:code "future-cancel"] ", " [:code "future-done?"] ", "
+       [:code "future-cancelled?"] ", " [:code "realized?"] ", and "
+       [:code "future?"] " back onto real OS threads via "
+       [:code "pthread_create"] " (CreateThread on Windows). "
+       [:code "deref"] " parks via "
+       [:code "pthread_cond_wait"] "; the blocking core.async ops "
+       "park on the same condition variables when the runtime "
+       "thread limit is greater than 1."]
+      [:p [:code "thread"] " is a stable alias for "
+       [:code "future-call"] "; both share the same worker pool. "
+       "Embedders raise the per-state limit via "
+       [:code "mino_set_thread_limit(S, n)"] "; the standalone "
+       [:code "./mino"] " binary grants " [:code "cpu_count"]
+       " by default, so REPL and script users see the canonical "
+       "surface working out of the box. Embedders that want "
+       "sandboxed scripts withhold the grant."]
+      [:p "When the limit is " [:code "<= 1"] ", the same forms "
+       "throw " [:code ":mino/unsupported"] " with a message "
+       "naming the policy. " [:code "agent"] " / " [:code "send"]
+       " / " [:code "send-off"] " / " [:code "pmap"] " are not "
+       "provided. See the "
+       [:a {:href "/documentation/intentional-divergences/#host-threads"}
+        "host-threads contract"]
+       " for the embed-distinctive pool / factory / stack-size "
+       "knobs and the multi-tenant pool example."]
 
       ;; --- Host interop ---
 
@@ -419,7 +452,7 @@
         " do not exist (no JVM classes to materialize). "
         [:code "defrecord"] ", " [:code "deftype"] ", "
         [:code "reify"] ", and " [:code "instance?"] " ship as "
-        "real value types — see the records section above."]
+        "real value types. See the records section above."]
        [:li [:strong "Host-thread primitives are grant-gated."]
         " " [:code "future"] " / " [:code "promise"] " / "
         [:code "deliver"] " / " [:code "thread"] " throw "
@@ -458,7 +491,9 @@
          [:code "try"] "/" [:code "catch"]]
          [:td "Same"]]
         [:tr [:td [:code "core.async"] " channels / " [:code "go"]]
-         [:td "Same (single-threaded scheduling)"]]
+         [:td "Same (cooperative scheduling; "
+          [:code "<!!"] " / " [:code ">!!"] " / "
+          [:code "alts!!"] " park across threads when granted)"]]
         [:tr [:td [:code "(dosync ...)"] " / " [:code "(ref ...)"]]
          [:td "Not applicable (use atoms)"]]
         [:tr [:td [:code "(future ...)"] " / "
@@ -474,7 +509,7 @@
          [:td "Real Ratio / BigInt / BigDec"]]
         [:tr [:td "Plain " [:code "+"] " / " [:code "-"] " / "
          [:code "*"] " on long overflow"]
-         [:td "Same — auto-promotes to BigInt"]]
+         [:td "Same. Auto-promotes to BigInt."]]
         [:tr [:td [:code "unchecked-+"] " / " [:code "unchecked--"]
               " / " [:code "unchecked-*"]]
          [:td "Same"]]]])))

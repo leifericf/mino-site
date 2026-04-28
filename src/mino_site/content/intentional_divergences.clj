@@ -61,15 +61,19 @@
        "the box. Embedders that want sandboxed scripts withhold the "
        "grant; embedders that want canon parity make the same call "
        "the standalone binary does."]
-      [:p [:strong "Status."] " The API surface (" [:code "mino_set_thread_limit"]
-       " / " [:code "mino_get_thread_limit"] " / "
-       [:code "mino_thread_count"] " / " [:code "mino_quiesce_threads"]
-       ") shipped in v0.84.0 alongside the script-side throw stubs. "
-       "The runtime that backs them — per-thread context refactor, "
-       "atom CAS upgrade, GC STW machinery, real "
-       [:code "pthread_create"] " plumbing — lands across upcoming "
-       "versions. The " [:code "(mino-thread-limit)"] " primitive "
-       "exposes the current limit so library code can branch on it."]
+      [:p [:strong "Status."] " The full surface ships: real OS-thread "
+       [:code "future"] " / " [:code "promise"] " / "
+       [:code "thread"] " backed by " [:code "pthread_create"]
+       " (CreateThread on Windows); " [:code "deref"]
+       " parks via " [:code "pthread_cond_wait"] "; "
+       [:code "future-cancel"] ", " [:code "future-done?"]
+       ", " [:code "future-cancelled?"] ", "
+       [:code "realized?"] ", " [:code "future?"] " round it out; "
+       "blocking " [:code "<!!"] " / " [:code ">!!"] " / "
+       [:code "alts!!"] " park across OS threads. "
+       "The " [:code "(mino-thread-limit)"] " primitive exposes "
+       "the current limit so library code can branch on it. "
+       "ASan + UBSan + TSan-clean across the test suite."]
       [:p [:strong "Embed-distinctive value-add."] " "
        [:code "mino_set_thread_pool"] " lets the host hand mino an "
        "existing pool (Tokio runtime, libuv worker pool, ASIO io_context, "
@@ -77,9 +81,15 @@
        [:code "future"] " spawns. The work item carries the state pointer, "
        "not the thread, so the same N-worker pool can service an "
        "unbounded number of isolated " [:code "mino_state_t"]
-       " runtimes — multi-tenant by construction. JVM Clojure cannot "
-       "offer this because the JVM forces one global heap; mino's "
-       "per-state isolation makes it natural."]
+       " runtimes - multi-tenant by construction. "
+       [:code "mino_set_thread_factory"] " hooks per-worker naming, "
+       "affinity, priority for the spawn-per-future path; "
+       [:code "mino_set_thread_stack_size"] " tunes RSS for tight "
+       "embedders. JVM Clojure cannot offer this because the JVM "
+       "forces one global heap; mino's per-state isolation makes "
+       "it natural. See "
+       [:code "examples/embed_multi_tenant_threads.c"]
+       " for a worked end-to-end demo."]
       [:p [:strong "Cooperative concurrency without threading."] " "
        [:code "core.async"] " channels and " [:code "go"]
        " blocks remain the inside-one-runtime story. " [:code "go"]
@@ -135,17 +145,18 @@
       [:h2 {:id "reify-proxy"} "No proxy, definterface"]
       [:p [:code "defrecord"] ", " [:code "deftype"] ", "
        [:code "reify"] ", and " [:code "instance?"] " all ship as "
-       "real value types — see the "
-       [:a {:href "/documentation/from-clojure/"} "Coming from Clojure"]
+       "real value types. See the "
+       [:a {:href "/documentation/coming-from-clojure/"}
+        "Coming from Clojure"]
        " page for the canonical surface and the embed-distinctive "
        "C-side construction API."]
       [:p [:code "proxy"] " materializes an anonymous JVM object "
        "implementing host interfaces; " [:code "definterface"] " "
        "declares one. Both are JVM shapes that don't translate to "
-       "mino's ANSI-C runtime."]
+       "mino's runtime."]
       [:p [:strong "Use defprotocol + extend-type."]
        " For one-off polymorphic values, mino has real "
-       [:code "reify"] " (cycle F). For static interface declaration, "
+       [:code "reify"] ". For static interface declaration, "
        [:code "defprotocol"] " is the analogue. "
        [:code "definterface"] " throws an informative error pointing "
        "at " [:code "defprotocol"] "."]
@@ -219,39 +230,37 @@
 
       ;; ----------------------------------------------------------------
 
-      [:h2 "What is in scope for future cycles"]
-      [:p "Two queued items remain on the roadmap:"]
+      [:h2 "What is in scope for future versions"]
+      [:p "One queued item remains on the roadmap:"]
       [:ul
-       [:li [:strong "Host-thread runtime"] " — the API surface "
-        "shipped in v0.84.0 and the throw stubs are in place; the "
-        "runtime that backs them (per-thread context refactor, "
-        "GC STW machinery, atom CAS upgrade, real "
-        [:code "pthread_create"] " plumbing) lands across upcoming "
-        "versions. The grant model is final."]
        [:li [:strong "ABI freeze"] " at v1.0. Until then "
         [:code "src/mino.h"] " is labelled evolving and the "
         "numeric-tower type tags (" [:code "MINO_BIGINT"]
         ", " [:code "MINO_RATIO"] ", " [:code "MINO_BIGDEC"]
         ") sit under the same evolving-API umbrella."]]
-      [:p "Items that shipped since the previous version of this "
-       "page: regex literal escapes (cycle A), the "
+      [:p "Items that shipped recently: regex literal escapes; the "
        [:code "*out*"] " / " [:code "*err*"] " / " [:code "*in*"]
-       " print pipeline (cycle B), REPL specials and "
+       " print pipeline; REPL specials and "
        [:code "clojure.repl"] " / " [:code "clojure.stacktrace"]
-       " (cycle C), " [:code "clojure.core.protocols"] " and "
-       [:code "clojure.datafy"] " (cycle D), auto-promoting "
+       "; " [:code "clojure.core.protocols"] " and "
+       [:code "clojure.datafy"] "; auto-promoting "
        [:code "+"] " / " [:code "-"] " / " [:code "*"] " / "
        [:code "inc"] " / " [:code "dec"] " plus the "
-       [:code "unchecked-*"] " family (cycle E), real "
+       [:code "unchecked-*"] " family; real "
        [:code "defrecord"] " / " [:code "deftype"] " / "
-       [:code "reify"] " / " [:code "instance?"] " (cycle F), "
-       "bundled stdlib + per-group install hooks (cycle G0), "
+       [:code "reify"] " / " [:code "instance?"] "; "
+       "bundled stdlib + per-group install hooks; "
        [:code "clojure.template"] " + " [:code "clojure.instant"]
-       " (cycle G1), " [:code "*data-readers*"] " reader hook "
-       "(cycle G2), " [:code "clojure.spec.alpha"] " + "
-       [:code "clojure.core.specs.alpha"] " (cycle G3), the "
-       "host-thread API surface and capability metadata "
-       "(cycles G4 + G0.5)."]
+       "; " [:code "*data-readers*"] " reader hook; "
+       [:code "clojure.spec.alpha"] " + "
+       [:code "clojure.core.specs.alpha"] "; the "
+       "host-thread capability and metadata surface; real OS-thread "
+       [:code "future"] " / " [:code "promise"] " / "
+       [:code "thread"] " backed by " [:code "pthread_create"]
+       "; blocking " [:code "<!!"] " / " [:code ">!!"] " / "
+       [:code "alts!!"] " parking across threads; "
+       "and the embed-distinctive thread pool, factory, and "
+       "stack-size surface."]
       [:p "The remaining items above (no JVM interop, no STM, no "
        "chunked seqs, no proxy / definterface, "
        [:code "(list)"] " is " [:code "nil"] ") are stable design "
