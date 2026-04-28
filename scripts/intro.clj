@@ -5,13 +5,15 @@
 ;; Language Reference page from runtime introspection rather than
 ;; from regex-scraping C source.
 
-(let [names (sort (apropos ""))]
+(require '[clojure.repl :as repl])
+
+(let [names (sort (repl/apropos ""))]
   (println "[")
   (doseq [s names]
     (let [v (try (eval s) (catch _ ::unresolved))]
       (when (not= v ::unresolved)
         (let [k (type v)
-              d (doc s)]
+              d (or (repl/doc-string s) "")]
           (println
             (str "  {:name "  (pr-str (str s))
                  " :kind "    k
