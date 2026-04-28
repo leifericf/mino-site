@@ -76,11 +76,36 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
        "Unstable alpha proof-of-concept. The API may change before v1.0."]
       [:section.hero
        [:h1.hero-tagline
-        "A tiny embeddable Lisp " [:br.desktop-br] "in pure ANSI C."]
+        "An embeddable Clojure-inspired " [:br.desktop-br]
+        "Lisp runtime in C."]
+       [:p.hero-subtitle
+        "Cooperative async by default, with host-granted threading "
+        "when needed."]
        [:div.hero-ctas
         [:a.cta-primary {:href "/get-started/"} "Get Started"]
-        [:a.cta-secondary {:href "/documentation/"} "Documentation"]
-        [:a.cta-secondary {:href "/about/"} "About"]]]
+        [:a.cta-secondary {:href "/documentation/"} "Documentation"]]]
+      [:section {:style "margin-top: 3rem;"}
+       [:div.use-case-grid
+        [:div.use-case
+         [:strong "Drop into a C/C++/Rust process"]
+         [:p "Link the library, create a runtime, evaluate scripts. "
+          "No VM, no JIT, no daemon. The host owns the process and "
+          "calls in when it wants the script to run."]]
+        [:div.use-case
+         [:strong "Isolated runtimes with explicit message-passing"]
+         [:p "Each runtime is a failure domain with its own heap and "
+          "garbage collector. Cross-runtime data moves by deep copy. "
+          "Run many tenants in one process without shared mutable state."]]
+        [:div.use-case
+         [:strong "Capability-gated host interop"]
+         [:p "Fresh runtimes start with no I/O, no filesystem, and no "
+          "ambient state. The embedder opts in to each capability and "
+          "registers exactly the host types and methods scripts can call."]]
+        [:div.use-case
+         [:strong "Clojure-inspired ergonomics"]
+         [:p "Persistent immutable data structures, lazy sequences, "
+          "macros, and a REPL-driven workflow. Mino is Clojure-inspired "
+          "today and continues to close canon gaps over time."]]]]
       [:section {:style "margin-top: 4rem;"}
        [:h2 "Three roles, one runtime"]
        [:p {:style "margin-bottom: 1rem;"}

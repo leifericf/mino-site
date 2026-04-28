@@ -12,14 +12,12 @@
 ;; --- Configuration ---
 
 (def site-title "mino")
-(def site-description "A tiny embeddable Lisp interpreter in pure ANSI C. Small C99 codebase, no dependencies, MIT licensed.")
+(def site-description "An embeddable Clojure-inspired Lisp runtime in C. Isolated states, persistent immutable data, and capability-gated host interop for scripting inside native applications.")
 (def site-url "https://mino-lang.org")
 
 (def nav-items
-  [{:href "/about/"          :label "About"         :page :about}
-   {:href "/get-started/"    :label "Get Started"   :page :get-started}
+  [{:href "/get-started/"    :label "Get Started"   :page :get-started}
    {:href "/documentation/"  :label "Documentation" :page :documentation}
-   {:href "/changelog/"       :label "Changelog"     :page :changelog}
    {:href "https://github.com/leifericf/mino"
     :label "GitHub"
     :external true}])
@@ -92,5 +90,9 @@
          [:footer.footer
           [:p (str site-title " is MIT licensed. ")
            [:a {:href "https://github.com/leifericf/mino"} "Source on GitHub"]
+           ". "
+           [:a {:href "/changelog/"} "Changelog"]
+           ". "
+           [:a {:href "/about/"} "About"]
            "."]]
          [:script (hu/raw-string highlight/highlight-js)]]]]))))

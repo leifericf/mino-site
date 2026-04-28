@@ -12,9 +12,9 @@
 
       [:h2 "What mino is"]
       [:p "mino is an isolated, embeddable, value-oriented runtime "
-       "implemented in pure ANSI C. The host application links the "
-       "library, creates one or more runtime instances, installs "
-       "capabilities, and evaluates user code through a compact C API."]
+       "implemented in C. The host application links the library, "
+       "creates one or more runtime instances, installs capabilities, "
+       "and evaluates user code through a compact C API."]
       [:p "Each runtime instance is self-contained. It owns its own "
        "garbage collector, intern tables, module cache, and every "
        "object allocated within it. Multiple instances coexist in the "
