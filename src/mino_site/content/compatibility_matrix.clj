@@ -178,11 +178,13 @@
               [:code "disj!"] " / " [:code "pop!"]]
          [:td "Supported"] [:td "Vector / map / set transients. "
           "Sorted-map and sorted-set transients are not provided."]]
-        [:tr [:td [:code "defrecord"] " / " [:code "deftype"]]
-         [:td "Absent"]
-         [:td "Maps cover the use case. See "
-          [:a {:href "/documentation/intentional-divergences/#records"}
-           "records and types"] "."]]
+        [:tr [:td [:code "defrecord"] " / " [:code "deftype"] " / "
+              [:code "->RecordName"] " / " [:code "map->RecordName"]]
+         [:td "Supported"]
+         [:td "Real value types with field-slot storage, protocol "
+          "dispatch, and " [:code "instance?"] ". "
+          [:code "(= record map-with-same-content)"] " is "
+          [:code "false"] " by design."]]
         [:tr [:td "Chunked-seq APIs ("
               [:code "chunked-seq?"] ", " [:code "chunk-first"]
               ", " [:code "chunk-rest"] ")"]
@@ -332,10 +334,14 @@
          [:td "Supported"] [:td "Long-only bit operations."]]
         [:tr [:td [:code "Math/abs"] " / " [:code "Math/sqrt"]
               " / " [:code "Math/sin"] " etc."]
-         [:td "Differs"]
-         [:td "mino exposes math via plain " [:code "abs"] ", "
-          [:code "sqrt"] ", " [:code "sin"] ", etc., not the "
-          [:code "Math/"] " static-call shape."]]]]
+         [:td "Absent"]
+         [:td "JVM static-call shape. Of the Java Math surface, only "
+          [:code "abs"] " ships as a plain function in "
+          [:code "clojure.core"] " today. Other transcendental "
+          "functions (" [:code "sqrt"] ", " [:code "sin"] ", etc.) "
+          "are not provided; the embedder can register them by "
+          "wrapping " [:code "<math.h>"] " through the host capability "
+          "registry."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Characters & strings
@@ -459,10 +465,11 @@
           "from inside mino."]]
         [:tr [:td [:code "volatile!"] " / " [:code "vswap!"]
               " / " [:code "vreset!"]]
-         [:td "Absent"]
-         [:td "The per-state lock means atom updates do not contend "
-          "with another mutator inside one runtime; volatile would "
-          "be a synonym. See "
+         [:td "Differs"]
+         [:td "All three resolve to the atom equivalents. The "
+          "per-state lock means atom updates already do not contend "
+          "with another mutator inside one runtime, so volatile is "
+          "a synonym. See "
           [:a {:href "/documentation/intentional-divergences/#volatile"}
            "no volatile!"] "."]]]]
 
@@ -604,8 +611,10 @@
               [:code "reader-conditional?"]]
          [:td "Supported"]
          [:td "Constructors and predicates for the reader-record "
-          "shapes. " [:code "*data-readers*"] " for user-defined "
-          "tag dispatch is not yet provided."]]]]
+          "shapes. User-defined tag dispatch via "
+          [:code "*data-readers*"] " is honored; the "
+          [:code "*default-data-reader-fn*"] " fallback applies "
+          "for unknown tags."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Namespaces & host

@@ -198,18 +198,21 @@
 
       ;; ----------------------------------------------------------------
 
-      [:h2 {:id "volatile"} "No volatile!"]
+      [:h2 {:id "volatile"} "Volatile! is a synonym for atom"]
       [:p [:code "volatile!"] ", " [:code "vswap!"] ", and "
        [:code "vreset!"] " exist in Clojure to give transducers "
        "a fast unsynchronized mutable cell that does not pay the "
        "atomic-CAS cost. The win is real on the JVM where "
        [:code "atom"] "'s CAS is not free."]
-      [:p "Each mino runtime is single-threaded; there is no "
-       "preemption inside a transducer, and " [:code "atom"]
-       " is itself a non-CAS swap on a mutable cell. Volatile "
-       "would be a synonym for atom with a different name, so it "
-       "is not provided. Stateful transducers use plain "
-       [:code "atom"] "."]
+      [:p "Mino's per-state lock means atom updates inside one "
+       "runtime do not contend with another mutator, so the "
+       "volatile/atom distinction collapses. Mino accepts "
+       [:code "volatile!"] ", " [:code "vswap!"] ", and "
+       [:code "vreset!"] " as direct aliases for "
+       [:code "atom"] ", " [:code "swap!"] ", and "
+       [:code "reset!"] ". Existing Clojure code that uses the "
+       "volatile family for stateful transducers ports without "
+       "edits and runs at atom speed."]
 
       ;; ----------------------------------------------------------------
 
