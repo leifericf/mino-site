@@ -54,12 +54,13 @@
         [:tr [:td [:code "(read-string \"(+ 1 2 3)\")"]]
              [:td "4.9 µs"]
              [:td "Cons-list construction during read"]]
-        [:tr [:td "Symbol/keyword lookup"]
+        [:tr [:td "Symbol/keyword resolution"]
              [:td "4.1 µs"]
-             [:td "Intern hash hit, returns cached pointer"]]
+             [:td "Eval shell + intern hash hit"]]
         [:tr [:td [:code "(re-find re s)"] " short string"]
              [:td "5.4 µs"]
-             [:td "Compiled NFA + match capture"]]]]
+             [:td "Compiled pattern + capture groups, "
+              "backtracking matcher"]]]]
 
       [:h2 "Bulk operations"]
       [:p "Cost of working with collections at scale. These show where "
@@ -111,7 +112,7 @@
         [:tr [:td [:code "(rangev 100)"]]
              [:td "5.4 µs"]
              [:td "0.054 µs"]
-             [:td "9× faster than " [:code "(into [] (range 100))"]]]
+             [:td "19× faster than " [:code "(into [] (range 100))"]]]
         [:tr [:td [:code "(rangev 1000)"]]
              [:td "106 µs"]
              [:td "0.11 µs"]
@@ -137,9 +138,11 @@
        [:code "<!!"] "/" [:code ">!!"] "/" [:code "alts!!"] " resolve to "
        "real OS threads. Embedders start at one (single-threaded) and "
        "raise the limit via " [:code "mino_set_thread_limit"] " or one "
-       "of the pool/factory grants. Each runtime serializes script "
-       "execution on a per-state recursive mutex, so cross-state work "
-       "runs fully concurrent and intra-state work is naturally race-free."]
+       "of the pool/factory grants. A runtime that has at least one "
+       "live worker serializes script execution on a per-state "
+       "recursive mutex; cross-state work runs fully concurrent and "
+       "intra-state work is naturally race-free. Single-threaded states "
+       "skip the mutex entirely and pay no lock cost."]
       [:p "On the M3 Pro the OS scheduler places mino's workers on the "
        "six performance cores first; the six efficiency cores absorb "
        "additional workers when the count exceeds six."]
@@ -149,7 +152,8 @@
        [:tbody
         [:tr [:td [:code "(future ...)"] " spawn + deref roundtrip"]
              [:td "31 µs"]
-             [:td "Spawn-per-future path; pthread_create + join"]]
+             [:td "Spawn-per-future path; pthread_create + cv_wait "
+              "handshake (pthread_join runs at quiesce, not per-future)"]]
         [:tr [:td [:code "swap!"] " on shared atom (1 worker)"]
              [:td "4.4 µs/op"]
              [:td "Single-thread CAS, no contention"]]
@@ -203,11 +207,14 @@
              [:td "Same path, no eval work"]]
         [:tr [:td [:code "mino_state_new"] " + " [:code "mino_install_all"]
               " (in-process)"]
-             [:td "~0.5 ms"]
-             [:td "Parses bundled stdlib, installs primitives"]]]]
-      [:p "Most of the ~6 ms cold start is OS process spawn and dynamic "
-       "loader work; the in-process state-init cost an embedder pays "
-       "per runtime sits at half a millisecond."]
+             [:td "~3.5 ms"]
+             [:td "Parses core.clj, installs primitives, registers "
+              "lazy bundled libs"]]]]
+      [:p "Roughly half the cold start is "
+       [:code "mino_new"] " evaluating " [:code "core.clj"]
+       " (~3.5 ms); the rest is OS process spawn, dynamic loader, and "
+       "exit. Embedders that create one runtime up-front pay the "
+       "3.5 ms once."]
 
       [:h2 "Cross-state cloning"]
       [:p "Cost of deep-copying data between runtime instances. "
@@ -220,14 +227,17 @@
         [:tr [:th "Operation"] [:th "Cost"] [:th "Notes"]]]
        [:tbody
         [:tr [:td "Clone: 5-element vector"]
-             [:td "0.24 µs"]
+             [:td "0.19 µs"]
              [:td "Deep copy, allocates in destination state"]]
         [:tr [:td "Clone: 100-element vector"]
-             [:td "3.6 µs"]
+             [:td "2.2 µs"]
              [:td "Linear in element count"]]
-        [:tr [:td "Clone: nested map"]
-             [:td "1.2 µs"]
-             [:td "Recursive traversal"]]]]
+        [:tr [:td "Clone: nested map (2 levels, ~6 keys)"]
+             [:td "1.7 µs"]
+             [:td "Recursive traversal"]]
+        [:tr [:td "Clone: 100-key string-keyed map"]
+             [:td "29 µs"]
+             [:td "Re-interns keys in destination state"]]]]
 
       [:h2 "Lifecycle"]
       [:p "Cost of creating and destroying runtime objects. These "
@@ -237,14 +247,14 @@
         [:tr [:th "Operation"] [:th "Cost"] [:th "Notes"]]]
        [:tbody
         [:tr [:td [:code "mino_state_new"] " + " [:code "mino_state_free"]]
-             [:td "0.28 µs"]
+             [:td "0.8 µs"]
              [:td "Bare state with no bindings"]]
         [:tr [:td [:code "mino_new"] " (state + core + I/O)"]
-             [:td "~0.5 ms"]
-             [:td "Parses and installs bundled stdlib"]]
+             [:td "~3.5 ms"]
+             [:td "Parses and evaluates core.clj"]]
         [:tr [:td [:code "mino_env_clone"]]
-             [:td "90 µs"]
-             [:td "Copy all bindings, share values"]]]]
+             [:td "2.5 µs"]
+             [:td "Thin clone; values shared with the parent env"]]]]
 
       [:h2 "Garbage collection"]
       [:p "mino uses a non-moving two-generation tracing collector. "
@@ -256,34 +266,37 @@
        "is stop-the-world at slice boundaries; there are no collector "
        "threads."]
       [:p "On realistic multi-subsystem benches the max pause sits at "
-       "~51 ms under the default slice budget, with GC share between "
-       "17 and 28 percent of wall clock. Tail-heavy workloads (deeply "
-       "nested lazy pipelines, large transient vectors, deep recursion) "
-       "were the headline target; the incremental major cut their "
-       "max pause roughly in half versus the previous single-phase "
-       "collector."]
+       "~19 ms under the default slice budget, with GC share between "
+       "15 and 50 percent of wall clock depending on the allocation "
+       "rate of the workload. Tail-heavy workloads (deeply nested "
+       "lazy pipelines, large transient vectors, deep recursion) were "
+       "the headline target for the incremental-major cycle; minor "
+       "and major are paced together so the worst case stays bounded."]
       [:table
        [:thead
         [:tr [:th "Workload"] [:th "GC share"] [:th "Max pause"]]]
        [:tbody
         [:tr [:td "Small function calls (empty, identity, let)"]
-             [:td "~9%"]
-             [:td "< 1 ms"]]
-        [:tr [:td "Tight loop 10,000 iters"]
-             [:td "~11%"]
-             [:td "~3 ms"]]
-        [:tr [:td "Build 1,000-element collection"]
-             [:td "~14-18%"]
-             [:td "~5-10 ms"]]
-        [:tr [:td "Build 10,000-element collection"]
-             [:td "~17-22%"]
-             [:td "~12-20 ms"]]
-        [:tr [:td "map/filter/reduce over 50,000"]
-             [:td "~27%"]
-             [:td "~51 ms"]]
-        [:tr [:td "Nested vectors 500x100"]
+             [:td "~7%"]
+             [:td "~2 ms"]]
+        [:tr [:td [:code "loop/recur"] " 10,000 iterations"]
+             [:td "~15%"]
+             [:td "~1.3 ms"]]
+        [:tr [:td "Build 1,000-element vector via " [:code "conj"]]
+             [:td "~25%"]
+             [:td "~4 ms"]]
+        [:tr [:td "Build 10,000-element vector via " [:code "conj"]]
              [:td "~26%"]
-             [:td "~51 ms"]]]]
+             [:td "~7 ms"]]
+        [:tr [:td "map/filter/map/reduce over 50,000"]
+             [:td "~46%"]
+             [:td "~19 ms"]]
+        [:tr [:td "Nested vectors 500x100"]
+             [:td "~41%"]
+             [:td "~19 ms"]]
+        [:tr [:td [:code "(fib 25)"] " (recursive)"]
+             [:td "~29%"]
+             [:td "~19 ms"]]]]
       [:p "Five tuning knobs are exposed through "
        [:code "mino_gc_set_param"] ": nursery size, major growth "
        "multiplier, promotion age, incremental slice budget, and "
@@ -306,21 +319,29 @@
         ", " [:code "mapv"] ", and " [:code "filterv"]
         " eliminate thunk overhead entirely when laziness is not needed."]
        [:li [:strong "Core library initialization."]
-        " Every new " [:code "mino_state_t"] " evaluates the bundled "
-        "stdlib at " [:code "mino_install_all"] " (~0.5 ms). Parsed "
-        "forms are cached per state, so creating multiple environments "
-        "within one state avoids re-parsing."]
+        " Every new " [:code "mino_state_t"] " parses and evaluates "
+        [:code "core.clj"] " at " [:code "mino_install_core"]
+        " (~3.5 ms). Parsed forms are cached per state, so creating "
+        "additional environments within one state avoids re-parsing. "
+        "The other bundled namespaces (" [:code "clojure.string"] ", "
+        [:code "clojure.set"] ", " [:code "clojure.walk"] ", "
+        [:code "clojure.edn"] ", and so on) are registered at "
+        [:code "mino_install_all"] " but not evaluated; they only pay "
+        "when a script first " [:code "require"] "s them."]
        [:li [:strong "Cons-list argument passing."]
         " Every function call builds a linked list of cons cells "
         "for its arguments. The callee walks the list to bind "
         "parameters. A fixed-arity fast path would eliminate this "
         "for common cases."]
-       [:li [:strong "Per-state lock at every eval entry."]
-        " Each script entry through " [:code "mino_eval_string"]
-        " or a worker " [:code "mino_call"] " takes the per-state "
-        "recursive mutex. The cost is ~10 ns of uncontested mutex "
-        "overhead per entry, far below per-eval cost. Contended "
-        "throughput is bound by the lock; see the Concurrency section."]
+       [:li [:strong "Per-state lock at every eval entry (when threaded)."]
+        " Once a state is multi-threaded (host has granted workers, or "
+        "the standalone has run " [:code "mino_install_all"] "), each "
+        "script entry through " [:code "mino_eval_string"] " or a "
+        "worker " [:code "mino_call"] " takes the per-state recursive "
+        "mutex. The uncontested cost is ~10 ns per entry, far below "
+        "per-eval cost; contended throughput is bound by the lock and "
+        "is the topic of the Concurrency section. Single-threaded "
+        "states skip the mutex entirely."]
        [:li [:strong "Tree-walking eval."]
         " There is no intermediate representation. Each form is "
         "traversed, dispatched on type, and interpreted directly. "
@@ -331,13 +352,16 @@
       [:p "Two performance characteristics are inherent to the current "
        "architecture. Both have mitigations."]
       [:ul
-       [:li [:strong "Stdlib initialization (~0.5 ms per runtime)."]
-        " Every new runtime instance evaluates the bundled stdlib "
-        "from source text. Parsed forms are cached per state, so "
-        "creating multiple environments within one state avoids "
-        "re-parsing. Cross-state sharing is not possible because "
-        "parsed forms contain state-specific interned pointers. A "
-        "bytecode format would address this but does not exist yet."]
+       [:li [:strong "core.clj initialization (~3.5 ms per runtime)."]
+        " Every new runtime instance parses and evaluates "
+        [:code "core.clj"] " from the embedded C string literal. "
+        "Parsed forms are cached per state, so creating additional "
+        "environments within one state avoids re-parsing. Cross-state "
+        "sharing is not possible because parsed forms contain "
+        "state-specific interned pointers. A bytecode format would "
+        "let parsed cores ride along the binary, but it doesn't exist "
+        "yet. The other bundled namespaces are lazy and don't add to "
+        "this cost."]
        [:li [:strong "Lazy sequence per-element overhead."]
         " Lazy-by-default sequences pay for a thunk allocation, an "
         "eval, and a cons cell on every element. The eager variants "
