@@ -10,8 +10,35 @@
     (h/html
       [:h1 "Get Started"]
 
-      [:h2 "1. Get the source"]
-      [:p "Clone the repository:"]
+      [:p "Two paths. If you only want to try the language and run "
+       "the REPL, install the standalone binary. If you are embedding "
+       "mino in a host program, build from source so you have the "
+       "headers and per-subsystem object files on hand."]
+
+      [:h2 "1. Install the standalone REPL"]
+      [:p "Pre-built binaries ship through Homebrew (macOS, Linux) "
+       "and Scoop (Windows). Both bundle the standard library and "
+       "drop a single " [:code "mino"] " executable on " [:code "PATH"] "."]
+
+      [:h3 "Homebrew"]
+      [:pre [:code "brew install leifericf/mino/mino"]]
+      [:p "On first install brew taps "
+       [:a {:href "https://github.com/leifericf/homebrew-mino"}
+        "leifericf/homebrew-mino"] " automatically. "
+       [:code "brew upgrade mino"] " picks up new releases."]
+
+      [:h3 "Scoop"]
+      [:pre [:code "scoop bucket add mino https://github.com/leifericf/scoop-mino\nscoop install mino"]]
+      [:p [:code "scoop update mino"] " picks up new releases."]
+
+      [:h3 "Verify"]
+      [:pre [:code "mino --version\nmino"]]
+      [:p "The first command prints the installed version. The "
+       "second drops you into the REPL."]
+
+      [:h2 "2. Get the source"]
+      [:p "For embedding, contributing, or running on a platform "
+       "that brew and scoop don't cover, clone the repository:"]
       [:pre [:code "git clone https://github.com/leifericf/mino.git"]]
       [:p "Or "
        [:a {:href "https://github.com/leifericf/mino/archive/refs/heads/main.zip"}
@@ -19,7 +46,7 @@
        ". mino is a small C99 codebase in " [:code "src/"]
        ". Any C99 compiler, no external dependencies."]
 
-      [:h2 "2. Build"]
+      [:h2 "3. Build"]
       [:p "The C tree is split into per-subsystem subdirectories "
        "under " [:code "src/"] ". Bootstrap the standalone REPL by "
        "generating the embedded core source header, then compiling "
@@ -61,7 +88,7 @@ cc -std=c99 -O2 \\
       [:p "Run the test suite:"]
       [:pre [:code "./mino task test"]]
 
-      [:h2 "3. Embed in your C program"]
+      [:h2 "4. Embed in your C program"]
       [:p "A minimal embedding creates a runtime, registers a host "
        "function, evaluates mino code, and extracts the result:"]
       [:pre
@@ -118,13 +145,13 @@ int main(void)
         [:code "mino_state_free()"] " tear down the environment "
         "and state."]]
 
-      [:h2 "4. Try the REPL"]
+      [:h2 "5. Try the REPL"]
       [:p "The standalone REPL is useful for exploring the language "
        "interactively:"]
       [:pre
        [:code {:data-lang "mino"}
-"$ ./mino
-mino 0.70.0
+"$ mino
+mino 0.92.0
 mino> (def greet (fn [name] (str \"hello, \" name \"!\")))
 #<fn>
 mino> (greet \"world\")

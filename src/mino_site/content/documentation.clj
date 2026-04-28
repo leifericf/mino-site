@@ -21,7 +21,8 @@
        [:a.role-chip {:href "#reference"} "Look something up"]]
 
       [:h2 {:id "embed"} "Embed"]
-      [:p "Drop the runtime into a C, C++, or Rust process. State "
+      [:p "Drop the runtime into any host language with C FFI: C, "
+       "C++, Rust, Go, Java, .NET, Swift, Zig, and beyond. State "
        "lifecycle, capability registration, and the embedder's "
        "operational surface."]
       [:div.card-grid
@@ -48,7 +49,18 @@
         [:div.card-title "Error Diagnostics"]
         [:div.card-desc
          "Structured errors with stable codes, source snippets, "
-         "and programmatic access. Errors are plain mino data."]]
+         "and programmatic access. Errors are plain mino data."]]]
+
+      [:h2 {:id "script"} "Script"]
+      [:p "Write mino code. The language as it lands for someone "
+       "coming from Clojure, plus the editor, test, and task tooling "
+       "for day-to-day development."]
+      [:div.card-grid
+       [:a.card {:href "/documentation/coming-from-clojure/"}
+        [:div.card-title "Coming from Clojure"]
+        [:div.card-desc
+         "What works the same, what differs, and intentional "
+         "divergences for Clojure programmers."]]
 
        [:a.card {:href "/documentation/testing/"}
         [:div.card-title "Testing"]
@@ -56,13 +68,6 @@
          "Write and run tests in mino using "
          [:code "deftest"] ", " [:code "is"] ", and "
          [:code "testing"] ". CI-friendly exit codes."]]
-
-       [:a.card {:href "/documentation/dependencies/"}
-        [:div.card-title "Dependencies"]
-        [:div.card-desc
-         "Declare dependencies in " [:code "mino.edn"]
-         ", fetch git repos with " [:code "mino deps"]
-         ", and use libraries from other ecosystems."]]
 
        [:a.card {:href "/documentation/tasks/"}
         [:div.card-title "Task Runner"]
@@ -78,17 +83,10 @@
          "Setup guides for Neovim, Helix, Emacs, VS Code, and "
          "IntelliJ."]]]
 
-      [:h2 {:id "script"} "Script"]
-      [:p "Write mino code. The language as it lands for someone "
-       "coming from Clojure, with a side-by-side compatibility table "
-       "and a list of intentional divergences."]
+      [:h2 {:id "reference"} "Reference"]
+      [:p "Lookup material. Two pages auto-generated from runtime "
+       "introspection, two hand-curated comparison tables."]
       [:div.card-grid
-       [:a.card {:href "/documentation/coming-from-clojure/"}
-        [:div.card-title "Coming from Clojure"]
-        [:div.card-desc
-         "What works the same, what differs, and intentional "
-         "divergences for Clojure programmers."]]
-
        [:a.card {:href "/documentation/compatibility-matrix/"}
         [:div.card-title "Compatibility Matrix"]
         [:div.card-desc
@@ -99,12 +97,8 @@
         [:div.card-title "Intentional Divergences"]
         [:div.card-desc
          "Where mino deliberately differs from Clojure and what "
-         "it offers in place of each divergence."]]]
+         "it offers in place of each divergence."]]
 
-      [:h2 {:id "reference"} "Reference"]
-      [:p "API reference material, auto-generated from source so it "
-       "stays in sync with the runtime."]
-      [:div.card-grid
        [:a.card {:href "/documentation/api/"}
         [:div.card-title "C API Reference"]
         [:div.card-desc
@@ -119,7 +113,7 @@
 
       [:h2 {:id "internals"} "Internals"]
       [:p "How the runtime works under the hood. Skim if you are "
-       "tuning, profiling, or porting."]
+       "tuning, profiling, porting, or wiring up a mino project."]
       [:div.card-grid
        [:a.card {:href "/documentation/garbage-collection/"}
         [:div.card-title "Garbage Collection"]
@@ -139,4 +133,12 @@
         [:div.card-desc
          "Operating systems, compilers, and language floors. "
          "What CI tests and the minimums below which nothing "
-         "is exercised."]]])))
+         "is exercised."]]
+
+       [:a.card {:href "/documentation/dependencies/"}
+        [:div.card-title "Dependencies"]
+        [:div.card-desc
+         "How the module resolver wires up "
+         [:code "mino.edn"] " declarations: bundled stdlib, on-disk "
+         [:code "lib/"] ", and git-fetched repos via "
+         [:code "mino deps"] "."]]])))

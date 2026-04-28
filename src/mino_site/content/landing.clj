@@ -73,11 +73,11 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
   (str
     (h/html
       [:div.banner
-       "Unstable alpha proof-of-concept. The API may change before v1.0."]
+       "Rapid proof-of-concept development. Expect breaking changes between releases until v1.0."]
       [:section.hero
        [:h1.hero-tagline
-        "An embeddable Clojure-inspired " [:br.desktop-br]
-        "Lisp runtime in C."]
+        "An embeddable Clojure-inspired Lisp."
+        [:br.desktop-br] " Written in portable C99."]
        [:p.hero-subtitle
         "Cooperative async by default, with host-granted threading "
         "when needed."]
@@ -87,8 +87,9 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
       [:section {:style "margin-top: 3rem;"}
        [:div.use-case-grid
         [:div.use-case
-         [:strong "Drop into a C/C++/Rust process"]
-         [:p "Link the library, create a runtime, evaluate scripts. "
+         [:strong "Drop into any host with C FFI"]
+         [:p "C, C++, Rust, Go, Java, .NET, Swift, Zig, and beyond. "
+          "Link the library, create a runtime, evaluate scripts. "
           "No VM, no JIT, no daemon. The host owns the process and "
           "calls in when it wants the script to run."]]
         [:div.use-case

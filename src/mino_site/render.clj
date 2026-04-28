@@ -12,7 +12,7 @@
 ;; --- Configuration ---
 
 (def site-title "mino")
-(def site-description "An embeddable Clojure-inspired Lisp runtime in C. Isolated states, persistent immutable data, and capability-gated host interop for scripting inside native applications.")
+(def site-description "An embeddable Clojure-inspired Lisp, written in portable C99. Isolated states, persistent immutable data, and capability-gated host interop for scripting inside native applications.")
 (def site-url "https://mino-lang.org")
 
 (def nav-items
