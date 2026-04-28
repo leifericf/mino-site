@@ -72,9 +72,9 @@
         :line-height   "1.8"}]
    ["p + pre" {:margin-top "0.75rem"}]
    ["pre + p" {:margin-top "1.25rem"}]
-   [:h1 :h2 :h3 {:color       (:heading colors)
-                  :font-weight "600"
-                  :line-height "1.3"}]
+   [:h1 :h2 :h3 :h4 {:color       (:heading colors)
+                     :font-weight "600"
+                     :line-height "1.3"}]
    [:h1 {:font-size     "2.25rem"
          :margin-bottom "2rem"
          :letter-spacing "-0.025em"}]
@@ -85,6 +85,9 @@
    [:h3 {:font-size     "1.125rem"
          :margin-top    "2rem"
          :margin-bottom "1rem"}]
+   [:h4 {:font-size     "1rem"
+         :margin-top    "1.5rem"
+         :margin-bottom "0.6rem"}]
    [:ul :ol {:margin-bottom "1rem"
              :padding-left  "1.5rem"}]
    [:li {:margin-bottom "0.4rem"
@@ -160,7 +163,7 @@
   [[:.hero {:padding    "5rem 0 4rem"
             :text-align "center"}]
    [:.hero-tagline {:font-family   font-mono
-                    :font-size     "2.25rem"
+                    :font-size     "1.875rem"
                     :font-weight   "600"
                     :color         (:heading colors)
                     :margin-bottom "1rem"
@@ -241,8 +244,10 @@
                      :text-decoration "none"}]
    [:.card-title {:font-size     "1.125rem"
                   :font-weight   "600"
+                  :line-height   "1.35"
                   :color         (:heading colors)
-                  :margin-bottom "0.5rem"}]
+                  :margin-bottom "0.5rem"
+                  :min-height    "3.04rem"}]
    [:.card-desc {:color       (:text-muted colors)
                  :font-size   "0.9rem"
                  :line-height "1.6"}]
@@ -319,24 +324,30 @@
    ;; Step switcher (landing page)
    [:.step-switcher {:margin-top "1rem"}]
    [:.step-tabs {:display "flex"
-                 :gap "0"
-                 :border-bottom (str "2px solid " (:border colors))}]
+                 :justify-content "center"
+                 :flex-wrap "wrap"
+                 :gap "0.5rem"
+                 :margin-bottom "1rem"}]
    [:.step-tab {:font-family font-mono
                 :font-size "0.85rem"
-                :padding "0.6rem 1.25rem"
-                :background "none"
-                :border "none"
-                :color (:text-muted colors)
+                :padding "0.5rem 1.1rem"
+                :background (:bg-subtle colors)
+                :border (str "1px solid " (:border colors))
+                :border-radius "6px"
+                :color (:text colors)
                 :cursor "pointer"
-                :border-bottom "2px solid transparent"
-                :margin-bottom "-2px"
-                :transition "color 0.15s, border-color 0.15s"}]
-   [:.step-tab:hover {:color (:text colors)}]
-   [:.step-tab.active {:color (:heading colors)
-                       :border-bottom-color (:link colors)
+                :transition "background-color 0.15s, border-color 0.15s, color 0.15s"}]
+   [:.step-tab:hover {:border-color (:text-muted colors)
+                      :color (:heading colors)}]
+   [:.step-tab.active {:background (:heading colors)
+                       :border-color (:heading colors)
+                       :color "#ffffff"
                        :font-weight "600"}]
-   [:.step-panel {:display "none"
-                  :padding-top "0.5rem"}]
+   [:.step-panels {:border (str "1px solid " (:border colors))
+                   :border-radius "8px"
+                   :padding "1.5rem"
+                   :background (:bg-subtle colors)}]
+   [:.step-panel {:display "none"}]
    [:.step-panel.active {:display "block"}]
    [:.step-label {:font-size "0.85rem"
                   :color (:text-muted colors)
@@ -434,8 +445,8 @@
   [[:table {:width         "100%"
             :border-collapse "collapse"
             :font-size    "0.85rem"
-            :margin-top   "0.5rem"
-            :margin-bottom "0.5rem"}]
+            :margin-top   "1rem"
+            :margin-bottom "1rem"}]
    [:th {:text-align    "left"
          :padding       "0.5rem 0.75rem"
          :font-weight   "600"
