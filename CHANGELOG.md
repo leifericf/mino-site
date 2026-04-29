@@ -4,6 +4,11 @@ All notable changes to mino-site are documented here.
 
 ## Unreleased
 
+- Tracking mino v0.94.0 (empty-list canon parity: `()` is now a real
+  value type, distinct from nil; cross-type seq equality includes
+  empty-list and excludes nil; print form is `()`). Removed the
+  `(list)` is `nil` divergence from the Intentional Divergences and
+  Coming from Clojure pages and flipped the compatibility matrix row.
 - Tracking mino v0.93.0 (C refactoring pass; bundled `mino deps` and
   `mino task` so brew installs work without a sibling `lib/`; bootstrap
   Makefile). Get Started and Tasks pages now show `make` as the

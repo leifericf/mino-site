@@ -163,24 +163,6 @@
 
       ;; ----------------------------------------------------------------
 
-      [:h2 {:id "list-empty"} "(list) is nil"]
-      [:p "Clojure's " [:code "(list)"] " is an empty "
-       [:code "PersistentList$EmptyList"] " instance. mino's "
-       [:code "(list)"] " is " [:code "nil"] ", and "
-       [:code "rest"] " has " [:code "next"] " semantics - it "
-       "returns " [:code "nil"] " when exhausted, not an empty "
-       "list. " [:code "(seq nil)"] " and " [:code "(seq ())"]
-       " are both " [:code "nil"] "."]
-      [:p "This matches how the bulk of real-world Clojure code "
-       "uses sequences: code that calls " [:code "next"]
-       " for nil-punning is unaffected; code that compares an "
-       "exhausted seq against " [:code "()"] " explicitly needs "
-       "to switch to a nil check. The simpler invariant "
-       "(\"empty seq is nil\") removes a class of bugs around "
-       "distinguishing empty list from nil sequence."]
-
-      ;; ----------------------------------------------------------------
-
       [:h2 {:id "multimethod-hierarchy"} "Multimethods use the global hierarchy only"]
       [:p [:code "defmulti"] " accepts a " [:code ":hierarchy"]
        " option in Clojure to dispatch against an explicit "
@@ -265,6 +247,5 @@
        "and the embed-distinctive thread pool, factory, and "
        "stack-size surface."]
       [:p "The remaining items above (no JVM interop, no STM, no "
-       "chunked seqs, no proxy / definterface, "
-       [:code "(list)"] " is " [:code "nil"] ") are stable design "
+       "chunked seqs, no proxy / definterface) are stable design "
        "choices, not deferrals."])))

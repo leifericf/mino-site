@@ -361,11 +361,7 @@
         ";=> 9"]]
       [:p "Differences:"]
       [:ul
-       [:li "No chunked sequences"]
-       [:li [:code "rest"] " has " [:code "next"] " semantics: it returns "
-        [:code "nil"] " when exhausted, not an empty list. mino's empty list "
-        "is " [:code "nil"] ". This matches how most real-world code uses "
-        [:code "next"] " for nil-punning."]]
+       [:li "No chunked sequences."]]
 
       ;; --- Numeric tower ---
 
@@ -468,11 +464,7 @@
         "mino's concurrency model."]
        [:li [:strong "Chunked sequences."]
         " mino's lazy seqs are element-at-a-time. Use "
-        "transducers when throughput matters."]
-       [:li [:strong "Distinct empty list."]
-        " " [:code "(list)"] " returns " [:code "nil"] ", not an "
-        "empty list object. " [:code "rest"] " has " [:code "next"]
-        " semantics."]]
+        "transducers when throughput matters."]]
 
       ;; --- Quick reference ---
 

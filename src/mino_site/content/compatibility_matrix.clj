@@ -203,14 +203,12 @@
         [:tr [:td [:code "lazy-seq"] " / " [:code "cons"] " / "
               [:code "seq"] " / " [:code "first"] " / "
               [:code "next"] " / " [:code "rest"]]
+         [:td "Supported"] [:td]]
+        [:tr [:td [:code "(list)"] " / " [:code "'()"]]
          [:td "Supported"]
-         [:td [:code "rest"] " has " [:code "next"] " semantics - "
-          "it returns " [:code "nil"] " when exhausted."]]
-        [:tr [:td [:code "(list)"]]
-         [:td "Differs"]
-         [:td "Returns " [:code "nil"] ", not an empty list. "
-          [:code "(seq nil)"] " is " [:code "nil"] "; "
-          [:code "(seq ())"] " is " [:code "nil"] "."]]
+         [:td "Returns the canonical empty list. "
+          [:code "(= '() nil)"] " is " [:code "false"] "; "
+          [:code "(= '() [])"] " is " [:code "true"] "."]]
         [:tr [:td [:code "map"] " / " [:code "filter"] " / "
               [:code "remove"] " / " [:code "take"] " / "
               [:code "drop"] " / " [:code "take-while"] " / "
