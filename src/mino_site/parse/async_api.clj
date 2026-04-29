@@ -1,8 +1,8 @@
 (ns mino-site.parse.async-api
   "Parse the async API surface for the language reference.
 
-  Reads both `lib/core/channel.clj` (channel/buffer/alts mechanics)
-  and `lib/core/async.clj` (go macro, blocking bridges, combinators),
+  Reads `lib/clojure/core/async.clj` (channel mechanics, the go macro,
+  blocking bridges, and high-level combinators in one namespace),
   extracting public defn/defmacro forms with their docstrings. Starred
   internal aliases (chan*, chan-put*, buf-fixed*, ...) and private go-
   helpers are filtered out."
@@ -103,10 +103,8 @@
 
 (defn parse
   "Parse the async API surface under the given mino root.
-  Reads lib/core/channel.clj first (channel/buffer/alts mechanics),
-  then lib/core/async.clj (go macro, blocking bridges, combinators).
+  Reads lib/clojure/core/async.clj (channel mechanics, the go macro,
+  blocking bridges, and combinators in one namespace).
   Returns a vector of {:name str :kind keyword :doc str :source str}."
   [mino-root]
-  (vec (concat
-         (parse-file (str mino-root "/lib/core/channel.clj"))
-         (parse-file (str mino-root "/lib/core/async.clj")))))
+  (parse-file (str mino-root "/lib/clojure/core/async.clj")))

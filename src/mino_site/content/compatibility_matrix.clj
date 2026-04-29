@@ -12,8 +12,8 @@
       [:p "What Clojure code runs on mino, what runs with small "
        "differences, and what is intentionally absent. The bar for "
        "this page is " [:em "the Clojure dialect at embedded scale"]
-       ": code that does not reach for JVM interop, chunked-seq "
-       "throughput, or host-thread primitives runs on mino unchanged. "
+       ": code that does not reach for JVM interop or host-thread "
+       "primitives runs on mino unchanged. "
        "Companion pages: "
        [:a {:href "/documentation/intentional-divergences/"}
         "intentional divergences"]
@@ -187,11 +187,18 @@
           [:code "false"] " by design."]]
         [:tr [:td "Chunked-seq APIs ("
               [:code "chunked-seq?"] ", " [:code "chunk-first"]
-              ", " [:code "chunk-rest"] ")"]
-         [:td "Absent"]
-         [:td "mino sequences are element-at-a-time. See "
-          [:a {:href "/documentation/intentional-divergences/#chunked-seqs"}
-           "no chunked sequences"] "."]]]]
+              ", " [:code "chunk-rest"] ", " [:code "chunk-next"]
+              ", " [:code "chunk-cons"] ", " [:code "chunk-buffer"]
+              ", " [:code "chunk-append"] ", " [:code "chunk"] ")"]
+         [:td "Supported"]
+         [:td "Real " [:code "MINO_CHUNKED_CONS"] " value type with "
+          "the canon API. " [:code "map"] ", " [:code "filter"] ", "
+          [:code "take"] ", " [:code "keep"] ", " [:code "keep-indexed"]
+          ", and " [:code "map-indexed"] " propagate chunkedness. "
+          "Sources do not auto-chunk yet, so "
+          [:code "(chunked-seq? (seq [1 2 3]))"] " returns "
+          [:code "false"] " until consumers explicitly construct a "
+          "chunked seq via the new primitives."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Sequences
@@ -216,8 +223,12 @@
          [:td "Supported"] [:td "Multi-collection " [:code "map"]
           " works."]]
         [:tr [:td [:code "range"] " / " [:code "iterate"] " / "
-              [:code "repeat"] " / " [:code "cycle"]]
-         [:td "Supported"] [:td]]
+              [:code "repeat"] " / " [:code "cycle"] " / "
+              [:code "iteration"]]
+         [:td "Supported"]
+         [:td [:code "iteration"] " (Clojure 1.11) takes "
+          "step/somef/vf/kf options as a map rather than the canon "
+          "kwargs form."]]
         [:tr [:td [:code "concat"] " / " [:code "interleave"] " / "
               [:code "interpose"] " / " [:code "partition"] " / "
               [:code "partition-all"] " / " [:code "partition-by"]]
@@ -316,7 +327,8 @@
           "Clojure canon."]]
         [:tr [:td [:code "unchecked-+"] " / " [:code "unchecked--"]
               " / " [:code "unchecked-*"] " / "
-              [:code "unchecked-inc"] " / " [:code "unchecked-dec"]]
+              [:code "unchecked-inc"] " / " [:code "unchecked-dec"]
+              " / " [:code "unchecked-divide-int"]]
          [:td "Supported"]
          [:td "Fast int64 path with wraparound semantics, matching "
           "Clojure's " [:code "unchecked-*"] " family."]]
@@ -394,19 +406,23 @@
               [:code "reset!"] " / " [:code "compare-and-set!"]
               " / " [:code "deref"] " / " [:code "@"]]
          [:td "Supported"] [:td]]
-        [:tr [:td [:code "core.async"] " - "
+        [:tr [:td [:code "clojure.core.async"] " - "
               [:code "chan"] " / " [:code "go"] " / "
               [:code "go-loop"] " / " [:code "<!"] " / "
               [:code ">!"] " / " [:code "<!!"] " / "
               [:code ">!!"] " / " [:code "alts!"] " / "
               [:code "alts!!"] " / " [:code "timeout"] " / "
               [:code "pipe"] " / " [:code "merge"] " / "
+              [:code "into"] " / "
               [:code "mult"] " / " [:code "tap"] " / "
               [:code "pub"] " / " [:code "sub"] " / "
               [:code "mix"] " / " [:code "pipeline"] " / "
               [:code "pipeline-async"]]
          [:td "Supported"]
-         [:td "Cooperative scheduling for "
+         [:td "Surface lives in the " [:code "clojure.core.async"]
+          " namespace; " [:code "merge"] " and " [:code "into"]
+          " shadow the " [:code "clojure.core"] " forms inside that "
+          "ns. Cooperative scheduling for "
           [:code "go"] " blocks; "
           [:code "<!!"] " / " [:code ">!!"] " / "
           [:code "alts!!"] " park across OS threads when the host "
@@ -462,14 +478,15 @@
           "inside one runtime, so there is nothing to lock against "
           "from inside mino."]]
         [:tr [:td [:code "volatile!"] " / " [:code "vswap!"]
-              " / " [:code "vreset!"]]
-         [:td "Differs"]
-         [:td "All three resolve to the atom equivalents. The "
-          "per-state lock means atom updates already do not contend "
-          "with another mutator inside one runtime, so volatile is "
-          "a synonym. See "
-          [:a {:href "/documentation/intentional-divergences/#volatile"}
-           "no volatile!"] "."]]]]
+              " / " [:code "vreset!"] " / " [:code "volatile?"]]
+         [:td "Supported"]
+         [:td "Real " [:code "MINO_VOLATILE"] " value type with a "
+          "single mutable slot. Stateful transducers ("
+          [:code "take"] ", " [:code "drop"] ", " [:code "drop-while"]
+          ", " [:code "take-nth"] ", " [:code "interpose"] ", "
+          [:code "distinct"] ", " [:code "partition-by"] ", "
+          [:code "partition-all"] ", " [:code "map-indexed"] ", "
+          [:code "dedupe"] ") use volatiles for their per-step state."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Polymorphism

@@ -14,7 +14,15 @@
        "Numbers below were measured against mino v0.92.0 on an Apple "
        "M3 Pro (6 performance cores plus 6 efficiency cores) under "
        "normal desktop load. Treat them as directional. They will move "
-       "as the runtime matures."]
+       "as the runtime matures. Phase-level updates since "
+       "the last bench run: real " [:code "MINO_VOLATILE"] " removes "
+       "the atom-CAS step from stateful transducers, lazy-seq "
+       "combinators " [:code "recur"] " on skip instead of allocating "
+       "a thunk per skipped element, " [:code "frequencies"]
+       " and " [:code "group-by"] " use transients, and the "
+       "chunked-seq family ships for explicit "
+       [:code "chunk-buffer"] "/" [:code "chunk-cons"] " pipelines. "
+       "A fresh bench run is queued."]
 
       [:p "mino is a tree-walking interpreter. There is no bytecode "
        "compiler, no JIT, and no dispatch optimization beyond the C "
@@ -317,7 +325,13 @@
         " (~0.77 µs/iteration) is several times faster than the "
         "lazy reduce equivalent. The eager variants " [:code "rangev"]
         ", " [:code "mapv"] ", and " [:code "filterv"]
-        " eliminate thunk overhead entirely when laziness is not needed."]
+        " eliminate thunk overhead entirely when laziness is not needed. "
+        "Lazy combinators now " [:code "recur"] " on skip rather than "
+        "allocating a thunk for every dropped element, and the "
+        "chunked-seq family ("
+        [:code "chunk-buffer"] " / " [:code "chunk-cons"]
+        ") amortizes thunk overhead in batches of 32 when the "
+        "consumer explicitly constructs a chunked seq."]
        [:li [:strong "Core library initialization."]
         " Every new " [:code "mino_state_t"] " parses and evaluates "
         [:code "core.clj"] " at " [:code "mino_install_core"]
@@ -369,7 +383,12 @@
         [:code "filterv"] " eliminate this overhead when laziness "
         "is not needed (see table above). For iteration without "
         "building a collection, " [:code "loop/recur"]
-        " remains the fastest option."]]
+        " remains the fastest option. The chunked-seq family ("
+        [:code "chunk-buffer"] " / " [:code "chunk-cons"]
+        ") amortizes thunk overhead in batches of 32 when the "
+        "consumer explicitly constructs a chunked seq; default "
+        "sources (" [:code "(seq [...])"] ", " [:code "range"]
+        ") do not auto-chunk yet."]]
 
       [:h2 "What this means in practice"]
       [:p "mino is fast enough for configuration evaluation, rules "

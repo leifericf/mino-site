@@ -89,6 +89,8 @@
        [:li "Multi-binding " [:code "for"] " and " [:code "doseq"]
         " with " [:code ":when"] ", " [:code ":while"]
         ", and " [:code ":let"]]
+       [:li [:code "iteration"] " (Clojure 1.11) for stateful "
+        "pull iterators built from a step function"]
        [:li "Transducers: " [:code "transduce"] ", "
         [:code "into"] " with xform, " [:code "sequence"] ", "
         [:code "eduction"] ", " [:code "completing"] ", "
@@ -173,19 +175,22 @@
        "runs by default; host-granted threading layers on top."]
 
       [:h3 "core.async"]
-      [:p [:code "core.async"] " channels and go blocks work as expected:"]
+      [:p [:code "clojure.core.async"] " channels and go blocks work "
+       "as expected:"]
       [:pre [:code
-        "(require \"core/async\")\n"
+        "(require '[clojure.core.async :as a :refer [chan go >! <!!]])\n"
         "\n"
         "(let [ch (chan 10)]\n"
         "  (go (>! ch 42))\n"
         "  (println (<!! ch)))  ;=> 42"]]
-      [:p "Supported: " [:code "chan"] ", " [:code "put!"] ", "
+      [:p "Supported under the " [:code "clojure.core.async"] " ns: "
+       [:code "chan"] ", " [:code "put!"] ", "
        [:code "take!"] ", " [:code "close!"] ", " [:code "go"] ", "
        [:code "go-loop"] ", " [:code "<!"] ", " [:code ">!"] ", "
        [:code "<!!"] ", " [:code ">!!"] ", " [:code "alts!"] ", "
        [:code "alts!!"] ", " [:code "timeout"] ", " [:code "pipe"] ", "
-       [:code "merge-chans"] ", " [:code "mult"] "/" [:code "tap"] ", "
+       [:code "merge"] ", " [:code "into"] ", "
+       [:code "mult"] "/" [:code "tap"] ", "
        [:code "pub"] "/" [:code "sub"] ", " [:code "mix"] "/" [:code "admix"] ", "
        [:code "pipeline"] ", " [:code "pipeline-async"] ". "
        "Channels support transducers and exception handlers."]
@@ -359,9 +364,19 @@
         "\n"
         "(transduce (map inc) + 0 [1 2 3])\n"
         ";=> 9"]]
-      [:p "Differences:"]
-      [:ul
-       [:li "No chunked sequences."]]
+      [:p "Chunked sequences ship as a real value type with the canon "
+       "API surface (" [:code "chunked-seq?"] ", " [:code "chunk-first"]
+       ", " [:code "chunk-rest"] ", " [:code "chunk-next"] ", "
+       [:code "chunk-cons"] ", " [:code "chunk-buffer"] ", "
+       [:code "chunk-append"] ", " [:code "chunk"]
+       "). " [:code "map"] ", " [:code "filter"] ", " [:code "take"]
+       ", " [:code "keep"] ", " [:code "keep-indexed"] ", and "
+       [:code "map-indexed"] " propagate chunkedness end-to-end. "
+       "Sources do not auto-chunk yet, so "
+       [:code "(chunked-seq? (seq [1 2 3]))"] " returns "
+       [:code "false"] " until consumers explicitly construct a "
+       "chunked seq via the new primitives. The full source "
+       "chunking pass is deferred."]
 
       ;; --- Numeric tower ---
 
@@ -461,10 +476,7 @@
         [:code "pmap"] " stay absent."]
        [:li [:strong "Shared-memory STM."]
         " No refs, no " [:code "dosync"] ". Atoms cover "
-        "mino's concurrency model."]
-       [:li [:strong "Chunked sequences."]
-        " mino's lazy seqs are element-at-a-time. Use "
-        "transducers when throughput matters."]]
+        "mino's concurrency model."]]
 
       ;; --- Quick reference ---
 

@@ -121,27 +121,6 @@
 
       ;; ----------------------------------------------------------------
 
-      [:h2 {:id "chunked-seqs"} "No chunked sequences"]
-      [:p "Clojure's sequences pull elements 32 at a time off "
-       "vectors and other indexed sources to amortize per-element "
-       "overhead. The chunk machinery (" [:code "chunked-seq?"]
-       ", " [:code "chunk-first"] ", " [:code "chunk-rest"]
-       ", " [:code "chunk-cons"] ", " [:code "chunk-buffer"] ") "
-       "is part of the public seq surface."]
-      [:p "mino's sequences are element-at-a-time. The chunk "
-       "throughput win matters most when a JVM's per-call overhead "
-       "is high relative to per-element work - which is a "
-       "reasonable tradeoff for JVM Clojure but not load-bearing "
-       "for embedded-scale workloads where mino lives. mino's "
-       "lazy seqs are GC-traceable, allocate cheaply, and "
-       "interoperate cleanly with transducers."]
-      [:p [:strong "Use transducers for throughput."] " A "
-       [:code "(transduce (comp (map ...) (filter ...)) ...)"]
-       " avoids intermediate-seq allocation entirely and beats "
-       "chunked-seq throughput in most cases."]
-
-      ;; ----------------------------------------------------------------
-
       [:h2 {:id "reify-proxy"} "No proxy, definterface"]
       [:p [:code "defrecord"] ", " [:code "deftype"] ", "
        [:code "reify"] ", and " [:code "instance?"] " all ship as "
@@ -177,24 +156,6 @@
        "to keep the hierarchy keys disjoint between subsystems "
        "(prefix with namespace) so the global hierarchy stays "
        "uncontested."]
-
-      ;; ----------------------------------------------------------------
-
-      [:h2 {:id "volatile"} "Volatile! is a synonym for atom"]
-      [:p [:code "volatile!"] ", " [:code "vswap!"] ", and "
-       [:code "vreset!"] " exist in Clojure to give transducers "
-       "a fast unsynchronized mutable cell that does not pay the "
-       "atomic-CAS cost. The win is real on the JVM where "
-       [:code "atom"] "'s CAS is not free."]
-      [:p "Mino's per-state lock means atom updates inside one "
-       "runtime do not contend with another mutator, so the "
-       "volatile/atom distinction collapses. Mino accepts "
-       [:code "volatile!"] ", " [:code "vswap!"] ", and "
-       [:code "vreset!"] " as direct aliases for "
-       [:code "atom"] ", " [:code "swap!"] ", and "
-       [:code "reset!"] ". Existing Clojure code that uses the "
-       "volatile family for stateful transducers ports without "
-       "edits and runs at atom speed."]
 
       ;; ----------------------------------------------------------------
 
@@ -244,8 +205,23 @@
        [:code "thread"] " backed by " [:code "pthread_create"]
        "; blocking " [:code "<!!"] " / " [:code ">!!"] " / "
        [:code "alts!!"] " parking across threads; "
-       "and the embed-distinctive thread pool, factory, and "
-       "stack-size surface."]
+       "the embed-distinctive thread pool, factory, and "
+       "stack-size surface; real "
+       [:code "MINO_VOLATILE"] " backing "
+       [:code "volatile!"] " / " [:code "vswap!"] " / "
+       [:code "vreset!"] " for stateful transducers; "
+       [:code "iteration"] " (Clojure 1.11); the "
+       [:code "clojure.core.async"] " namespace wrap with "
+       [:code "merge"] " and " [:code "into"]
+       " under their canon names; and the chunked-seq family ("
+       [:code "MINO_CHUNKED_CONS"] " value type, "
+       [:code "chunked-seq?"] ", " [:code "chunk-first"] ", "
+       [:code "chunk-rest"] ", " [:code "chunk-next"] ", "
+       [:code "chunk-cons"] ", " [:code "chunk-buffer"] ", "
+       [:code "chunk-append"] ", " [:code "chunk"] ") with "
+       [:code "map"] "/" [:code "filter"] "/" [:code "take"]
+       "/" [:code "keep"] "/" [:code "keep-indexed"] "/"
+       [:code "map-indexed"] " propagating chunkedness end-to-end."]
       [:p "The remaining items above (no JVM interop, no STM, no "
-       "chunked seqs, no proxy / definterface) are stable design "
-       "choices, not deferrals."])))
+       "proxy / definterface) are stable design choices, not "
+       "deferrals."])))

@@ -119,7 +119,7 @@
   [:section.api-section {:id "async"}
    [:h2 "core.async"]
    [:p "CSP channels and go blocks. Available after "
-    [:code "(require \"core/async\")"] "."]
+    [:code "(require '[clojure.core.async :as a])"] "."]
    (for [{:keys [name kind doc source]} async-forms]
      [:div.decl {:id (str "fn-" name) :data-name name}
       [:h3.decl-name [:code name]

@@ -14,14 +14,14 @@
     (h/html
       [:h1 "About mino"]
 
-      [:p "Mino is an embeddable Clojure-inspired Lisp runtime "
+      [:p "mino is an embeddable Clojure-inspired Lisp runtime "
        "implemented in C. The host application links the library, "
        "creates one or more runtimes, installs capabilities, and "
        "evaluates user code through a compact C API. The language "
        "centers on immutable values and persistent collections; the "
        "embedding API is the product."]
 
-      [:p "Mino is Clojure-inspired today and continues to close canon "
+      [:p "mino is Clojure-inspired today and continues to close canon "
        "gaps over time. Cooperative async runs by default, with "
        "host-granted threading when needed."]
 
@@ -41,7 +41,7 @@
         " - release history."]]
 
       [:h2 "Inspirations"]
-      [:p "Mino draws from four projects that each got something "
+      [:p "mino draws from four projects that each got something "
        "deeply right: "
        [:strong "Clojure"] " for immutable values, persistent data "
        "structures, and a data-first programming model; "
