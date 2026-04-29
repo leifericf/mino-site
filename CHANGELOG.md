@@ -4,6 +4,17 @@ All notable changes to mino-site are documented here.
 
 ## Unreleased
 
+- Tracking mino v0.95.5 (Clojure-side hygiene pass: `clojure.data/diff`
+  rebuilt around `reduce`; `clojure.test` state moved to dynamic vars
+  and `run-tests` returns a summary map; `clojure.instant/parse-timestamp`
+  decomposed into per-segment helpers; `core.async` canon parity with
+  `onto-chan!`/`to-chan!` renames, `pipeline` ex-handler arity, and
+  `alts!` kwargs surface; `mino.tasks.builtin` and `clojure.string`
+  hygiene; `src/core.clj` standardisation dropping the trailing-`_`
+  private convention and converting `def`-with-fn-body to `defn`.
+  No user-visible site copy needed updating — the changelog page picks
+  up the new entries automatically and the Coming-from-Clojure /
+  async / test pages do not name the renamed internal helpers.
 - Tracking mino v0.94.0 (empty-list canon parity: `()` is now a real
   value type, distinct from nil; cross-type seq equality includes
   empty-list and excludes nil; print form is `()`). Removed the
