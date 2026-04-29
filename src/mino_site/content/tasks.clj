@@ -100,28 +100,18 @@
        "Makefile but written entirely in mino."]
 
       [:h2 "Bootstrap"]
-      [:p "Since " [:code "mino task build"] " requires a mino binary "
-       "to run, the first build is a single bootstrap step. The C "
-       "tree is split across per-subsystem subdirectories under "
-       [:code "src/"] ", and the embedded core source header "
-       [:code "src/core_mino.h"] " is regenerated from "
-       [:code "src/core.clj"] " before compilation:"]
-      [:pre [:code {:data-lang "bash"}
-"printf 'static const char *core_mino_src =\\n' > src/core_mino.h
-sed 's/\\\\/\\\\\\\\/g; s/\"/\\\\\"/g; s/^/    \"/; s/$/\\\\n\"/' src/core.clj >> src/core_mino.h
-printf '    ;\\n' >> src/core_mino.h
-cc -std=c99 -O2 \\
-  -Isrc -Isrc/public -Isrc/runtime -Isrc/gc -Isrc/eval \\
-  -Isrc/collections -Isrc/prim -Isrc/async -Isrc/interop \\
-  -Isrc/diag -Isrc/vendor/imath \\
-  -o mino \\
-  src/public/*.c src/runtime/*.c src/gc/*.c src/eval/*.c \\
-  src/collections/*.c src/prim/*.c src/async/*.c src/interop/*.c \\
-  src/regex/*.c src/diag/*.c src/vendor/imath/*.c \\
-  main.c -lm"]]
-      [:p "After that, " [:code "./mino task build"] " handles all "
-       "subsequent builds with incremental compilation. Editing a "
-       "header recompiles only the translation units that include it."]
+      [:p "Since " [:code "mino task build"] " needs a mino binary "
+       "to run, the first build comes from a small bootstrap "
+       [:code "Makefile"] " at the repository root:"]
+      [:pre [:code {:data-lang "bash"} "make"]]
+      [:p "The Makefile generates the bundled-source headers (core.clj "
+       "plus the clojure.* and mino.* namespaces baked into the "
+       "binary) and compiles every subsystem in one " [:code "cc"]
+       " invocation. It does nothing else — every other build, "
+       "test, and tooling task lives in the task runner. After "
+       "bootstrap, " [:code "./mino task build"] " takes over with "
+       "incremental compilation: editing a header recompiles only "
+       "the translation units that include it."]
 
       [:h2 "Writing task functions"]
       [:p "Task functions are ordinary mino functions. They can use "

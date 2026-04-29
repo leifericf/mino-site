@@ -48,27 +48,22 @@
 
       [:h2 "3. Build"]
       [:p "The C tree is split into per-subsystem subdirectories "
-       "under " [:code "src/"] ". Bootstrap the standalone REPL by "
-       "generating the embedded core source header, then compiling "
-       "every subsystem in one cc invocation:"]
+       "under " [:code "src/"] ". Bootstrap with "
+       [:code "make"] ":"]
       [:pre
        [:code
 "cd mino
-printf 'static const char *core_mino_src =\\n' > src/core_mino.h
-sed 's/\\\\/\\\\\\\\/g; s/\"/\\\\\"/g; s/^/    \"/; s/$/\\\\n\"/' src/core.clj >> src/core_mino.h
-printf '    ;\\n' >> src/core_mino.h
-cc -std=c99 -O2 \\
-  -Isrc -Isrc/public -Isrc/runtime -Isrc/gc -Isrc/eval \\
-  -Isrc/collections -Isrc/prim -Isrc/async -Isrc/interop \\
-  -Isrc/diag -Isrc/vendor/imath \\
-  -o mino \\
-  src/public/*.c src/runtime/*.c src/gc/*.c src/eval/*.c \\
-  src/collections/*.c src/prim/*.c src/async/*.c src/interop/*.c \\
-  src/regex/*.c src/diag/*.c src/vendor/imath/*.c \\
-  main.c -lm
-./mino task build"]]
-      [:p "After the bootstrap, " [:code "./mino task build"] " takes "
-       "over for incremental rebuilds."]
+make
+./mino"]]
+      [:p [:code "make"] " is the bootstrap step only — it generates "
+       "the bundled-source headers and compiles the binary from a "
+       "clean checkout. Every other build, test, and tooling task "
+       "runs through the binary itself: "
+       [:code "./mino task build"] " for incremental rebuilds, "
+       [:code "./mino task test"] " for the test suite, "
+       [:code "./mino task build-asan"] " for an ASan-instrumented "
+       "build, " [:code "./mino task"] " on its own to list what's "
+       "available."]
       [:p "Or compile mino directly into your own program (use the "
        "same " [:code "-I"] " flags and the same per-subsystem "
        "source globs):"]
