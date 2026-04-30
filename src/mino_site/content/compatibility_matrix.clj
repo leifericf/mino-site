@@ -194,11 +194,11 @@
          [:td "Real " [:code "MINO_CHUNKED_CONS"] " value type with "
           "the canon API. " [:code "map"] ", " [:code "filter"] ", "
           [:code "take"] ", " [:code "keep"] ", " [:code "keep-indexed"]
-          ", and " [:code "map-indexed"] " propagate chunkedness. "
-          "Sources do not auto-chunk yet, so "
-          [:code "(chunked-seq? (seq [1 2 3]))"] " returns "
-          [:code "false"] " until consumers explicitly construct a "
-          "chunked seq via the new primitives."]]]]
+          ", and " [:code "map-indexed"] " propagate chunkedness "
+          "end-to-end. Sources auto-chunk since v0.98.3: "
+          [:code "(seq vec)"] " emits 32-element chunks reusing the "
+          "vector's leaves, and lazy " [:code "range"] " produces a "
+          "fresh chunk on each force."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Sequences
@@ -374,10 +374,18 @@
               " / " [:code "starts-with?"] " / "
               [:code "ends-with?"] " / " [:code "includes?"]
               " / " [:code "escape"] " / " [:code "replace"]
-              " / " [:code "trim"] " / " [:code "triml"]
-              " / " [:code "trimr"] " / " [:code "trim-newline"]
-              " / " [:code "split-lines"] " / " [:code "join"]]
-         [:td "Supported"] [:td]]
+              " / " [:code "replace-first"] " / "
+              [:code "split"] " / " [:code "split-lines"] " / "
+              [:code "join"] " / " [:code "trim"] " / "
+              [:code "triml"] " / " [:code "trimr"] " / "
+              [:code "trim-newline"] " / " [:code "index-of"] " / "
+              [:code "last-index-of"] " / "
+              [:code "re-quote-replacement"]]
+         [:td "Supported"]
+         [:td [:code "split"] " accepts an optional 3rd "
+          [:code "limit"] " argument matching canon "
+          [:code "String.split(re, limit)"] ": positive caps the "
+          "result, zero or negative keeps trailing empties."]]
         [:tr [:td "Regex: " [:code "re-find"] " / "
               [:code "re-matches"] " / " [:code "re-seq"]
               " / " [:code "re-pattern"] " / "

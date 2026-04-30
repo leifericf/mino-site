@@ -372,11 +372,13 @@
        "). " [:code "map"] ", " [:code "filter"] ", " [:code "take"]
        ", " [:code "keep"] ", " [:code "keep-indexed"] ", and "
        [:code "map-indexed"] " propagate chunkedness end-to-end. "
-       "Sources do not auto-chunk yet, so "
+       "Vector seqs and lazy " [:code "range"] " auto-chunk into "
+       "32-element chunks, so "
        [:code "(chunked-seq? (seq [1 2 3]))"] " returns "
-       [:code "false"] " until consumers explicitly construct a "
-       "chunked seq via the new primitives. The full source "
-       "chunking pass is deferred."]
+       [:code "true"] " and a "
+       [:code "(reduce + (map inc (filter odd? (range 1e6))))"]
+       "-style pipeline runs end-to-end chunked without "
+       "per-element cons-cell allocation."]
 
       ;; --- Numeric tower ---
 

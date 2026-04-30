@@ -196,7 +196,7 @@
        [:code "iteration"] " (Clojure 1.11); the "
        [:code "clojure.core.async"] " namespace wrap with "
        [:code "merge"] " and " [:code "into"]
-       " under their canon names; and the chunked-seq family ("
+       " under their canon names; the chunked-seq family ("
        [:code "MINO_CHUNKED_CONS"] " value type, "
        [:code "chunked-seq?"] ", " [:code "chunk-first"] ", "
        [:code "chunk-rest"] ", " [:code "chunk-next"] ", "
@@ -204,7 +204,16 @@
        [:code "chunk-append"] ", " [:code "chunk"] ") with "
        [:code "map"] "/" [:code "filter"] "/" [:code "take"]
        "/" [:code "keep"] "/" [:code "keep-indexed"] "/"
-       [:code "map-indexed"] " propagating chunkedness end-to-end."]
+       [:code "map-indexed"] " propagating chunkedness end-to-end "
+       "and source-side auto-chunking on " [:code "(seq vec)"]
+       " and lazy " [:code "range"] "; cross-type "
+       [:code "compare"] " over the canon order "
+       "(" [:code "nil"] " < " [:code "false"] " < "
+       [:code "true"] " < numbers < strings < symbols < keywords"
+       "); and a minimal "
+       [:code "clojure.test.check"] " port (generators, properties, "
+       [:code "quick-check"] "; shrinking deferred) backing "
+       [:code "s/gen"] " and " [:code "s/exercise"] "."]
       [:p "The remaining items above (no JVM interop, no STM, no "
        "proxy / definterface) are stable design choices, not "
        "deferrals."])))

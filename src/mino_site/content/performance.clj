@@ -385,10 +385,9 @@
         "building a collection, " [:code "loop/recur"]
         " remains the fastest option. The chunked-seq family ("
         [:code "chunk-buffer"] " / " [:code "chunk-cons"]
-        ") amortizes thunk overhead in batches of 32 when the "
-        "consumer explicitly constructs a chunked seq; default "
-        "sources (" [:code "(seq [...])"] ", " [:code "range"]
-        ") do not auto-chunk yet."]]
+        ") amortizes thunk overhead in batches of 32, and as of "
+        "v0.98.3 default sources (" [:code "(seq [...])"] ", lazy "
+        [:code "range"] ") auto-chunk through the same pipeline."]]
 
       [:h2 "What this means in practice"]
       [:p "mino is fast enough for configuration evaluation, rules "
