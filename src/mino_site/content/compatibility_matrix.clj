@@ -225,10 +225,7 @@
         [:tr [:td [:code "range"] " / " [:code "iterate"] " / "
               [:code "repeat"] " / " [:code "cycle"] " / "
               [:code "iteration"]]
-         [:td "Supported"]
-         [:td [:code "iteration"] " (Clojure 1.11) takes "
-          "step/somef/vf/kf options as a map rather than the canon "
-          "kwargs form."]]
+         [:td "Supported"] [:td]]
         [:tr [:td [:code "concat"] " / " [:code "interleave"] " / "
               [:code "interpose"] " / " [:code "partition"] " / "
               [:code "partition-all"] " / " [:code "partition-by"]]
@@ -413,16 +410,20 @@
               [:code ">!!"] " / " [:code "alts!"] " / "
               [:code "alts!!"] " / " [:code "timeout"] " / "
               [:code "pipe"] " / " [:code "merge"] " / "
-              [:code "into"] " / "
+              [:code "into"] " / " [:code "reduce"] " / "
+              [:code "transduce"] " / " [:code "split"] " / "
+              [:code "partition-by"] " / "
               [:code "mult"] " / " [:code "tap"] " / "
               [:code "pub"] " / " [:code "sub"] " / "
               [:code "mix"] " / " [:code "pipeline"] " / "
               [:code "pipeline-async"]]
          [:td "Supported"]
          [:td "Surface lives in the " [:code "clojure.core.async"]
-          " namespace; " [:code "merge"] " and " [:code "into"]
-          " shadow the " [:code "clojure.core"] " forms inside that "
-          "ns. Cooperative scheduling for "
+          " namespace; " [:code "merge"] ", " [:code "into"] ", "
+          [:code "reduce"] ", " [:code "transduce"] ", and "
+          [:code "partition-by"] " shadow the "
+          [:code "clojure.core"] " forms inside that ns. "
+          "Cooperative scheduling for "
           [:code "go"] " blocks; "
           [:code "<!!"] " / " [:code ">!!"] " / "
           [:code "alts!!"] " park across OS threads when the host "

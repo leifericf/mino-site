@@ -159,23 +159,6 @@
 
       ;; ----------------------------------------------------------------
 
-      [:h2 {:id "tagged-literals"} "No user tagged literals"]
-      [:p "Clojure's " [:code "*data-readers*"] " and "
-       [:code "tagged-literal"] " let user code register a reader "
-       "function for " [:code "#tag value"] " literals. mino's "
-       "reader does not consult a user table; the only tagged-"
-       "literal forms accepted are the built-in numeric ones "
-       "(" [:code "1N"] ", " [:code "1M"] ", " [:code "1/2"]
-       ") and reader-conditional " [:code "#?"] " / "
-       [:code "#?@"] "."]
-      [:p "This is a soft divergence - the same end (custom "
-       "data carriers from text) is reachable via "
-       [:code "read-string"] " plus a normalizing " [:code "fn"]
-       ". A future cycle may add a small "
-       [:code "*data-readers*"] "-style hook."]
-
-      ;; ----------------------------------------------------------------
-
       [:h2 "What is in scope for future versions"]
       [:p "One queued item remains on the roadmap:"]
       [:ul
