@@ -4,6 +4,21 @@ All notable changes to mino-site are documented here.
 
 ## Unreleased
 
+- Tracking mino v0.97.5 (Kwargs + Audit + Hygiene cycle: kwargs
+  destructuring matches Clojure 1.11 (inline pairs, trailing map,
+  mixed; `:or` defaults eval correctly inside the C-level binder);
+  `iteration` rewritten to canon `& {:keys [...]}` shape; `sort-by`
+  and `reductions` gain multi-arity; `src/core.clj` 80-char wrap
+  with no behavioral churn; `defn` lifted so six bootstrap
+  `def + fn` forms become `defn`; `clojure.core.async` gains canon
+  `reduce` / `transduce` / `split` / `partition-by` (and excludes
+  them from `clojure.core`); `clojure.spec.alpha` gains `abbrev` /
+  `describe`). Compatibility Matrix flips the `iteration` row to
+  drop the kwargs-as-map divergence note and adds the four new
+  async combinators to the `clojure.core.async` row. Intentional
+  Divergences drops the "No user tagged literals" h2: end-to-end
+  verification confirms `*data-readers*` and the
+  `tagged-literal` record fallback both fire from `read-string`.
 - Tracking mino v0.96.8 (Canon-Parity cycle: real `MINO_VOLATILE`
   primitive backing `volatile!`/`vswap!`/`vreset!`; stateful transducers
   use volatiles; lazy-seq combinators `recur` on skip; transients in
