@@ -4,6 +4,33 @@ All notable changes to mino-site are documented here.
 
 ## Unreleased
 
+- Tracking mino v0.98.5 (Hygiene + Closure cycle: macro hygiene
+  fix in `qq_qualify_symbol` so syntax-quoted bare symbols inside a
+  macro body qualify against the macro's defining namespace not the
+  consumer's `*ns*` (closes the silent
+  `with-out-str`-after-`:refer :all` miscompile and the
+  `unbound symbol: chan*` failure for `(a/go ...)` called from
+  outside `clojure.core.async`); `compare` gains the canon
+  cross-type total order
+  `nil < false < true < numbers < strings < symbols < keywords`;
+  `clojure.string/split` gains the 3-arg `limit` arity; vector seqs
+  and lazy `range` auto-chunk into 32-element chunks so
+  `(chunked-seq? (seq [1 2 3]))` is `true` and
+  `(reduce + (map inc (filter odd? (range 1e6))))`-style pipelines
+  run end-to-end chunked; `array-map` insertion-order semantics
+  verified to already match canon; `random-seed!` primitive plus a
+  minimal `clojure.test.check` port (generators, properties,
+  `quick-check`; shrinking deferred) backing
+  `clojure.spec.alpha/gen` and `clojure.spec.alpha/exercise`).
+  Compatibility Matrix flips the chunked-seq row note to mention
+  source-side auto-chunking, expands the `clojure.string` row with
+  the new arity, and the `clojure.string/split` 3-arg note.
+  Intentional Divergences gains the cross-type `compare` order, the
+  source-auto-chunking note, and the `clojure.test.check` line.
+  From-Clojure flips the chunked-sequences caveat from "sources do
+  not auto-chunk yet" to "vector seqs and lazy `range` auto-chunk
+  into 32-element chunks". Performance flips the same caveat in the
+  pipeline notes.
 - Tracking mino v0.97.5 (Kwargs + Audit + Hygiene cycle: kwargs
   destructuring matches Clojure 1.11 (inline pairs, trailing map,
   mixed; `:or` defaults eval correctly inside the C-level binder);
