@@ -357,6 +357,13 @@
       [:p [:code "rest"] " on vectors, maps, sets, and strings returns "
        "a lazy cons chain (elements produced on demand), matching the "
        "expected behavior for large collections."]
+      [:p "Strings are sequences of characters: "
+       [:code "(seq \"abc\")"] " returns "
+       [:code "(\\a \\b \\c)"] ", " [:code "(first \"abc\")"]
+       " returns " [:code "\\a"] ", and " [:code "(get \"ab\" 0)"]
+       " returns " [:code "\\a"] ". The walk is codepoint-counted so "
+       "multi-byte characters like " [:code "\\☃"] " count as one "
+       "position. " [:code "subs"] " indexes by codepoint as well."]
       [:p "Transducers work as expected:"]
       [:pre [:code
         "(into [] (comp (map inc) (filter even?)) [1 2 3 4 5])\n"
@@ -404,14 +411,29 @@
         " controls division rounding."]
        [:li "Plain " [:code "+"] " / " [:code "-"] " / "
         [:code "*"] " / " [:code "inc"] " / " [:code "dec"]
-        " throw " [:code ":eval/overflow"] " (code "
-        [:code "MOV001"] ") on long overflow rather than "
-        "auto-promoting. Use " [:code "+'"] " / " [:code "-'"]
-        " / " [:code "*'"] " / " [:code "inc'"] " / "
-        [:code "dec'"] " for Clojure's auto-promote semantics. "
-        "Mixed-type tower dispatch (long × bigint, ratio × "
-        "bigdec, etc.) follows the standard promotion order."]
-       [:li "Float arithmetic follows IEEE 754."]]
+        " auto-promote to bigint on long overflow rather than "
+        "throwing. This matches the semantics of Clojure's prime "
+        "variants (" [:code "+'"] " / " [:code "-'"] " / "
+        [:code "*'"] " / " [:code "inc'"] " / " [:code "dec'"]
+        ") and is a deliberate divergence from JVM Clojure where "
+        "the unprimed forms raise " [:code "ArithmeticException"]
+        ". For wraparound semantics use the "
+        [:code "unchecked-*"] " family. Mixed-type tower dispatch "
+        "(long × bigint, ratio × bigdec, etc.) follows the "
+        "standard promotion order."]
+       [:li [:code "mod"] " / " [:code "rem"] " / "
+        [:code "quot"] " preserve the higher operand tier: "
+        [:code "(mod 10 3N)"] " is " [:code "1N"] ", "
+        [:code "(mod 10 3.0M)"] " is " [:code "1.0M"] ", "
+        [:code "(mod 3 1/2)"] " is " [:code "0N"] " (the ratio "
+        "result collapses to bigint when integer-valued)."]
+       [:li [:code "<"] " / " [:code "<="] " / " [:code ">"]
+        " / " [:code ">="] " require numeric operands and short-"
+        "circuit to " [:code "false"] " when any operand is "
+        [:code "##NaN"] ", matching Clojure's unordered semantics."]
+       [:li "Float arithmetic follows IEEE 754. mino has only one "
+        "float tier (double); " [:code "(float x)"] " and "
+        [:code "(double x)"] " return values that compare equal."]]
 
       ;; --- Error handling ---
 

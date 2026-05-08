@@ -159,6 +159,92 @@
 
       ;; ----------------------------------------------------------------
 
+      [:h2 {:id "auto-promote"} "Auto-promoting math operators"]
+      [:p "Plain " [:code "+"] " / " [:code "-"] " / " [:code "*"]
+       " / " [:code "inc"] " / " [:code "dec"] " auto-promote to "
+       [:code "MINO_BIGINT"] " on long overflow. JVM Clojure raises "
+       [:code "ArithmeticException"] " for the unprimed forms and "
+       "reserves the prime variants (" [:code "+'"] " / "
+       [:code "-'"] " / etc.) for the auto-promoting behaviour; "
+       "mino keeps only one form and chooses the safe one. "
+       [:code "(* Long/MIN_VALUE -1)"] " on the JVM throws; on mino "
+       "it returns " [:code "9223372036854775808N"] "."]
+      [:p [:strong "Why."] " mino's stated goal is correctness over "
+       "throughput. Long overflow is a frequent source of subtle "
+       "production bugs in JVM Clojure and forces every numeric "
+       "library to choose between throwing and primed-everywhere. "
+       "Auto-promotion makes the obvious form mathematically right; "
+       "the embedded use case rarely needs the wraparound shape, and "
+       "when it does the " [:code "unchecked-*"] " family "
+       "(" [:code "unchecked-+"] ", " [:code "unchecked--"] ", "
+       [:code "unchecked-*"] ", " [:code "unchecked-inc"] ", "
+       [:code "unchecked-dec"] ", " [:code "unchecked-divide-int"]
+       ") is the explicit opt-in. Same surface as Clojure, sharper "
+       "default."]
+
+      ;; ----------------------------------------------------------------
+
+      [:h2 {:id "float-double"} "One float tier (double)"]
+      [:p "mino has a single 64-bit IEEE 754 float tier ("
+       [:code "MINO_FLOAT"] "). " [:code "(float 0.1)"] " and "
+       [:code "(double 0.1)"] " return the same value, "
+       [:code "(= (float 0.5) (double 0.5))"] " is "
+       [:code "true"] ", and " [:code "float?"] " / "
+       [:code "double?"] " are aliases. JVM Clojure exposes both "
+       [:code "java.lang.Float"] " and " [:code "java.lang.Double"]
+       " as distinct types; cross-type equality is "
+       [:code "false"] " there even when the values are numerically "
+       "equal."]
+      [:p [:strong "Why."] " A 32-bit float tier exists in JVM "
+       "Clojure mostly because Java's primitive set forces it; the "
+       "values exist on the heap as boxed " [:code "java.lang.Float"]
+       " objects, and cross-tier comparison is a frequent source of "
+       "bugs (" [:code "(= 0.1 (float 0.1))"] " is "
+       [:code "false"] " on the JVM). mino picks one float tier and "
+       "uses it consistently. The C-level embedding API exposes "
+       [:code "double"] " for both reading and writing, so there's "
+       "no representational gap to span."]
+
+      ;; ----------------------------------------------------------------
+
+      [:h2 {:id "regex-strings"} "Regex patterns are strings"]
+      [:p "mino's regex literal " [:code "#\"...\""]
+       " parses to a " [:code "MINO_STRING"] " whose contents are "
+       "the pattern source. " [:code "re-find"] ", "
+       [:code "re-matches"] ", " [:code "re-seq"] ", "
+       [:code "re-pattern"] ", and the " [:code "clojure.string"]
+       " regex consumers compile from that string at the call site. "
+       "There is no separate " [:code "java.util.regex.Pattern"]
+       "-equivalent value type."]
+      [:p [:strong "Consequences."] " Two regex values produced from "
+       "the same source string compare equal under "
+       [:code "="] " (they're the same string). On the JVM, "
+       [:code "(= #\"x\" #\"x\")"] " is " [:code "false"] " because "
+       "Pattern instances rely on identity. The mino behaviour is "
+       "convenient (regex patterns can be used as map keys, "
+       "deduplicated in sets) but does diverge from Clojure's "
+       "Pattern semantics."]
+
+      ;; ----------------------------------------------------------------
+
+      [:h2 {:id "fn-arity"} "Permissive function arity"]
+      [:p "Calling a fixed-arity function with too few or too many "
+       "arguments does not throw in mino. Missing positional "
+       "parameters bind to " [:code "nil"] ", and trailing "
+       "arguments are silently ignored: "
+       [:code "((fn [x] x) 1 2 3)"] " returns " [:code "1"]
+       ", and " [:code "((fn [x y] [x y]))"] " returns "
+       [:code "[nil nil]"] ". JVM Clojure raises "
+       [:code "clojure.lang.ArityException"] " in both cases."]
+      [:p [:strong "Why."] " The embedded use case favours "
+       "robustness over strictness; permissive arity makes "
+       "host-supplied callbacks easier to slot in without exact "
+       "shape negotiation. Variadic " [:code "& rest"] " parameters "
+       "are still respected, and a future strict mode is on the "
+       "long-term roadmap."]
+
+      ;; ----------------------------------------------------------------
+
       [:h2 "What is in scope for future versions"]
       [:p "One queued item remains on the roadmap:"]
       [:ul

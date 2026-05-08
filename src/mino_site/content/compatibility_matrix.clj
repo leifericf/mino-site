@@ -319,9 +319,16 @@
           [:code "MINO_BIGINT"] "."]]
         [:tr [:td "Plain " [:code "+"] " / " [:code "-"] " / "
               [:code "*"] " / " [:code "inc"] " / " [:code "dec"]]
-         [:td "Supported"]
-         [:td "Auto-promotes to bigint on long overflow, matching "
-          "Clojure canon."]]
+         [:td "Differs"]
+         [:td "Auto-promotes to bigint on long overflow rather than "
+          "raising " [:code "ArithmeticException"] " as JVM Clojure "
+          "does for the unprimed forms. Equivalent to Clojure's "
+          [:code "+'"] " / " [:code "-'"] " / " [:code "*'"]
+          " / " [:code "inc'"] " / " [:code "dec'"] ". Use the "
+          [:code "unchecked-*"] " family for wraparound. "
+          "Documented under "
+          [:a {:href "/documentation/intentional-divergences/#auto-promote"}
+           "auto-promoting math"] "."]]
         [:tr [:td [:code "unchecked-+"] " / " [:code "unchecked--"]
               " / " [:code "unchecked-*"] " / "
               [:code "unchecked-inc"] " / " [:code "unchecked-dec"]
@@ -331,9 +338,30 @@
           "Clojure's " [:code "unchecked-*"] " family."]]
         [:tr [:td [:code "rational?"] " / " [:code "ratio?"] " / "
               [:code "decimal?"] " / " [:code "integer?"] " / "
-              [:code "number?"]]
+              [:code "bigint?"] " / " [:code "number?"]]
          [:td "Supported"]
-         [:td "Predicates point at the real numeric-tower types."]]
+         [:td "Predicates point at the real numeric-tower types. "
+          [:code "rational?"] " is true for int / bigint / ratio / "
+          "bigdec; " [:code "integer?"] " is true for int and "
+          "bigint; " [:code "bigint?"] " specifically tests the "
+          "bigint tier. The narrow " [:code "pos-int?"] " / "
+          [:code "neg-int?"] " / " [:code "nat-int?"] " predicates "
+          "match only the long tier (per Clojure)."]]
+        [:tr [:td [:code "mod"] " / " [:code "rem"] " / "
+              [:code "quot"]]
+         [:td "Supported"]
+         [:td "Preserve operand tier: bigint operands produce "
+          "bigint results, ratio operands produce a bigint quot "
+          "and a ratio rem / mod (collapsing to bigint when integer-"
+          "valued), bigdec operands produce bigdec results at the "
+          "aligned scale."]]
+        [:tr [:td [:code "<"] " / " [:code "<="] " / " [:code ">"]
+              " / " [:code ">="]]
+         [:td "Supported"]
+         [:td "Operands must be numeric ("
+          [:code "(< nil 1)"] " throws); any "
+          [:code "##NaN"] " operand short-circuits the chain to "
+          [:code "false"] "."]]
         [:tr [:td [:code "bit-and"] " / " [:code "bit-or"] " / "
               [:code "bit-xor"] " / " [:code "bit-not"] " / "
               [:code "bit-shift-left"] " / "
@@ -547,6 +575,59 @@
         [:tr [:td [:code ":extend-via-metadata"] " on protocols"]
          [:td "Differs"]
          [:td "Not honored. Method-table extension only."]]]]
+
+      ;; ----------------------------------------------------------------
+      ;; Errors
+
+      ;; ----------------------------------------------------------------
+      ;; Testing
+
+      [:h2 "Testing"]
+      [:table
+       [:thead [:tr [:th "Form"] [:th "Status"] [:th "Note"]]]
+       [:tbody
+        [:tr [:td [:code "clojure.test/deftest"] " / "
+              [:code "is"] " / " [:code "are"] " / "
+              [:code "testing"] " / " [:code "run-tests"]]
+         [:td "Supported"]
+         [:td "Standard test framework. " [:code "(is (= 1 1))"]
+          ", " [:code "(is (thrown? ...))"] ", and "
+          [:code "(testing \"description\" ...)"] " all work."]]
+        [:tr [:td [:code "use-fixtures"] " / " [:code "compose-fixtures"]
+              " / " [:code "join-fixtures"]]
+         [:td "Supported"]
+         [:td "Both " [:code ":once"] " and " [:code ":each"]
+          " kinds. The " [:code "use-fixtures"] " form is a macro "
+          "so the calling namespace is captured at expansion time -- "
+          "mino's " [:code "*ns*"] " is the function's defining "
+          "namespace, not a dynamic var."]]
+        [:tr [:td [:code "clojure.test.check"] " - "
+              [:code "quick-check"] " / generators / properties"]
+         [:td "Supported"]
+         [:td "Minimal port of the test.check API. Generators, "
+          "properties, and " [:code "quick-check"] " ship; "
+          "shrinking is deferred. Backs the "
+          [:code "s/gen"] " and " [:code "s/exercise"]
+          " hooks under " [:code "clojure.spec.alpha"] "."]]
+        [:tr [:td [:code "special-symbol?"]]
+         [:td "Supported"]
+         [:td "Returns " [:code "true"] " for the Clojure-reserved "
+          "special form names ("
+          [:code "fn"] ", " [:code "fn*"] ", "
+          [:code "let"] ", " [:code "let*"] ", "
+          [:code "loop"] ", " [:code "loop*"] ", "
+          [:code "if"] ", " [:code "do"] ", " [:code "quote"]
+          ", " [:code "def"] ", " [:code "var"] ", "
+          [:code "set!"] ", " [:code "throw"] ", " [:code "try"]
+          ", " [:code "catch"] ", " [:code "finally"] ", "
+          [:code "recur"] ", " [:code "new"] ", " [:code "."]
+          ", " [:code "&"] ", " [:code "case*"] ", "
+          [:code "deftype*"] ", " [:code "letfn*"]
+          ", and the mino-only " [:code "ns"] ", "
+          [:code "binding"] ", " [:code "lazy-seq"]
+          ", " [:code "refer-clojure"] "). Unimplemented "
+          "JVM-only specials are reserved as a portability "
+          "courtesy."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Errors
