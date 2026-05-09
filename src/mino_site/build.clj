@@ -24,6 +24,7 @@
     [mino-site.content.testing :as testing]
     [mino-site.content.embedding :as embedding]
     [mino-site.content.garbage-collection :as garbage-collection]
+    [mino-site.content.stm :as stm]
     [mino-site.content.platforms :as platforms]
     [mino-site.content.performance :as performance]
     [mino-site.content.from-clojure :as from-clojure]
@@ -154,6 +155,13 @@
                           :description "Two-generation tracing collector with incremental old-gen mark: phases, tuning knobs, stats fields, and environment variables."
                           :active-page :documentation}
          (garbage-collection/garbage-collection-page)))
+
+     "/documentation/stm/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Software Transactional Memory"
+                          :description "Refs, dosync, alter, commute, ensure, ref-set, watches, validators, and the C API mirror. Single-version optimistic locking; deviations from JVM canon."
+                          :active-page :documentation}
+         (stm/stm-page)))
 
      "/documentation/performance/index.html"
      (fn [ctx]

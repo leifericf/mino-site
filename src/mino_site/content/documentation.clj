@@ -122,6 +122,15 @@
          "mark: phases, tuning knobs, stats fields, and environment "
          "variables."]]
 
+       [:a.card {:href "/documentation/stm/"}
+        [:div.card-title "Software Transactional Memory"]
+        [:div.card-desc
+         "Refs, " [:code "dosync"] ", " [:code "alter"] ", "
+         [:code "commute"] ", " [:code "ensure"] ", "
+         [:code "ref-set"] ", watches, and the C API mirror. "
+         "Single-version optimistic locking and how it differs "
+         "from JVM canon."]]
+
        [:a.card {:href "/documentation/performance/"}
         [:div.card-title "Performance"]
         [:div.card-desc
