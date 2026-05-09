@@ -551,11 +551,38 @@
           [:code "0"] " unconditionally. mino uses single-version "
           "optimistic locking and has no MVCC history to introspect. "
           "See " [:a {:href "/documentation/stm/"} "STM"] "."]]
-        [:tr [:td [:code "agent"] " / " [:code "send"] " / "
-              [:code "send-off"] " / " [:code "await"]]
+        [:tr [:td [:code "agent"] " / " [:code "agent?"] " / "
+              [:code "send"] " / " [:code "send-off"] " / "
+              [:code "await"] " / " [:code "await-for"] " / "
+              [:code "agent-error"] " / " [:code "restart-agent"] " / "
+              [:code "set-error-handler!"] " / "
+              [:code "error-handler"] " / "
+              [:code "set-error-mode!"] " / " [:code "error-mode"]]
+         [:td "Supported (MVP)"]
+         [:td "mino runs sends synchronously on the calling thread; "
+          [:code "await"] " is a no-op since the queue is always "
+          "drained on send return. Action throws and watch throws "
+          "are both captured into " [:code "agent-error"] ". "
+          "See " [:a {:href "/documentation/stm/"} "STM"]
+          " for the deviations."]]
+        [:tr [:td [:code "send-via"]]
          [:td "Absent"]
-         [:td "Not provided. Atoms cover mino's mutation shape; "
-          "cross-runtime coordination uses message passing."]]
+         [:td "Not provided in the MVP -- no public Executor type "
+          "is exposed. " [:code "send"] " and " [:code "send-off"]
+          " share one synchronous path."]]
+        [:tr [:td [:code "shutdown-agents"] " / "
+              [:code "release-pending-sends"]]
+         [:td "Stub"]
+         [:td "Returns nil / 0. mino's worker model exits with the "
+          "host process; the synchronous send model has no pending "
+          "queue to release."]]
+        [:tr [:td [:code "add-watch"] " / " [:code "remove-watch"]
+              " on agents"]
+         [:td "Supported"]
+         [:td "Same callback signature as on atoms / refs / vars. "
+          "Watch throws are captured into " [:code "agent-error"]
+          " (one watch's throw does not silence later watches on "
+          "the same publish)."]]
         [:tr [:td [:code "locking"] " / " [:code "monitor-enter"]
               " / " [:code "monitor-exit"]]
          [:td "Absent"]

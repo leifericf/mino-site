@@ -502,18 +502,14 @@
         [:code "mino_set_thread_limit(S, n>1)"] ". Standalone "
         [:code "./mino"] " grants " [:code "cpu_count"] " by "
         "default, so REPL/script users see the canon surface "
-        "without configuration. " [:code "agent"] " / "
-        [:code "send"] " / " [:code "send-off"] " / "
-        [:code "pmap"] " stay absent."]
-       [:li [:strong "agents."]
-        " " [:code "agent"] ", " [:code "send"] ", "
-        [:code "send-off"] ", and " [:code "await"]
-        " stay absent. Refs (with " [:code "dosync"] " / "
-        [:code "alter"] " / " [:code "commute"] ") cover "
-        "shared-memory coordination; agent-style fire-and-forget "
-        "would need a runtime-owned dispatcher mino does not "
-        "ship today."]
-       ]
+        "without configuration. " [:code "pmap"] " stays absent."]
+       [:li [:strong "Synchronous agents."]
+        " " [:code "agent"] " / " [:code "send"] " / "
+        [:code "send-off"] " / " [:code "await"]
+        " all work, but mino's MVP runs sends synchronously on the "
+        "calling thread (no worker pool). " [:code "send-via"]
+        " is absent (no public Executor type). See "
+        [:a {:href "/documentation/stm/"} "STM"] "."]]
 
       ;; --- Quick reference ---
 

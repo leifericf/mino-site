@@ -131,12 +131,17 @@
        [:a {:href "/documentation/stm/"} "STM page"]
        " for the full enumeration of deviations and the C API "
        "mirror."]
-      [:p [:strong "agents stay absent."]
+      [:p [:strong "Agents are synchronous (MVP)."]
        " " [:code "agent"] ", " [:code "send"] ", "
-       [:code "send-off"] ", and " [:code "await"]
-       " do not ship. Refs cover shared-memory coordination; "
-       "fire-and-forget agent semantics would need a runtime-owned "
-       "dispatcher mino does not provide."]
+       [:code "send-off"] ", " [:code "await"] ", "
+       [:code "agent-error"] ", and " [:code "restart-agent"]
+       " all ship. Sends run synchronously on the calling thread "
+       "in mino's MVP; mino's eval loop already serializes worker "
+       "threads on a per-state mutex, so a worker-pool dispatcher "
+       "would gain nothing while complicating the lifecycle. "
+       [:code "send-via"] " is not implemented (no public Executor "
+       "type). See " [:a {:href "/documentation/stm/"} "STM"]
+       " for the full surface."]
 
       ;; ----------------------------------------------------------------
 

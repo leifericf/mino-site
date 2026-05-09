@@ -148,13 +148,30 @@
 
       ;; --- What still doesn't work ---
 
+      [:h2 "Agents"]
+      [:p "mino now ships agents in MVP form: "
+       [:code "agent"] ", " [:code "send"] ", " [:code "send-off"]
+       ", " [:code "await"] ", " [:code "agent-error"] ", "
+       [:code "restart-agent"] ", and the error-mode / error-handler "
+       "surface. The MVP runs sends "
+       [:strong "synchronously"]
+       " on the calling thread rather than dispatching to a worker "
+       "pool. mino's eval loop holds a per-state mutex so a worker "
+       "pool would serialize on it anyway; the synchronous shape is "
+       "observably equivalent for any program that does not race "
+       "against the agent itself, and " [:code "await"]
+       " becomes a trivial no-op."]
+      [:p "Action throws and watch throws are both captured into "
+       [:code "agent-error"] " via a manual try frame -- a thrown "
+       "watch on an agent does not propagate to the caller of "
+       [:code "send"] ", matching JVM-ish behavior. "
+       [:code "send-via"] " is not implemented (no public Executor "
+       "type)."]
+
       [:h2 "What still doesn't work"]
       [:ul
-       [:li [:code "agent"] " / " [:code "send"] " / "
-        [:code "send-off"] " / " [:code "await"]
-        " stay unimplemented. Refs cover shared-memory coordination; "
-        "fire-and-forget agent semantics would need a runtime-owned "
-        "dispatcher mino does not ship today."]
+       [:li [:code "send-via"]
+        " (custom executor for sends) -- see Agents above."]
        [:li "Reflection on " [:code "clojure.lang.Ref"] " (or any "
         "other JVM class). Cross-link: see "
         [:a {:href "/documentation/intentional-divergences/"}
