@@ -135,6 +135,17 @@
        " for how to compose this with watches, futures, and the "
        "host's own thread pool."]
 
+      [:h3 "Cross-state ref defense"]
+      [:p "JVM Clojure has one global transactional surface. mino "
+       "supports many " [:code "mino_state_t"]
+       " in a single host process, so a host that accidentally "
+       "passes a ref allocated in one state to another state's "
+       [:code "mino_tx_*"] " entries would silently mutate the "
+       "foreign heap. To prevent that, every ref records its "
+       "allocating state at construction time, and every public C "
+       "entry checks it; a mismatch throws "
+       [:code "eval/state"] " MST007 (\"ref from foreign state\")."]
+
       ;; --- What still doesn't work ---
 
       [:h2 "What still doesn't work"]
