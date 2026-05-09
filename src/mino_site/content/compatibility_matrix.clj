@@ -523,8 +523,21 @@
         [:tr [:td [:code "add-watch"] " / " [:code "remove-watch"]
               " on refs"]
          [:td "Supported"]
-         [:td "Watches fire after commit. The " [:code "add-watch"]
-          " var arm is the only remaining gap (separate from STM)."]]
+         [:td "Watches fire after commit. Same surface as on atoms "
+          "and vars."]]
+        [:tr [:td [:code "add-watch"] " / " [:code "remove-watch"]
+              " on vars"]
+         [:td "Supported"]
+         [:td "Fire on " [:code "alter-var-root"] " (and " [:code "def"]
+          " with rebind), not on " [:code "binding"]
+          " thread-local pushes. Same callback signature as on "
+          "atoms / refs."]]
+        [:tr [:td [:code "set-validator!"] " / "
+              [:code "get-validator"] " on vars"]
+         [:td "Supported"]
+         [:td "Validator runs before " [:code "alter-var-root"]
+          " publishes the new root; throw rejects without "
+          "mutating the var."]]
         [:tr [:td [:code "set-validator!"] " / "
               [:code "get-validator"] " on refs"]
          [:td "Supported"]

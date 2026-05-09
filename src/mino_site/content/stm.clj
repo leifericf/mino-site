@@ -150,8 +150,6 @@
 
       [:h2 "What still doesn't work"]
       [:ul
-       [:li [:code "add-watch"] " on " [:strong "vars"]
-        " (atoms and refs work)."]
        [:li [:code "agent"] " / " [:code "send"] " / "
         [:code "send-off"] " / " [:code "await"]
         " stay unimplemented. Refs cover shared-memory coordination; "

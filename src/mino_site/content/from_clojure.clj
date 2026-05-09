@@ -513,9 +513,7 @@
         "shared-memory coordination; agent-style fire-and-forget "
         "would need a runtime-owned dispatcher mino does not "
         "ship today."]
-       [:li [:strong "Watches on vars."]
-        " " [:code "add-watch"] " / " [:code "remove-watch"]
-        " work on atoms and refs but not on vars."]]
+       ]
 
       ;; --- Quick reference ---
 
