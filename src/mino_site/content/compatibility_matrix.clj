@@ -494,14 +494,50 @@
           "shape is reachable as a small composition of "
           [:code "future"] " and " [:code "deref"]
           " over a partitioned input."]]
-        [:tr [:td [:code "ref"] " / " [:code "ref-set"] " / "
-              [:code "alter"] " / " [:code "commute"] " / "
-              [:code "dosync"]]
-         [:td "Absent"]
-         [:td "STM is not provided. Atoms cover mino's concurrency "
-          "model. See "
-          [:a {:href "/documentation/intentional-divergences/#stm"}
-           "no STM"] "."]]
+        [:tr [:td [:code "ref"] " / " [:code "ref?"]]
+         [:td "Supported"]
+         [:td "STM ref construction and identity predicate. See "
+          [:a {:href "/documentation/stm/"} "STM"] " for the design "
+          "choices and deviations."]]
+        [:tr [:td [:code "dosync"] " / " [:code "dosync*"]]
+         [:td "Supported"]
+         [:td "Transaction body. " [:code "dosync"] " is a macro "
+          "expanding to " [:code "(dosync* (fn [] ...))"] "."]]
+        [:tr [:td [:code "alter"] " / " [:code "commute"] " / "
+              [:code "ref-set"] " / " [:code "ensure"]]
+         [:td "Supported"]
+         [:td "In-tx writers. " [:code "alter"] " participates in "
+          "read-set validation; " [:code "commute"] " does not and "
+          "is replayed at commit. " [:code "ref-set"] " / "
+          [:code "alter"] " after " [:code "commute"]
+          " on the same ref throws " [:code "\"Can't set after commute\""]
+          " (JVM canon)."]]
+        [:tr [:td [:code "io!"]]
+         [:td "Supported"]
+         [:td "Throws " [:code ":mino/state"] " MST003 when called "
+          "inside a transaction; outside, runs body unchanged."]]
+        [:tr [:td [:code "in-transaction?"]]
+         [:td "Supported"]
+         [:td "Returns " [:code "true"] " inside a "
+          [:code "dosync"] " body, " [:code "false"] " otherwise."]]
+        [:tr [:td [:code "add-watch"] " / " [:code "remove-watch"]
+              " on refs"]
+         [:td "Supported"]
+         [:td "Watches fire after commit. The " [:code "add-watch"]
+          " var arm is the only remaining gap (separate from STM)."]]
+        [:tr [:td [:code "set-validator!"] " / "
+              [:code "get-validator"] " on refs"]
+         [:td "Supported"]
+         [:td "Validators run during commit before any write becomes "
+          "visible. Same surface as on atoms."]]
+        [:tr [:td [:code "ref-min-history"] " / "
+              [:code "ref-max-history"] " / "
+              [:code "ref-history-count"]]
+         [:td "Stub"]
+         [:td "Returns " [:code "0"] " / " [:code "10"] " / "
+          [:code "0"] " unconditionally. mino uses single-version "
+          "optimistic locking and has no MVCC history to introspect. "
+          "See " [:a {:href "/documentation/stm/"} "STM"] "."]]
         [:tr [:td [:code "agent"] " / " [:code "send"] " / "
               [:code "send-off"] " / " [:code "await"]]
          [:td "Absent"]

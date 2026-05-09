@@ -105,19 +105,38 @@
 
       ;; ----------------------------------------------------------------
 
-      [:h2 {:id "stm"} "No STM (refs / dosync)"]
-      [:p [:code "ref"] ", " [:code "ref-set"] ", "
-       [:code "alter"] ", " [:code "commute"] ", and "
-       [:code "dosync"] " coordinate writes across multiple "
-       "host threads. mino has one mutator per runtime, so the "
-       "problem STM solves does not exist inside a runtime, and "
-       "across runtimes the answer is message passing, not shared "
-       "memory."]
-      [:p [:strong "Use atoms instead."] " "
-       [:code "atom"] ", " [:code "swap!"] ", " [:code "reset!"]
-       ", and " [:code "compare-and-set!"] " cover the same "
-       "uniform-update pattern that single-ref dosync handles in "
-       "Clojure code, with simpler semantics."]
+      [:h2 {:id "stm"} "STM uses single-version optimistic locking"]
+      [:p [:code "ref"] ", " [:code "dosync"] ", "
+       [:code "alter"] ", " [:code "commute"] ", "
+       [:code "ensure"] ", " [:code "ref-set"] ", and "
+       [:code "io!"] " all work as in Clojure, plus watches and "
+       "validators on refs. The Clojure surface matches canon for "
+       "any program that does not depend on the items below."]
+      [:p [:strong "Underneath, mino is simpler than JVM Clojure."]
+       " mino keeps one committed value per ref instead of the "
+       "JVM MVCC history ring; "
+       [:code "ref-min-history"] ", " [:code "ref-max-history"]
+       ", and " [:code "ref-history-count"] " are stubs returning "
+       [:code "0"] " / " [:code "10"] " / " [:code "0"]
+       ". A single global commit lock serializes commits in place "
+       "of per-ref read/write locks, and there is no barging or "
+       "mid-body retry. Long readers under sustained writer "
+       "pressure may exhaust the 10000-retry cap rather than serve "
+       "an older snapshot from history."]
+      [:p [:strong "The trade-off is deliberate."]
+       " mino's typical workload is a small ref set and a handful "
+       "of worker threads, often single-threaded. The simpler "
+       "machinery costs nothing on the single-threaded fast path "
+       "and stays comprehensible at a glance. See the "
+       [:a {:href "/documentation/stm/"} "STM page"]
+       " for the full enumeration of deviations and the C API "
+       "mirror."]
+      [:p [:strong "agents stay absent."]
+       " " [:code "agent"] ", " [:code "send"] ", "
+       [:code "send-off"] ", and " [:code "await"]
+       " do not ship. Refs cover shared-memory coordination; "
+       "fire-and-forget agent semantics would need a runtime-owned "
+       "dispatcher mino does not provide."]
 
       ;; ----------------------------------------------------------------
 
@@ -300,6 +319,6 @@
        [:code "clojure.test.check"] " port (generators, properties, "
        [:code "quick-check"] "; shrinking deferred) backing "
        [:code "s/gen"] " and " [:code "s/exercise"] "."]
-      [:p "The remaining items above (no JVM interop, no STM, no "
-       "proxy / definterface) are stable design choices, not "
-       "deferrals."])))
+      [:p "The remaining items above (no JVM interop, simpler STM "
+       "underneath, no proxy / definterface) are stable design "
+       "choices, not deferrals."])))
