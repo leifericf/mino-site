@@ -54,6 +54,13 @@
         ", " [:code "filter"] ", " [:code "take"] ", " [:code "range"]
         ", etc.)"]
        [:li "Atoms with " [:code "swap!"] " and " [:code "reset!"]]
+       [:li "Refs and STM: " [:code "ref"] ", " [:code "dosync"] ", "
+        [:code "alter"] ", " [:code "commute"] ", " [:code "ensure"] ", "
+        [:code "ref-set"] ", " [:code "io!"] ", " [:code "in-transaction?"]
+        ", plus " [:code "add-watch"] " / " [:code "set-validator!"]
+        " on refs (single-version optimistic locking; see "
+        [:a {:href "/documentation/stm/"} "STM"]
+        " for the deviations from JVM canon)"]
        [:li "Threading macros (" [:code "->"] ", " [:code "->>"] ", "
         [:code "as->"] ", " [:code "cond->"] ", " [:code "cond->>"] ", "
         [:code "some->"] ", " [:code "some->>"] ")"]
@@ -498,9 +505,17 @@
         "without configuration. " [:code "agent"] " / "
         [:code "send"] " / " [:code "send-off"] " / "
         [:code "pmap"] " stay absent."]
-       [:li [:strong "Shared-memory STM."]
-        " No refs, no " [:code "dosync"] ". Atoms cover "
-        "mino's concurrency model."]]
+       [:li [:strong "agents."]
+        " " [:code "agent"] ", " [:code "send"] ", "
+        [:code "send-off"] ", and " [:code "await"]
+        " stay absent. Refs (with " [:code "dosync"] " / "
+        [:code "alter"] " / " [:code "commute"] ") cover "
+        "shared-memory coordination; agent-style fire-and-forget "
+        "would need a runtime-owned dispatcher mino does not "
+        "ship today."]
+       [:li [:strong "Watches on vars."]
+        " " [:code "add-watch"] " / " [:code "remove-watch"]
+        " work on atoms and refs but not on vars."]]
 
       ;; --- Quick reference ---
 
@@ -522,8 +537,10 @@
          [:td "Same (cooperative scheduling; "
           [:code "<!!"] " / " [:code ">!!"] " / "
           [:code "alts!!"] " park across threads when granted)"]]
-        [:tr [:td [:code "(dosync ...)"] " / " [:code "(ref ...)"]]
-         [:td "Not applicable (use atoms)"]]
+        [:tr [:td [:code "(dosync ...)"] " / " [:code "(ref ...)"]
+              " / " [:code "alter"] " / " [:code "commute"]]
+         [:td "Same surface (single-version optimistic locking; "
+          [:a {:href "/documentation/stm/"} "see STM"] ")"]]
         [:tr [:td [:code "(future ...)"] " / "
               [:code "(promise)"] " / " [:code "(thread ...)"]]
          [:td "Same when host grants threads (default in standalone)"]]
