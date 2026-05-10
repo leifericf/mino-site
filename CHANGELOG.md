@@ -4,6 +4,34 @@ All notable changes to mino-site are documented here.
 
 ## Unreleased
 
+- Tracking mino v0.102.0 (Agents finish MVP: per-state worker
+  thread + run-queue replaces the synchronous-on-the-calling-thread
+  fallback. `send` / `send-off` enqueue and return the agent
+  immediately; a worker drains the queue under `state_lock` and
+  signals `agent_cv` when each agent's in-flight count reaches
+  zero. `await` and `await-for` now block until every named
+  agent's queued actions complete; `await-for` returns `false`
+  on timeout. The worker counts against `thread_limit`, so
+  `send` throws `MTH001` if the host hasn't granted a thread
+  budget -- same shape as `future` / `promise` / `thread`. The
+  worker exits when the run-queue drains so it doesn't keep
+  `thread_count` above zero indefinitely; the next `send`
+  re-spawns. `shutdown-agents` joins the worker and seals the
+  state's agent surface (subsequent sends throw `MST008`);
+  self-call from inside an action body throws `MST002`.
+  `restart-agent` accepts `:clear-actions true` to drop every
+  queued action for that agent. The `dosync` post-commit drain
+  enqueues onto the worker instead of running synchronously.
+  Latent fix: `mino_pcall` now restores `lock_depth` after a
+  longjmp from a throwing body; the agent worker's yield/resume
+  cycle made the imbalance observable). The Compatibility Matrix
+  agent rows flip from "Supported (MVP)" to "Supported";
+  Intentional Divergences rewrites the agent paragraph from
+  "synchronous (MVP)" to "async via per-state worker"; the STM
+  page agents section gains the thread-budget contract,
+  failure-handling details, and lifecycle paragraph; Coming from
+  Clojure flips the synchronous-agents bullet to async-agents
+  with the `MTH001` thread-budget caveat.
 - Tracking mino v0.101.1 (STM and agent hardening pass: 19 commits
   closing real or latent bugs across the STM and agent surfaces;
   no new features, all alignment with JVM canon and internal
