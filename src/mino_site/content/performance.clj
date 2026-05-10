@@ -11,18 +11,17 @@
       [:h1 "Performance"]
 
       [:p.banner
-       "Numbers below were measured against mino v0.92.0 on an Apple "
-       "M3 Pro (6 performance cores plus 6 efficiency cores) under "
-       "normal desktop load. Treat them as directional. They will move "
-       "as the runtime matures. Phase-level updates since "
-       "the last bench run: real " [:code "MINO_VOLATILE"] " removes "
-       "the atom-CAS step from stateful transducers, lazy-seq "
-       "combinators " [:code "recur"] " on skip instead of allocating "
-       "a thunk per skipped element, " [:code "frequencies"]
-       " and " [:code "group-by"] " use transients, and the "
-       "chunked-seq family ships for explicit "
-       [:code "chunk-buffer"] "/" [:code "chunk-cons"] " pipelines. "
-       "A fresh bench run is queued."]
+       "Per-call cost numbers below were measured against mino v0.92.0 "
+       "on an Apple M3 Pro (6 performance cores plus 6 efficiency "
+       "cores) under normal desktop load. Treat them as directional. "
+       "v0.103.0 closed a non-JIT performance cycle that cut "
+       "per-op cost by an average of about 24 percent across the "
+       "microbenchmark gate, and dropped a tight integer "
+       [:code "loop/recur"] " bench from 941 ms to 375 ms (about a "
+       "60 percent reduction). Allocation shape per op is unchanged; "
+       "the gains come from cutting fixed eval-side overhead. The "
+       "shape relationships in the tables still hold; a full rebench "
+       "is queued."]
 
       [:p "mino is a tree-walking interpreter. There is no bytecode "
        "compiler, no JIT, and no dispatch optimization beyond the C "
@@ -32,81 +31,93 @@
 
       [:h2 "Core operations"]
       [:p "Per-call cost for fundamental eval shapes, measured through "
-       "the full read + eval path (min of three runs, 10³-10⁶ "
-       "iterations). Lower is better."]
+       "the full read plus eval path. Numbers are v0.103.0 perf-gate "
+       "baselines (median of three runs, " [:code "dotimes [_ N]"]
+       " amortized inside one call to "
+       [:code "(time ...)"] "). Lower is better."]
       [:table
        [:thead
         [:tr [:th "Operation"] [:th "Cost"] [:th "Notes"]]]
        [:tbody
         [:tr [:td "Primitive call " [:code "(+ 1 2)"]]
-             [:td "4.7 µs"]
-             [:td "Read + dispatch + arithmetic"]]
+             [:td "3.4 µs"]
+             [:td "Inline call cache hit, int+int fast lane, "
+              "no cons-spine build"]]
         [:tr [:td "User fn call (1 arg)"]
-             [:td "4.7 µs"]
-             [:td "Env child + parameter binding + body eval"]]
+             [:td "3.0 µs"]
+             [:td "Shape-pre-compiled binding, env child"]]
         [:tr [:td "User fn call (3 args)"]
-             [:td "5.4 µs"]
-             [:td "Cost grows ~0.3 µs per arg from cons-list build"]]
+             [:td "3.5 µs"]
+             [:td "Cost grows about 0.2 µs per arg"]]
         [:tr [:td "Vector literal " [:code "[1 2 3]"]]
-             [:td "4.4 µs"]
+             [:td "3.2 µs"]
              [:td "32-way trie allocation"]]
         [:tr [:td "Map literal " [:code "{:a 1 :b 2}"]]
-             [:td "4.3 µs"]
+             [:td "3.2 µs"]
              [:td "HAMT insertion per key"]]
         [:tr [:td [:code "(get m k)"] " on 100-key map"]
              [:td "4.9 µs"]
-             [:td "Hash + HAMT traversal"]]
+             [:td "Hash plus HAMT traversal"]]
         [:tr [:td [:code "(read-string \"42\")"]]
-             [:td "4.5 µs"]
-             [:td "Tokenize + parse"]]
+             [:td "3.4 µs"]
+             [:td "Tokenize plus parse"]]
         [:tr [:td [:code "(read-string \"(+ 1 2 3)\")"]]
-             [:td "4.9 µs"]
+             [:td "3.8 µs"]
              [:td "Cons-list construction during read"]]
         [:tr [:td "Symbol/keyword resolution"]
-             [:td "4.1 µs"]
-             [:td "Eval shell + intern hash hit"]]
+             [:td "3.0 µs"]
+             [:td "Eval shell, intern hash hit, hashed env probe"]]
         [:tr [:td [:code "(re-find re s)"] " short string"]
-             [:td "5.4 µs"]
-             [:td "Compiled pattern + capture groups, "
+             [:td "4.3 µs"]
+             [:td "Compiled pattern, capture groups, "
               "backtracking matcher"]]]]
 
       [:h2 "Bulk operations"]
       [:p "Cost of working with collections at scale. These show where "
-       "interpreter overhead compounds."]
+       "interpreter overhead compounds. v0.103.0 numbers, measured "
+       "the same way the bench harness does (1000 calls amortized; "
+       "median of three runs)."]
       [:table
        [:thead
         [:tr [:th "Operation"] [:th "Cost"] [:th "Per element"]]]
        [:tbody
         [:tr [:td [:code "(into [] (range 100))"]]
-             [:td "102 µs"]
-             [:td "1.0 µs"]]
+             [:td "24 µs"]
+             [:td "0.24 µs"]]
         [:tr [:td [:code "(into [] (range 1000))"]]
-             [:td "1.34 ms"]
-             [:td "1.34 µs"]]
+             [:td "386 µs"]
+             [:td "0.39 µs"]]
         [:tr [:td [:code "(reduce + 0 (range 100))"]]
-             [:td "56 µs"]
-             [:td "0.56 µs"]]
+             [:td "6 µs"]
+             [:td "0.06 µs"]]
         [:tr [:td [:code "(reduce + 0 (range 1000))"]]
-             [:td "1.30 ms"]
-             [:td "1.30 µs"]]
+             [:td "7 µs"]
+             [:td "0.007 µs"]]
         [:tr [:td [:code "(reduce + 0 (range 10000))"]]
-             [:td "15.0 ms"]
-             [:td "1.50 µs"]]
+             [:td "9 µs"]
+             [:td "0.0009 µs"]]
         [:tr [:td "Build 100-key map via " [:code "loop/recur"]]
-             [:td "233 µs"]
-             [:td "2.33 µs/key"]]
+             [:td "174 µs"]
+             [:td "1.74 µs/key"]]
         [:tr [:td [:code "loop/recur"] " 1,000 iterations"]
-             [:td "739 µs"]
-             [:td "0.74 µs"]]
+             [:td "212 µs"]
+             [:td "0.21 µs"]]
         [:tr [:td [:code "loop/recur"] " 10,000 iterations"]
-             [:td "7.7 ms"]
-             [:td "0.77 µs"]]
+             [:td "2.3 ms"]
+             [:td "0.23 µs"]]
         [:tr [:td [:code "(fib 20)"] " (~21k recursive calls)"]
-             [:td "28 ms"]
-             [:td "1.3 µs/call"]]
+             [:td "9.0 ms"]
+             [:td "0.43 µs/call"]]
         [:tr [:td [:code "(fib 25)"] " (~242k recursive calls)"]
-             [:td "428 ms"]
-             [:td "1.8 µs/call"]]]]
+             [:td "96 ms"]
+             [:td "0.40 µs/call"]]]]
+      [:p "The three " [:code "(reduce + 0 (range N))"] " rows are "
+       "the same shape and almost the same cost because the int-range "
+       "fast path that landed in v0.103.0 walks the integer range in "
+       "C with overflow-aware arithmetic when the reducer is the "
+       "canonical " [:code "+"] " primitive. The reduction never "
+       "materializes thunks or cons cells; the result drops out of a "
+       "tight C loop."]
 
       [:h2 "Eager collection builders"]
       [:p "When laziness is not needed, " [:code "rangev"] ", "
@@ -118,26 +129,31 @@
              [:th "vs. lazy equivalent"]]]
        [:tbody
         [:tr [:td [:code "(rangev 100)"]]
-             [:td "5.4 µs"]
-             [:td "0.054 µs"]
-             [:td "19× faster than " [:code "(into [] (range 100))"]]]
+             [:td "3.3 µs"]
+             [:td "0.033 µs"]
+             [:td "7× faster than " [:code "(into [] (range 100))"]]]
         [:tr [:td [:code "(rangev 1000)"]]
-             [:td "106 µs"]
-             [:td "0.11 µs"]
-             [:td "13× faster than " [:code "(into [] (range 1000))"]]]
+             [:td "55 µs"]
+             [:td "0.055 µs"]
+             [:td "7× faster than " [:code "(into [] (range 1000))"]]]
         [:tr [:td [:code "(reduce + 0 (rangev 1000))"]]
-             [:td "477 µs"]
-             [:td "0.48 µs"]
-             [:td "2.7× faster than the lazy form"]]
+             [:td "160 µs"]
+             [:td "0.16 µs"]
+             [:td "Slower than " [:code "(reduce + 0 (range 1000))"]
+              ", which now hits the int-range fast path"]]
         [:tr [:td [:code "(mapv inc (rangev 1000))"]]
-             [:td "338 µs"]
-             [:td "0.34 µs"]
-             [:td "Eliminates thunk + cons cell per element"]]]]
-      [:p "The speedup comes from skipping thunk allocation and eval "
-       "overhead per element. When per-element work is dominated by a "
-       "user function call, the eager path provides a smaller advantage. "
-       "Use " [:code "rangev"] " for data generation and " [:code "reduce"]
-       " over vectors for the biggest wins."]
+             [:td "350 µs"]
+             [:td "0.35 µs"]
+             [:td "Eliminates thunk plus cons cell per element"]]]]
+      [:p "The eager-builder speedup comes from skipping thunk "
+       "allocation and eval overhead per element. The picture for "
+       [:code "reduce + (range N)"] " specifically inverted in v0.103.0: "
+       "the lazy form now hits an int-range fast path that walks the "
+       "range directly in C with overflow-aware arithmetic, so it is "
+       "the fastest path for that shape. " [:code "rangev"] " still "
+       "wins when the result needs to live as a vector for further "
+       "indexed work; " [:code "mapv"] " and " [:code "filterv"]
+       " still win when laziness is not the goal."]
 
       [:h2 "Concurrency"]
       [:p "Standalone mino grants " [:code "cpu_count"] " worker threads "
@@ -191,37 +207,39 @@
         [:tr [:th "Item"] [:th "Size"] [:th "Notes"]]]
        [:tbody
         [:tr [:td "Stripped " [:code "mino"] " binary (arm64)"]
-             [:td "640 KB"]
+             [:td "~770 KB"]
              [:td "Single self-contained executable; no dynamic deps"]]
-        [:tr [:td "C source tree (" [:code "src/"] " minus vendor)"]
-             [:td "~1.1 MB"]
+        [:tr [:td "C source tree (" [:code "src/"] " minus vendor and "
+              "bundled-source headers)"]
+             [:td "~1.7 MB"]
              [:td "What an embedder pulls in for an in-tree build"]]
         [:tr [:td "Vendor (" [:code "imath"] " for BigInt)"]
              [:td "~89 KB"]
              [:td "Only used when arithmetic exceeds 64-bit range"]]
         [:tr [:td "Bundled stdlib source"]
-             [:td "~175 KB"]
+             [:td "~190 KB"]
              [:td "Compiled into the binary; no on-disk sidecar"]]]]
-      [:p "Cold startup (median of 100 invocations on the M3 Pro):"]
+      [:p "Cold startup (median of 20 invocations on the M3 Pro, "
+       "warm filesystem cache):"]
       [:table
        [:thead
         [:tr [:th "Operation"] [:th "Wall time"] [:th "Notes"]]]
        [:tbody
         [:tr [:td [:code "./mino -e '(+ 1 2)'"]]
-             [:td "~6.8 ms"]
-             [:td "Process spawn + state init + eval + exit"]]
+             [:td "~9 ms"]
+             [:td "Process spawn, state init, eval, exit"]]
         [:tr [:td [:code "./mino -e nil"]]
-             [:td "~6.4 ms"]
+             [:td "~9 ms"]
              [:td "Same path, no eval work"]]
-        [:tr [:td [:code "mino_state_new"] " + " [:code "mino_install_all"]
-              " (in-process)"]
+        [:tr [:td [:code "mino_state_new"] " plus "
+              [:code "mino_install_all"] " (in-process)"]
              [:td "~3.5 ms"]
              [:td "Parses core.clj, installs primitives, registers "
               "lazy bundled libs"]]]]
-      [:p "Roughly half the cold start is "
+      [:p "Roughly a third of the cold start is "
        [:code "mino_new"] " evaluating " [:code "core.clj"]
-       " (~3.5 ms); the rest is OS process spawn, dynamic loader, and "
-       "exit. Embedders that create one runtime up-front pay the "
+       "; the rest is OS process spawn, dynamic loader, and exit. "
+       "Embedders that create one runtime up-front pay the "
        "3.5 ms once."]
 
       [:h2 "Cross-state cloning"]
@@ -322,12 +340,12 @@
         "per-element cost in " [:code "range"] ", " [:code "map"]
         ", " [:code "filter"] ", " [:code "take"] ", and "
         [:code "concat"] ". For tight loops, " [:code "loop/recur"]
-        " (~0.77 µs/iteration) is several times faster than the "
-        "lazy reduce equivalent. The eager variants " [:code "rangev"]
-        ", " [:code "mapv"] ", and " [:code "filterv"]
-        " eliminate thunk overhead entirely when laziness is not needed. "
-        "Lazy combinators now " [:code "recur"] " on skip rather than "
-        "allocating a thunk for every dropped element, and the "
+        " (about 0.23 µs per iteration in v0.103.0) is several times "
+        "faster than the lazy reduce equivalent. The eager variants "
+        [:code "rangev"] ", " [:code "mapv"] ", and " [:code "filterv"]
+        " eliminate thunk overhead entirely when laziness is not "
+        "needed. Lazy combinators " [:code "recur"] " on skip rather "
+        "than allocating a thunk for every dropped element, and the "
         "chunked-seq family ("
         [:code "chunk-buffer"] " / " [:code "chunk-cons"]
         ") amortizes thunk overhead in batches of 32 when the "
@@ -342,11 +360,23 @@
         [:code "clojure.edn"] ", and so on) are registered at "
         [:code "mino_install_all"] " but not evaluated; they only pay "
         "when a script first " [:code "require"] "s them."]
-       [:li [:strong "Cons-list argument passing."]
-        " Every function call builds a linked list of cons cells "
-        "for its arguments. The callee walks the list to bind "
-        "parameters. A fixed-arity fast path would eliminate this "
-        "for common cases."]
+       [:li [:strong "Cons-list argument passing (residual)."]
+        " The original eval path built a linked list of cons cells "
+        "for every function call's arguments and walked it on the "
+        "callee side to bind parameters. As of v0.103.0 the hot "
+        "fixed-arity primitives (" [:code "inc"] ", " [:code "dec"]
+        ", " [:code "count"] ", " [:code "first"] ", " [:code "rest"]
+        ", " [:code "cons"] ", and the type predicates) take their "
+        "arguments through a flat C array instead, and user "
+        "functions whose parameter vector is a list of plain "
+        "interned symbols dispatch through a shape-pre-compiled "
+        "binding path. The variadic " [:code "+"] " " [:code "-"]
+        " " [:code "*"] " " [:code "/"] " " [:code "<"] " "
+        [:code "<="] " " [:code ">"] " " [:code ">="]
+        " primitives also take this path for calls with three or "
+        "more arguments. The cons-spine cost remains for "
+        "destructuring parameter shapes, rest arguments, and "
+        "non-hot prims, but it is no longer the per-call default."]
        [:li [:strong "Per-state lock at every eval entry (when threaded)."]
         " Once a state is multi-threaded (host has granted workers, or "
         "the standalone has run " [:code "mino_install_all"] "), each "
@@ -359,8 +389,23 @@
        [:li [:strong "Tree-walking eval."]
         " There is no intermediate representation. Each form is "
         "traversed, dispatched on type, and interpreted directly. "
-        "A bytecode compiler would give a large constant-factor "
-        "improvement across the board."]]
+        "v0.103.0 added a per-state monomorphic inline call cache "
+        "keyed on the call form pointer, so calls whose head is an "
+        "unqualified symbol that resolves past every local frame "
+        "skip symbol lookup and var dereference on subsequent hits. "
+        "Cache invalidation is generation-counter based: "
+        [:code "var-set"] ", " [:code "ns-unmap"] ", and "
+        [:code "var-unintern"] " all bump the counter and the next "
+        "call falls through. A binary numeric fast lane handles "
+        [:code "(op a b)"] " for the canonical " [:code "+"] " "
+        [:code "-"] " " [:code "*"] " " [:code "="] " " [:code "<"]
+        " " [:code "<="] " " [:code ">"] " " [:code ">="]
+        " primitives directly through the C-builtin overflow ops "
+        "when both operands are integers, skipping the numeric "
+        "tower entirely. A bytecode compiler would still give a "
+        "large constant-factor improvement across the board, "
+        "but the cache and fast lanes recover most of the inner-loop "
+        "cost without one."]]
 
       [:h2 "Known issues"]
       [:p "Two performance characteristics are inherent to the current "
