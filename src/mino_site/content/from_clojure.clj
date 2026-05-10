@@ -236,9 +236,11 @@
        "sandboxed scripts withhold the grant."]
       [:p "When the limit is " [:code "<= 1"] ", the same forms "
        "throw " [:code ":mino/unsupported"] " with a message "
-       "naming the policy. " [:code "agent"] " / " [:code "send"]
-       " / " [:code "send-off"] " / " [:code "pmap"] " are not "
-       "provided. See the "
+       "naming the policy. " [:code "agent"] " ships and "
+       "constructors work, but " [:code "send"] " / "
+       [:code "send-off"] " throw " [:code "MTH001"]
+       " when their pool's worker can't spawn under the granted "
+       "limit. " [:code "pmap"] " is not provided. See the "
        [:a {:href "/documentation/intentional-divergences/#host-threads"}
         "host-threads contract"]
        " for the embed-distinctive pool / factory / stack-size "
@@ -507,13 +509,20 @@
         " " [:code "agent"] " / " [:code "send"] " / "
         [:code "send-off"] " / " [:code "await"] " / "
         [:code "await-for"] " / " [:code "shutdown-agents"]
-        " all work; " [:code "send"] " enqueues onto a per-state "
-        "run-queue and returns the agent immediately, and a worker "
-        "thread drains the queue. The worker counts against "
-        [:code "thread_limit"] ", so " [:code "send"] " throws "
+        " all work. " [:code "send"] " enqueues onto the POOLED "
+        "run-queue, " [:code "send-off"] " onto SOLO; each pool "
+        "has its own worker thread but the per-state eval lock "
+        "still serializes one action at a time across both pools. "
+        "Each worker counts against "
+        [:code "thread_limit"] " (the embedder thread does not), "
+        "so " [:code "send"] " throws "
         [:code "MTH001"] " if the host hasn't granted a thread "
-        "budget. " [:code "send-via"] " is intentionally deferred "
-        "(no public Executor type). See "
+        "budget. Public C-API: " [:code "mino_send"] ", "
+        [:code "mino_send_off"] ", " [:code "mino_await"] ", "
+        [:code "mino_await_for"] ", " [:code "mino_agent_error"]
+        ", " [:code "mino_restart_agent"] ". "
+        [:code "send-via"] " is intentionally deferred (no public "
+        "Executor type). See "
         [:a {:href "/documentation/stm/"} "STM"] "."]]
 
       ;; --- Quick reference ---

@@ -559,29 +559,35 @@
               [:code "error-handler"] " / "
               [:code "set-error-mode!"] " / " [:code "error-mode"]]
          [:td "Supported"]
-         [:td [:code "send"] " enqueues onto a per-state run-queue "
-          "and returns the agent immediately; a worker thread drains "
-          "the queue under " [:code "state_lock"] ". "
+         [:td [:code "send"] " enqueues onto the agent's POOLED "
+          "run-queue, " [:code "send-off"] " onto SOLO; both "
+          "return the agent immediately, and each pool's worker "
+          "drains its queue under " [:code "state_lock"] ". "
           [:code "await"] " / " [:code "await-for"] " block until "
-          "every named agent's in-flight count reaches zero. The "
+          "every named agent's in-flight count reaches zero. Each "
           "worker counts against " [:code "thread_limit"]
-          " (default 1 in embedded use; bumped to "
+          " (the embedder thread does not; default 1 in embedded "
+          "use, bumped to "
           [:code "cpu_count"] " in standalone " [:code "./mino"]
           "); " [:code "send"] " throws " [:code "MTH001"]
           " if the host hasn't granted a thread budget. Action "
           "throws and watch throws are both captured into "
-          [:code "agent-error"] ". See "
+          [:code "agent-error"] ". Public C-API mirrors: "
+          [:code "mino_send"] ", " [:code "mino_send_off"] ", "
+          [:code "mino_await"] ", " [:code "mino_await_for"] ", "
+          [:code "mino_agent_error"] ", "
+          [:code "mino_restart_agent"] ". See "
           [:a {:href "/documentation/stm/"} "STM"]
           " for the deviations."]]
         [:tr [:td [:code "send-via"]]
          [:td "Absent"]
          [:td "Intentionally deferred -- no public Executor type "
           "is exposed yet. " [:code "send"] " and " [:code "send-off"]
-          " share the same per-state worker."]]
+          " each have their own per-state worker (POOLED and SOLO)."]]
         [:tr [:td [:code "shutdown-agents"]]
          [:td "Supported"]
-         [:td "Quiesces the per-state worker (drains the queue, "
-          "joins the pthread) and seals the agent surface so "
+         [:td "Quiesces both per-state workers (drains the queues, "
+          "joins the pthreads) and seals the agent surface so "
           "subsequent " [:code "send"] " / " [:code "send-off"]
           " throw " [:code "MST008"] ". Idempotent. Throws "
           [:code "MST002"] " if called from inside an action body."]]

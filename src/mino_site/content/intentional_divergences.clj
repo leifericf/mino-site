@@ -143,10 +143,11 @@
        "serializes one action at a time across both pools, so "
        "multi-agent dispatch is still serialized within one state. "
        "Each worker counts against "
-       [:code "thread_limit"] ", so " [:code "send"] " throws "
+       [:code "thread_limit"] " (the embedder thread does not), so "
+       [:code "send"] " throws "
        [:code "MTH001"] " if the host hasn't granted a thread "
        "budget; embedders that want both pools alive concurrently "
-       "must raise the limit to >= 3. " [:code "send-via"]
+       "must raise the limit to >= 2. " [:code "send-via"]
        " is intentionally deferred (no public Executor type). One "
        "small pool-routing deviation: " [:code "send-off"]
        " inside a " [:code "dosync"] " posts onto POOLED for the "

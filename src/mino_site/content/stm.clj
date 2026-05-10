@@ -153,36 +153,37 @@
        [:code "agent"] ", " [:code "send"] ", " [:code "send-off"]
        ", " [:code "await"] ", " [:code "await-for"] ", "
        [:code "agent-error"] ", " [:code "restart-agent"] ", "
-       [:code "shutdown-agents"] ", and the error-mode / "
-       "error-handler surface. " [:code "send"] " enqueues the "
-       "action onto a per-state run-queue and returns the agent "
-       "immediately; a worker thread drains the queue and runs each "
+       [:code "shutdown-agents"] ", " [:code "release-pending-sends"]
+       ", and the error-mode / error-handler surface. "
+       [:code "send"] " enqueues an action onto a per-state run-queue "
+       "(POOLED for " [:code "send"] ", SOLO for "
+       [:code "send-off"] ") and returns the agent immediately; "
+       "a worker thread per pool drains its queue and runs each "
        "action under " [:code "state_lock"] ". "
        [:code "await"] " and " [:code "await-for"] " block until "
        "every named agent's in-flight count reaches zero ("
        [:code "await-for"] " returns " [:code "false"] " on "
        "timeout)."]
       [:p [:strong "Thread budget."]
-       " The worker counts against " [:code "thread_limit"]
-       " (default 1 in embedded use; standalone " [:code "./mino"]
-       " bumps to " [:code "cpu_count"] " after install), so "
+       " Each pool's worker counts against " [:code "thread_limit"]
+       " (the embedder thread does not). Default is 1 in embedded "
+       "use; standalone " [:code "./mino"] " bumps to "
+       [:code "cpu_count"] " after install. "
        [:code "send"] " / " [:code "send-off"] " throw "
-       [:code "MTH001"] " when the host hasn't granted a thread "
+       [:code "MTH001"] " when the host hasn't granted enough thread "
        "budget -- the same shape "
        [:code "future"] " / " [:code "promise"] " / "
        [:code "thread"] " already use. Each pool's worker exits "
        "when its run-queue drains so it doesn't keep "
        [:code "thread_count"] " > 0 indefinitely; the next "
-       [:code "send"] " re-spawns. " [:code "send"] " routes onto "
-       "the POOLED pool, " [:code "send-off"] " onto SOLO; the two "
-       "queues are independent so a long-running send-off does not "
-       "stall pending sends, and vice versa. mino's per-state eval "
-       "lock still serializes one action at a time across both "
+       [:code "send"] " into that pool re-spawns. mino's per-state "
+       "eval lock still serializes one action at a time across both "
        "pools, so the user-visible behavior is identical to a single "
        "queue today; the split is the seam for a future "
        "SOLO-yields-eval-lock-during-blocking-IO design. Embedders "
        "that want both pools alive concurrently must raise the "
-       "thread limit to at least 3 (embedder + POOLED + SOLO worker)."]
+       "thread limit to at least 2; mixing with futures or host "
+       "threads requires correspondingly more."]
       [:p [:strong "Failure handling."]
        " Action throws and watch throws are both captured into "
        [:code "agent-error"] " via "
