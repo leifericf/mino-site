@@ -131,23 +131,29 @@
        [:a {:href "/documentation/stm/"} "STM page"]
        " for the full enumeration of deviations and the C API "
        "mirror."]
-      [:p [:strong "Agents dispatch asynchronously through a "
-                    "per-state worker thread."]
+      [:p [:strong "Agents dispatch asynchronously through "
+                    "per-state worker threads (POOLED + SOLO)."]
        " " [:code "agent"] ", " [:code "send"] ", "
        [:code "send-off"] ", " [:code "await"] ", "
        [:code "await-for"] ", " [:code "agent-error"] ", "
        [:code "restart-agent"] ", and " [:code "shutdown-agents"]
-       " all ship. " [:code "send"] " enqueues the action onto a "
-       "per-state run-queue and returns the agent immediately; a "
-       "worker thread drains the queue under the per-state eval "
-       "lock, so multi-agent dispatch is still serialized within "
-       "one state. The worker counts against "
+       " all ship. " [:code "send"] " enqueues onto the POOLED "
+       "run-queue, " [:code "send-off"] " onto SOLO; each pool has "
+       "its own worker thread but the per-state eval lock still "
+       "serializes one action at a time across both pools, so "
+       "multi-agent dispatch is still serialized within one state. "
+       "Each worker counts against "
        [:code "thread_limit"] ", so " [:code "send"] " throws "
        [:code "MTH001"] " if the host hasn't granted a thread "
-       "budget. " [:code "send-via"] " is intentionally deferred "
-       "(no public Executor type). See "
+       "budget; embedders that want both pools alive concurrently "
+       "must raise the limit to >= 3. " [:code "send-via"]
+       " is intentionally deferred (no public Executor type). See "
        [:a {:href "/documentation/stm/"} "STM"]
-       " for the full surface."]
+       " for the full surface, including the public C-API perimeter "
+       "(" [:code "mino_send"] ", " [:code "mino_send_off"] ", "
+       [:code "mino_await"] ", " [:code "mino_await_for"] ", "
+       [:code "mino_agent_error"] ", "
+       [:code "mino_restart_agent"] ")."]
 
       ;; ----------------------------------------------------------------
 

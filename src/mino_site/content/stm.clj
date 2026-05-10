@@ -170,14 +170,19 @@
        [:code "MTH001"] " when the host hasn't granted a thread "
        "budget -- the same shape "
        [:code "future"] " / " [:code "promise"] " / "
-       [:code "thread"] " already use. The worker exits when the "
-       "run-queue drains so it doesn't keep "
+       [:code "thread"] " already use. Each pool's worker exits "
+       "when its run-queue drains so it doesn't keep "
        [:code "thread_count"] " > 0 indefinitely; the next "
-       [:code "send"] " re-spawns. mino's per-state eval lock "
-       "still serializes one action at a time per state regardless "
-       "of pool size; a separate pool for blocking IO ("
-       [:code "send-off"] " in JVM canon) is left for a follow-up "
-       "cycle."]
+       [:code "send"] " re-spawns. " [:code "send"] " routes onto "
+       "the POOLED pool, " [:code "send-off"] " onto SOLO; the two "
+       "queues are independent so a long-running send-off does not "
+       "stall pending sends, and vice versa. mino's per-state eval "
+       "lock still serializes one action at a time across both "
+       "pools, so the user-visible behavior is identical to a single "
+       "queue today; the split is the seam for a future "
+       "SOLO-yields-eval-lock-during-blocking-IO design. Embedders "
+       "that want both pools alive concurrently must raise the "
+       "thread limit to at least 3 (embedder + POOLED + SOLO worker)."]
       [:p [:strong "Failure handling."]
        " Action throws and watch throws are both captured into "
        [:code "agent-error"] " via "
@@ -194,15 +199,30 @@
        "Executor type)."]
       [:p [:strong "Lifecycle."]
        " " [:code "shutdown-agents"] " flips an agents-shutdown "
-       "flag, signals the worker to drain and exit, and "
-       [:code "pthread_join"] "s. Subsequent "
+       "flag, signals both pool workers to drain and exit, and "
+       [:code "pthread_join"] "s each. Subsequent "
        [:code "send"] " / " [:code "send-off"] " throw "
        [:code "MST008"] ". Calling "
        [:code "shutdown-agents"] " from inside an action body "
        "(self-join) throws " [:code "MST002"] " instead of "
-       "deadlocking. " [:code "mino_state_free"] " quiesces the "
-       "worker before heap teardown so a worker can't run after "
+       "deadlocking. " [:code "mino_state_free"] " quiesces both "
+       "pools before heap teardown so a worker can't run after "
        "free."]
+      [:p [:strong "Embedder C-API."]
+       " Host code can drive agents directly without going through "
+       "the Clojure prim layer. "
+       [:code "mino_send"] " / " [:code "mino_send_off"] " enqueue "
+       "an action and return the agent immediately. "
+       [:code "mino_await"] " / " [:code "mino_await_for"] " block "
+       "until the named agents drain (NULL-terminated array). "
+       [:code "mino_agent_error"] " reads the failure latch. "
+       [:code "mino_restart_agent"] " clears it and resets the "
+       "value, with optional clear-actions semantics. Each entry "
+       "takes the same " [:code "mino_lock"] " perimeter "
+       [:code "mino_call"] " uses, and the cross-state guard fires "
+       "at the boundary -- passing an agent from another "
+       [:code "mino_state_t"] " throws "
+       [:code "MST007"] " and returns NULL."]
 
       [:h2 "What still doesn't work"]
       [:ul
