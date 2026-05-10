@@ -4,6 +4,26 @@ All notable changes to mino-site are documented here.
 
 ## Unreleased
 
+- Tracking mino v0.103.0 (Worker-List Lock Split: separates the
+  brief worker-bookkeeping lock (`worker_ctxs_head` linked list +
+  `thread_count` counter) from the heavy recursive `state_lock`.
+  Closes the only NEEDS-DESIGN finding from the v0.102.0
+  adversarial pass: a tight embedder loop holding state_lock can
+  no longer starve future / agent worker entry-link or
+  exit-detach. Lock order: state_lock outer, worker_list_lock
+  inner; workers at entry/exit acquire alone. GC root scan takes
+  the new lock briefly across the three `worker_ctxs_head`
+  walks. The public C API surface is unchanged; embedders that
+  rebuild against the new submodule pick up the fix
+  transparently. No site-side changes: pages reference the
+  general embedding contract, not the specific lock split, so
+  the existing prose stays accurate).
+- Tracking mino v0.102.1 (Agents adversarial-test pass + qa-arch
+  hygiene: doc accuracy fix to the thread-budget message in
+  `agent_worker_ensure` and the matching site copy on the STM
+  page, the Compatibility Matrix, the Intentional Divergences
+  page, and the Coming-from-Clojure page; 11 `abort()`
+  rationale comments + TU-size allowlist updates).
 - Tracking mino v0.102.0 (Agents finish MVP: per-state agent
   workers + run-queues replace the synchronous-on-the-calling-thread
   fallback, with a separate POOLED / SOLO split for `send` /
