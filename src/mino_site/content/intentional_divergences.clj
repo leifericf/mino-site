@@ -147,7 +147,13 @@
        [:code "MTH001"] " if the host hasn't granted a thread "
        "budget; embedders that want both pools alive concurrently "
        "must raise the limit to >= 3. " [:code "send-via"]
-       " is intentionally deferred (no public Executor type). See "
+       " is intentionally deferred (no public Executor type). One "
+       "small pool-routing deviation: " [:code "send-off"]
+       " inside a " [:code "dosync"] " posts onto POOLED for the "
+       "post-commit drain (JVM canon would dispatch via the action's "
+       "original pool). This is invisible while both pools run under "
+       "the per-state eval lock; the deviation will matter once SOLO "
+       "yields the lock for blocking IO. See "
        [:a {:href "/documentation/stm/"} "STM"]
        " for the full surface, including the public C-API perimeter "
        "(" [:code "mino_send"] ", " [:code "mino_send_off"] ", "
