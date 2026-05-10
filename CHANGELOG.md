@@ -4,6 +4,24 @@ All notable changes to mino-site are documented here.
 
 ## Unreleased
 
+- Tracking mino v0.101.1 (STM and agent hardening pass: 19 commits
+  closing real or latent bugs across the STM and agent surfaces;
+  no new features, all alignment with JVM canon and internal
+  consistency. Two-pass atomic commit; `tx_state_t.in_commit` to
+  reject re-entered mutators; `mino_pcall`-wrapped commute-replay
+  and watch dispatch for both refs and agents; in-tx `send` /
+  `send-off` deferred to post-commit with `release-pending-sends`
+  wired to count and clear; cross-state defense for agents and
+  tightened for refs (moved into shared cores so the Clojure path
+  is covered); constructor option parsing for `:validator`,
+  `:error-handler`, `:error-mode`, `:meta` with unknown keys
+  throwing; `error-handler` actually invoked on action and
+  validator failure; `restart-agent` validates new state;
+  `*agent*` bound during action / validator / watch dispatch;
+  `shutdown-agents` flips a state-level flag and `send-via`
+  throws MST008 instead of being unbound; `with-meta` /
+  `vary-meta` on stateful types throw; agent print form now
+  carries identity).
 - Tracking mino v0.98.5 (Hygiene + Closure cycle: macro hygiene
   fix in `qq_qualify_symbol` so syntax-quoted bare symbols inside a
   macro body qualify against the macro's defining namespace not the
