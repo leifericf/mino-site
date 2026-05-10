@@ -503,12 +503,17 @@
         [:code "./mino"] " grants " [:code "cpu_count"] " by "
         "default, so REPL/script users see the canon surface "
         "without configuration. " [:code "pmap"] " stays absent."]
-       [:li [:strong "Synchronous agents."]
+       [:li [:strong "Async agents."]
         " " [:code "agent"] " / " [:code "send"] " / "
-        [:code "send-off"] " / " [:code "await"]
-        " all work, but mino's MVP runs sends synchronously on the "
-        "calling thread (no worker pool). " [:code "send-via"]
-        " is absent (no public Executor type). See "
+        [:code "send-off"] " / " [:code "await"] " / "
+        [:code "await-for"] " / " [:code "shutdown-agents"]
+        " all work; " [:code "send"] " enqueues onto a per-state "
+        "run-queue and returns the agent immediately, and a worker "
+        "thread drains the queue. The worker counts against "
+        [:code "thread_limit"] ", so " [:code "send"] " throws "
+        [:code "MTH001"] " if the host hasn't granted a thread "
+        "budget. " [:code "send-via"] " is intentionally deferred "
+        "(no public Executor type). See "
         [:a {:href "/documentation/stm/"} "STM"] "."]]
 
       ;; --- Quick reference ---

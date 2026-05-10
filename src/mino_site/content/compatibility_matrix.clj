@@ -558,24 +558,38 @@
               [:code "set-error-handler!"] " / "
               [:code "error-handler"] " / "
               [:code "set-error-mode!"] " / " [:code "error-mode"]]
-         [:td "Supported (MVP)"]
-         [:td "mino runs sends synchronously on the calling thread; "
-          [:code "await"] " is a no-op since the queue is always "
-          "drained on send return. Action throws and watch throws "
-          "are both captured into " [:code "agent-error"] ". "
-          "See " [:a {:href "/documentation/stm/"} "STM"]
+         [:td "Supported"]
+         [:td [:code "send"] " enqueues onto a per-state run-queue "
+          "and returns the agent immediately; a worker thread drains "
+          "the queue under " [:code "state_lock"] ". "
+          [:code "await"] " / " [:code "await-for"] " block until "
+          "every named agent's in-flight count reaches zero. The "
+          "worker counts against " [:code "thread_limit"]
+          " (default 1 in embedded use; bumped to "
+          [:code "cpu_count"] " in standalone " [:code "./mino"]
+          "); " [:code "send"] " throws " [:code "MTH001"]
+          " if the host hasn't granted a thread budget. Action "
+          "throws and watch throws are both captured into "
+          [:code "agent-error"] ". See "
+          [:a {:href "/documentation/stm/"} "STM"]
           " for the deviations."]]
         [:tr [:td [:code "send-via"]]
          [:td "Absent"]
-         [:td "Not provided in the MVP -- no public Executor type "
-          "is exposed. " [:code "send"] " and " [:code "send-off"]
-          " share one synchronous path."]]
-        [:tr [:td [:code "shutdown-agents"] " / "
-              [:code "release-pending-sends"]]
-         [:td "Stub"]
-         [:td "Returns nil / 0. mino's worker model exits with the "
-          "host process; the synchronous send model has no pending "
-          "queue to release."]]
+         [:td "Intentionally deferred -- no public Executor type "
+          "is exposed yet. " [:code "send"] " and " [:code "send-off"]
+          " share the same per-state worker."]]
+        [:tr [:td [:code "shutdown-agents"]]
+         [:td "Supported"]
+         [:td "Quiesces the per-state worker (drains the queue, "
+          "joins the pthread) and seals the agent surface so "
+          "subsequent " [:code "send"] " / " [:code "send-off"]
+          " throw " [:code "MST008"] ". Idempotent. Throws "
+          [:code "MST002"] " if called from inside an action body."]]
+        [:tr [:td [:code "release-pending-sends"]]
+         [:td "Supported"]
+         [:td "Inside a " [:code "dosync"] ", returns the count of "
+          "queued sends and clears them so they don't fire on "
+          "commit. Outside a transaction returns 0."]]
         [:tr [:td [:code "add-watch"] " / " [:code "remove-watch"]
               " on agents"]
          [:td "Supported"]

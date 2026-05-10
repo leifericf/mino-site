@@ -149,29 +149,67 @@
       ;; --- What still doesn't work ---
 
       [:h2 "Agents"]
-      [:p "mino now ships agents in MVP form: "
+      [:p "mino ships agents with async dispatch: "
        [:code "agent"] ", " [:code "send"] ", " [:code "send-off"]
-       ", " [:code "await"] ", " [:code "agent-error"] ", "
-       [:code "restart-agent"] ", and the error-mode / error-handler "
-       "surface. The MVP runs sends "
-       [:strong "synchronously"]
-       " on the calling thread rather than dispatching to a worker "
-       "pool. mino's eval loop holds a per-state mutex so a worker "
-       "pool would serialize on it anyway; the synchronous shape is "
-       "observably equivalent for any program that does not race "
-       "against the agent itself, and " [:code "await"]
-       " becomes a trivial no-op."]
-      [:p "Action throws and watch throws are both captured into "
-       [:code "agent-error"] " via a manual try frame -- a thrown "
-       "watch on an agent does not propagate to the caller of "
-       [:code "send"] ", matching JVM-ish behavior. "
-       [:code "send-via"] " is not implemented (no public Executor "
-       "type)."]
+       ", " [:code "await"] ", " [:code "await-for"] ", "
+       [:code "agent-error"] ", " [:code "restart-agent"] ", "
+       [:code "shutdown-agents"] ", and the error-mode / "
+       "error-handler surface. " [:code "send"] " enqueues the "
+       "action onto a per-state run-queue and returns the agent "
+       "immediately; a worker thread drains the queue and runs each "
+       "action under " [:code "state_lock"] ". "
+       [:code "await"] " and " [:code "await-for"] " block until "
+       "every named agent's in-flight count reaches zero ("
+       [:code "await-for"] " returns " [:code "false"] " on "
+       "timeout)."]
+      [:p [:strong "Thread budget."]
+       " The worker counts against " [:code "thread_limit"]
+       " (default 1 in embedded use; standalone " [:code "./mino"]
+       " bumps to " [:code "cpu_count"] " after install), so "
+       [:code "send"] " / " [:code "send-off"] " throw "
+       [:code "MTH001"] " when the host hasn't granted a thread "
+       "budget -- the same shape "
+       [:code "future"] " / " [:code "promise"] " / "
+       [:code "thread"] " already use. The worker exits when the "
+       "run-queue drains so it doesn't keep "
+       [:code "thread_count"] " > 0 indefinitely; the next "
+       [:code "send"] " re-spawns. mino's per-state eval lock "
+       "still serializes one action at a time per state regardless "
+       "of pool size; a separate pool for blocking IO ("
+       [:code "send-off"] " in JVM canon) is left for a follow-up "
+       "cycle."]
+      [:p [:strong "Failure handling."]
+       " Action throws and watch throws are both captured into "
+       [:code "agent-error"] " via "
+       [:code "mino_pcall"] " -- a thrown watch does not abort "
+       "sibling watches or propagate to the caller of "
+       [:code "send"] ", matching JVM canon. With an "
+       [:code "error-handler"] " installed, the action throw "
+       "routes through the handler and the agent stays clean (no "
+       [:code "agent-error"] " latch). "
+       [:code "restart-agent"] " accepts trailing "
+       [:code ":clear-actions true"] " to drop every queued action "
+       "for that agent. "
+       [:code "send-via"] " is intentionally deferred (no public "
+       "Executor type)."]
+      [:p [:strong "Lifecycle."]
+       " " [:code "shutdown-agents"] " flips an agents-shutdown "
+       "flag, signals the worker to drain and exit, and "
+       [:code "pthread_join"] "s. Subsequent "
+       [:code "send"] " / " [:code "send-off"] " throw "
+       [:code "MST008"] ". Calling "
+       [:code "shutdown-agents"] " from inside an action body "
+       "(self-join) throws " [:code "MST002"] " instead of "
+       "deadlocking. " [:code "mino_state_free"] " quiesces the "
+       "worker before heap teardown so a worker can't run after "
+       "free."]
 
       [:h2 "What still doesn't work"]
       [:ul
        [:li [:code "send-via"]
-        " (custom executor for sends) -- see Agents above."]
+        " (custom executor for sends) -- intentionally deferred. "
+        "Use " [:code "send"] " or " [:code "send-off"]
+        " through the per-state worker."]
        [:li "Reflection on " [:code "clojure.lang.Ref"] " (or any "
         "other JVM class). Cross-link: see "
         [:a {:href "/documentation/intentional-divergences/"}

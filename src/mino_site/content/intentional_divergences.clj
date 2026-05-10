@@ -131,16 +131,22 @@
        [:a {:href "/documentation/stm/"} "STM page"]
        " for the full enumeration of deviations and the C API "
        "mirror."]
-      [:p [:strong "Agents are synchronous (MVP)."]
+      [:p [:strong "Agents dispatch asynchronously through a "
+                    "per-state worker thread."]
        " " [:code "agent"] ", " [:code "send"] ", "
        [:code "send-off"] ", " [:code "await"] ", "
-       [:code "agent-error"] ", and " [:code "restart-agent"]
-       " all ship. Sends run synchronously on the calling thread "
-       "in mino's MVP; mino's eval loop already serializes worker "
-       "threads on a per-state mutex, so a worker-pool dispatcher "
-       "would gain nothing while complicating the lifecycle. "
-       [:code "send-via"] " is not implemented (no public Executor "
-       "type). See " [:a {:href "/documentation/stm/"} "STM"]
+       [:code "await-for"] ", " [:code "agent-error"] ", "
+       [:code "restart-agent"] ", and " [:code "shutdown-agents"]
+       " all ship. " [:code "send"] " enqueues the action onto a "
+       "per-state run-queue and returns the agent immediately; a "
+       "worker thread drains the queue under the per-state eval "
+       "lock, so multi-agent dispatch is still serialized within "
+       "one state. The worker counts against "
+       [:code "thread_limit"] ", so " [:code "send"] " throws "
+       [:code "MTH001"] " if the host hasn't granted a thread "
+       "budget. " [:code "send-via"] " is intentionally deferred "
+       "(no public Executor type). See "
+       [:a {:href "/documentation/stm/"} "STM"]
        " for the full surface."]
 
       ;; ----------------------------------------------------------------
