@@ -14,7 +14,7 @@
        "Per-call cost numbers below were measured against mino v0.92.0 "
        "on an Apple M3 Pro (6 performance cores plus 6 efficiency "
        "cores) under normal desktop load. Treat them as directional. "
-       "v0.103.0 closed a non-JIT performance cycle that cut "
+       "v0.104.0 closed a non-JIT performance cycle that cut "
        "per-op cost by an average of about 24 percent across the "
        "microbenchmark gate, and dropped a tight integer "
        [:code "loop/recur"] " bench from 941 ms to 375 ms (about a "
@@ -31,7 +31,7 @@
 
       [:h2 "Core operations"]
       [:p "Per-call cost for fundamental eval shapes, measured through "
-       "the full read plus eval path. Numbers are v0.103.0 perf-gate "
+       "the full read plus eval path. Numbers are v0.104.0 perf-gate "
        "baselines (median of three runs, " [:code "dotimes [_ N]"]
        " amortized inside one call to "
        [:code "(time ...)"] "). Lower is better."]
@@ -74,7 +74,7 @@
 
       [:h2 "Bulk operations"]
       [:p "Cost of working with collections at scale. These show where "
-       "interpreter overhead compounds. v0.103.0 numbers, measured "
+       "interpreter overhead compounds. v0.104.0 numbers, measured "
        "the same way the bench harness does (1000 calls amortized; "
        "median of three runs)."]
       [:table
@@ -113,7 +113,7 @@
              [:td "0.40 µs/call"]]]]
       [:p "The three " [:code "(reduce + 0 (range N))"] " rows are "
        "the same shape and almost the same cost because the int-range "
-       "fast path that landed in v0.103.0 walks the integer range in "
+       "fast path that landed in v0.104.0 walks the integer range in "
        "C with overflow-aware arithmetic when the reducer is the "
        "canonical " [:code "+"] " primitive. The reduction never "
        "materializes thunks or cons cells; the result drops out of a "
@@ -147,7 +147,7 @@
              [:td "Eliminates thunk plus cons cell per element"]]]]
       [:p "The eager-builder speedup comes from skipping thunk "
        "allocation and eval overhead per element. The picture for "
-       [:code "reduce + (range N)"] " specifically inverted in v0.103.0: "
+       [:code "reduce + (range N)"] " specifically inverted in v0.104.0: "
        "the lazy form now hits an int-range fast path that walks the "
        "range directly in C with overflow-aware arithmetic, so it is "
        "the fastest path for that shape. " [:code "rangev"] " still "
@@ -340,7 +340,7 @@
         "per-element cost in " [:code "range"] ", " [:code "map"]
         ", " [:code "filter"] ", " [:code "take"] ", and "
         [:code "concat"] ". For tight loops, " [:code "loop/recur"]
-        " (about 0.23 µs per iteration in v0.103.0) is several times "
+        " (about 0.23 µs per iteration in v0.104.0) is several times "
         "faster than the lazy reduce equivalent. The eager variants "
         [:code "rangev"] ", " [:code "mapv"] ", and " [:code "filterv"]
         " eliminate thunk overhead entirely when laziness is not "
@@ -363,7 +363,7 @@
        [:li [:strong "Cons-list argument passing (residual)."]
         " The original eval path built a linked list of cons cells "
         "for every function call's arguments and walked it on the "
-        "callee side to bind parameters. As of v0.103.0 the hot "
+        "callee side to bind parameters. As of v0.104.0 the hot "
         "fixed-arity primitives (" [:code "inc"] ", " [:code "dec"]
         ", " [:code "count"] ", " [:code "first"] ", " [:code "rest"]
         ", " [:code "cons"] ", and the type predicates) take their "
@@ -389,7 +389,7 @@
        [:li [:strong "Tree-walking eval."]
         " There is no intermediate representation. Each form is "
         "traversed, dispatched on type, and interpreted directly. "
-        "v0.103.0 added a per-state monomorphic inline call cache "
+        "v0.104.0 added a per-state monomorphic inline call cache "
         "keyed on the call form pointer, so calls whose head is an "
         "unqualified symbol that resolves past every local frame "
         "skip symbol lookup and var dereference on subsequent hits. "
