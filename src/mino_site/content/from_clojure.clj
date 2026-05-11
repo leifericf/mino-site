@@ -46,7 +46,8 @@
         [:code "loop"] "/" [:code "recur"] " with vector binding forms"]
        [:li "Destructuring in " [:code "let"] ", " [:code "fn"] ", "
         [:code "loop"] " (vector positional, map " [:code ":keys"]
-        "/" [:code ":or"] "/" [:code ":as"] ", nested)"]
+        "/" [:code ":strs"] "/" [:code ":syms"] "/" [:code ":or"]
+        "/" [:code ":as"] ", nested)"]
        [:li "Multi-arity functions: " [:code "(fn ([x] ...) ([x y] ...))"]]
        [:li "Named anonymous functions: " [:code "(fn name [x] ...)"]]
        [:li "Macros, quasiquote, " [:code "gensym"]]
