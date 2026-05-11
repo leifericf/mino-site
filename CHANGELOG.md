@@ -4,6 +4,35 @@ All notable changes to mino-site are documented here.
 
 ## Unreleased
 
+- Tracking mino v0.105.0 through v0.144.1 (Bytecode-VM Cycle: a
+  lazily-compiled register-based bytecode VM now handles user
+  fns by default, with the tree-walker remaining as a fallback
+  for declined forms and top-level evaluation. The cycle landed
+  pointer-tagged values for small integers / booleans / nil /
+  char, inline-cache slots for global symbol resolution,
+  immediate-operand fast lanes for the canonical arithmetic and
+  comparison primitives, fused counted-loop opcodes for the
+  `(recur (dec ...))` and `(recur (inc ...))` shapes, an argv
+  calling convention that skips the cons-spine build on hot
+  paths, compile-time literal-arg folding for pure primitives,
+  n-arity arithmetic expansion to chained binary ops, a flatmap
+  representation for persistent maps under 8 entries, a cached
+  hash on immutable vector / map / set headers with a same-type-
+  and-both-cached `=` short-circuit, and a tree-walker
+  destructure fix for `:strs` / `:syms` plus a forcing path for
+  map / set value equality with lazy contents. Cross-runtime
+  numbers shift substantially: a tight integer counter loop now
+  runs ~4× faster than Lua 5.5 on the same shape; an arithmetic
+  chain bench drops 19× from v0.128.0 baseline; cond-branch
+  drops 50× and beats Janet 2.6×. Site updates: `:strs` and
+  `:syms` listed in the Coming-from-Clojure destructure summary;
+  Performance page banner and "Where the time goes" architecture
+  description refreshed for the bytecode VM (microbench numbers
+  in the body left intact with a "full rebench queued" note);
+  landing-page embedding card replaces "No VM, no JIT, no
+  daemon" with "No external runtime, no JIT, no daemon" so the
+  intended contrast (against JVM / CLR / Node) survives the
+  arrival of an internal bytecode interpreter).
 - Tracking mino v0.104.0 (Eval-Floor Performance Cycle: a non-JIT
   pass that lands the inline call cache, argv/argc calling
   convention for the hot fixed-arity prims plus the variadic
