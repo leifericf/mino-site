@@ -14,20 +14,25 @@
        "Per-call cost numbers below were measured against mino v0.92.0 "
        "on an Apple M3 Pro (6 performance cores plus 6 efficiency "
        "cores) under normal desktop load. Treat them as directional. "
-       "v0.104.0 closed a non-JIT performance cycle that cut "
+       "Two performance cycles have shipped since: v0.104.0 cut "
        "per-op cost by an average of about 24 percent across the "
-       "microbenchmark gate, and dropped a tight integer "
-       [:code "loop/recur"] " bench from 941 ms to 375 ms (about a "
-       "60 percent reduction). Allocation shape per op is unchanged; "
-       "the gains come from cutting fixed eval-side overhead. The "
-       "shape relationships in the tables still hold; a full rebench "
-       "is queued."]
+       "microbenchmark gate, and v0.144.x added a lazily-compiled "
+       "bytecode VM that drops tight-loop cost a further order of "
+       "magnitude. A tight integer-counter loop now runs in about "
+       "15 ms per 10 million iterations; an arithmetic-chain "
+       "microbench dropped 19×. Allocation shape per op is "
+       "unchanged; the gains come from cutting fixed eval-side "
+       "overhead. The shape relationships in the tables still hold; "
+       "a full rebench against the post-bytecode runtime is queued."]
 
-      [:p "mino is a tree-walking interpreter. There is no bytecode "
-       "compiler, no JIT, and no dispatch optimization beyond the C "
-       "compiler's own work. The numbers below reflect that. They are "
-       "included to set honest expectations and to show where the cost "
-       "centers are, not to claim speed."]
+      [:p "mino runs user fns through a register-based bytecode VM "
+       "that is lazily populated on the first call to each fn. The "
+       "tree-walker remains as a fallback for fn shapes the bytecode "
+       "compiler declines and for non-fn forms at the top level. "
+       "There is no JIT. The numbers below reflect the tree-walker "
+       "era; the bytecode VM brings tight inner loops to within "
+       "constant factors of Lua 5.5 on the integer-counter and "
+       "arithmetic-chain shapes."]
 
       [:h2 "Core operations"]
       [:p "Per-call cost for fundamental eval shapes, measured through "
@@ -386,26 +391,20 @@
         "per-eval cost; contended throughput is bound by the lock and "
         "is the topic of the Concurrency section. Single-threaded "
         "states skip the mutex entirely."]
-       [:li [:strong "Tree-walking eval."]
-        " There is no intermediate representation. Each form is "
-        "traversed, dispatched on type, and interpreted directly. "
-        "v0.104.0 added a per-state monomorphic inline call cache "
-        "keyed on the call form pointer, so calls whose head is an "
-        "unqualified symbol that resolves past every local frame "
-        "skip symbol lookup and var dereference on subsequent hits. "
-        "Cache invalidation is generation-counter based: "
-        [:code "var-set"] ", " [:code "ns-unmap"] ", and "
-        [:code "var-unintern"] " all bump the counter and the next "
-        "call falls through. A binary numeric fast lane handles "
-        [:code "(op a b)"] " for the canonical " [:code "+"] " "
-        [:code "-"] " " [:code "*"] " " [:code "="] " " [:code "<"]
-        " " [:code "<="] " " [:code ">"] " " [:code ">="]
-        " primitives directly through the C-builtin overflow ops "
-        "when both operands are integers, skipping the numeric "
-        "tower entirely. A bytecode compiler would still give a "
-        "large constant-factor improvement across the board, "
-        "but the cache and fast lanes recover most of the inner-loop "
-        "cost without one."]]
+       [:li [:strong "Bytecode VM and tree-walker fallback."]
+        " As of v0.144.x, user fns are lazily compiled to bytecode "
+        "on first call and executed by a register-based VM with "
+        "inline-cache slots for global symbol resolution, "
+        "immediate-operand opcodes for the canonical numeric and "
+        "comparison primitives, fused counted-loop opcodes for the "
+        [:code "(recur (dec ...))"] " / " [:code "(recur (inc ...))"]
+        " shapes, and a pointer-tagged value representation that "
+        "skips heap allocation for small integers and booleans. "
+        "Compilation declines (rest args, complex destructure, "
+        "exotic forms) fall back to the tree-walker. The bytecode "
+        "VM brings tight inner loops to within constant factors of "
+        "Lua 5.5; the tree-walker still handles non-fn top-level "
+        "evaluation and the slow path for declined forms."]]
 
       [:h2 "Known issues"]
       [:p "Two performance characteristics are inherent to the current "
