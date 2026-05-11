@@ -4,6 +4,13 @@ All notable changes to mino-site are documented here.
 
 ## Unreleased
 
+- Submodule pointer bumped to mino v0.144.5 (closes the
+  bytecode-VM cycle on remote; covers four release-pipeline
+  follow-ups: a GC fix for tracing the compiled-bytecode record
+  through the remembered set, two build-environment patches that
+  silence gcc's `-Wclobbered` heuristic without changing
+  generated code, and a real correctness fix in `OP_PUSHCATCH`
+  for nested-try re-throw on stricter compilers).
 - Tracking mino v0.105.0 through v0.144.1 (Bytecode-VM Cycle: a
   lazily-compiled register-based bytecode VM now handles user
   fns by default, with the tree-walker remaining as a fallback
