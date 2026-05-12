@@ -96,8 +96,8 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
         [:div.stat-card
          [:div.stat-eyebrow "Floor — minimum"]
          [:div.stat-row
-          [:span.stat-value "590 KB"]
-          [:span.stat-aside "0.22 ms init"]]
+          [:span.stat-value "613 KB"]
+          [:span.stat-aside "0.23 ms init"]]
          [:p.stat-detail
           "Reader, evaluator, GC, persistent collections, numeric ops, "
           "foundational macros. No "
@@ -106,8 +106,8 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
         [:div.stat-card
          [:div.stat-eyebrow "Standard — full Clojure"]
          [:div.stat-row
-          [:span.stat-value "706 KB"]
-          [:span.stat-aside "5.2 ms init"]]
+          [:span.stat-value "728 KB"]
+          [:span.stat-aside "5.3 ms init"]]
          [:p.stat-detail
           "Floor plus regex, bignum, multimethods, protocols, "
           "transducers — every name a Clojure scripter expects. The "
@@ -117,8 +117,8 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
         [:div.stat-card
          [:div.stat-eyebrow "Standalone — everything"]
          [:div.stat-row
-          [:span.stat-value "895 KB"]
-          [:span.stat-aside "5.7 ms init"]]
+          [:span.stat-value "987 KB"]
+          [:span.stat-aside "5.5 ms init"]]
          [:p.stat-detail
           "Standard plus I/O, FS, STM, agents, async, bundled "
           [:code "clojure.*"] " stdlib, REPL, crash handler. The "
@@ -126,8 +126,8 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
           "sees today."]]]
        [:p.stat-footnote
         "Wall-time cold start (full process spawn) on x86_64 Linux: "
-        "Floor 1.02 ms (median, 50 runs), comparable to Lua 5.5 at "
-        "0.77 ms and ahead of Janet at 1.95 ms. See "
+        "Floor 1.04 ms (median, 50 runs), comparable to Lua 5.5 at "
+        "0.78 ms and ahead of Janet at 1.95 ms. See "
         [:a {:href "/documentation/performance/"} "Performance"]
         " for the full table, per-operation costs, and capability "
         "opt-in mechanics."]]

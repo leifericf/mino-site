@@ -21,7 +21,7 @@
       [:h1 "Performance"]
 
       [:p.banner
-       "Numbers below were measured against mino v0.147.0 on x86_64 "
+       "Numbers below were measured against mino v0.148.0 on x86_64 "
        "Linux (WSL2, kernel 6.6) under normal desktop load. Treat them "
        "as directional; different hardware will shift absolute numbers "
        "but the ratios between rows hold. The full bench suite lives "
@@ -58,7 +58,7 @@
         [:tr [:th "Build"] [:th "Stripped size"] [:th "What's in it"]]]
        [:tbody
         [:tr [:td "Floor (" [:code "install_minimal"] " only)"]
-             [:td "~590 KB"]
+             [:td "~613 KB"]
              [:td [:code "mino_state_new"] " + "
                   [:code "mino_install_minimal"] " + "
                   [:code "mino_eval_string"] ". Reader, evaluator, GC, "
@@ -70,13 +70,13 @@
                   " raise the MNS002 capability-disabled diagnostic if "
                   "user code references them."]]
         [:tr [:td "Standard (" [:code "install_core"] " back-compat alias)"]
-             [:td "~706 KB"]
+             [:td "~728 KB"]
              [:td "Floor plus regex, bignum, multimethods, protocols, "
                   "transducers — every name a Clojure scripter expects. "
                   "Still no I/O, FS, processes, STM, agents, async, "
                   "no bundled " [:code "clojure.*"] " stdlib."]]
         [:tr [:td "Standalone (" [:code "install_all"] " + REPL)"]
-             [:td "~895 KB"]
+             [:td "~987 KB"]
              [:td "Standard plus I/O, FS, " [:code "subprocess"]
                   ", STM, agents, async, host-interop, all bundled "
                   [:code "clojure.*"]
@@ -120,12 +120,12 @@
          [:th "Footprint"] [:th "Notes"]]]
        [:tbody
         [:tr [:td "Lua 5.5"]
-             [:td "0.77 ms"]
+             [:td "0.78 ms"]
              [:td "33 KB"]
              [:td "Reference. Different language, far smaller surface."]]
         [:tr [:td "mino Floor (" [:code "install_minimal"] ")"]
-             [:td "1.02 ms"]
-             [:td "590 KB"]
+             [:td "1.04 ms"]
+             [:td "598 KB"]
              [:td "Process spawn + " [:code "mino_state_new"] " + "
                   [:code "mino_install_minimal"] " + eval + exit. No "
                   [:code "core.clj"] " parse / eval. Within 30% of Lua "
@@ -135,18 +135,18 @@
              [:td "888 KB"]
              [:td "Reference."]]
         [:tr [:td "Babashka 1.12"]
-             [:td "3.66 ms"]
+             [:td "3.58 ms"]
              [:td "67 MB"]
              [:td "Reference. GraalVM AOT, Clojure dialect."]]
         [:tr [:td "mino Standard (" [:code "install_core"] ")"]
-             [:td "6.69 ms"]
-             [:td "706 KB"]
+             [:td "6.77 ms"]
+             [:td "710 KB"]
              [:td "Floor + regex + bignum + multimethods + protocols "
                   "+ transducers. Parses and evaluates "
                   [:code "core.clj"] " at install."]]
         [:tr [:td "mino Standalone (" [:code "./mino -e ..."] ")"]
-             [:td "7.17 ms"]
-             [:td "895 KB"]
+             [:td "7.27 ms"]
+             [:td "899 KB"]
              [:td "Standard plus I/O, FS, processes, STM, agents, async, "
                   "bundled " [:code "clojure.*"] ". The Homebrew binary."]]]]
       [:p "Per-process initialization cost, measured in-process over 50 "
@@ -161,23 +161,23 @@
         [:tr [:td [:code "mino_state_new"] " + "
               [:code "mino_install_minimal"] " + "
               [:code "mino_state_free"]]
-             [:td "0.22 ms"]
+             [:td "0.23 ms"]
              [:td "Floor tier. No " [:code "core.clj"] " parse / eval."]]
         [:tr [:td [:code "mino_state_new"] " + "
               [:code "mino_install_clojure_core"] " (all canonical caps on) "
               "+ " [:code "mino_state_free"]]
-             [:td "5.22 ms"]
+             [:td "5.25 ms"]
              [:td "Standard tier. Parses and evaluates "
                   [:code "core.clj"] " with regex, bignum, "
                   "multimethods, protocols, transducers enabled."]]
         [:tr [:td [:code "mino_state_new"] " + "
               [:code "mino_install_core"] " + "
               [:code "mino_state_free"]]
-             [:td "5.32 ms"]
+             [:td "5.33 ms"]
              [:td "Back-compat alias. Same surface as Standard."]]
         [:tr [:td [:code "mino_state_new"] " + "
               [:code "mino_install_all"] " + " [:code "mino_state_free"]]
-             [:td "5.67 ms"]
+             [:td "5.48 ms"]
              [:td "Adds I/O, FS, STM, agents, bundled "
                   [:code "clojure.*"]
                   " registration (lazy; not evaluated until "
