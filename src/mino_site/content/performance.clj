@@ -78,7 +78,7 @@
        [:tbody
         [:tr [:td "C source tree (" [:code "src/"] " minus vendor)"]
              [:td "~1.6 MB"]
-             [:td "Hand-written C plus generated bundled-source headers"]]
+             [:td "C source plus generated bundled-source headers"]]
         [:tr [:td "Vendor (" [:code "imath"] " for BigInt)"]
              [:td "~150 KB"]
              [:td "Only loaded when arithmetic exceeds 64-bit range"]]

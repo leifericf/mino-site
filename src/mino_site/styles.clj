@@ -393,7 +393,42 @@
                            :margin-bottom 0}]
    [:.use-case-nav {:margin-top "2rem"
                     :padding-top "1rem"
-                    :border-top (str "1px solid " (:border colors))}]])
+                    :border-top (str "1px solid " (:border colors))}]
+   ;; Stat cards (landing page footprint / cold-start summary)
+   [:.stat-grid {:display "grid"
+                 :grid-template-columns "repeat(3, 1fr)"
+                 :gap "1rem"
+                 :margin-top "1rem"}]
+   [:.stat-card {:padding "1rem 1.1rem"
+                 :border (str "1px solid " (:border colors))
+                 :border-radius "6px"
+                 :background (:bg-subtle colors)}]
+   [:.stat-eyebrow {:font-size "0.7rem"
+                    :text-transform "uppercase"
+                    :letter-spacing "0.04em"
+                    :color (:text-muted colors)
+                    :font-weight "600"
+                    :margin-bottom "0.4rem"}]
+   [:.stat-row {:display "flex"
+                :align-items "baseline"
+                :gap "0.6rem"
+                :flex-wrap "wrap"
+                :margin-bottom "0.5rem"}]
+   [:.stat-value {:font-size "1.25rem"
+                  :font-weight "600"
+                  :color (:heading colors)
+                  :line-height "1.2"
+                  :font-variant-numeric "tabular-nums"}]
+   [:.stat-aside {:font-size "0.8rem"
+                  :color (:text-muted colors)}]
+   [".stat-aside code" {:font-size "0.75rem"}]
+   [:.stat-detail {:font-size "0.85rem"
+                   :line-height "1.5"
+                   :color (:text-muted colors)
+                   :margin 0}]
+   [:.stat-footnote {:font-size "0.85rem"
+                     :color (:text-muted colors)
+                     :margin-top "0.75rem"}]])
 
 ;; --- Declaration entries (API + Language reference) ---
 
@@ -593,6 +628,8 @@
      ;; Declarations — compact on mobile
      [:.decl-name {:font-size "0.9rem"}]
      [:.use-case-grid {:grid-template-columns "1fr"}]
+     [:.stat-grid {:grid-template-columns "1fr"
+                   :gap "0.75rem"}]
      ;; Footer
      [:.footer {:margin-top "3rem"}])])
 

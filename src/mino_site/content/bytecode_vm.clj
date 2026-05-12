@@ -384,7 +384,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        "native compilation are both well-understood directions — but "
        "mino does not have one. The cost matters:"]
       [:ul
-       [:li "A code-gen backend (DynASM, LLVM, or hand-rolled "
+       [:li "A code-gen backend (DynASM, LLVM, or a bespoke "
         "assembler) plus the platform matrix that goes with it. mino "
         "currently builds as one self-contained C99 compile with no "
         "runtime page-protection ceremony, no signal-handler hooks, "
