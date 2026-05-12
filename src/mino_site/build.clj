@@ -27,6 +27,7 @@
     [mino-site.content.stm :as stm]
     [mino-site.content.platforms :as platforms]
     [mino-site.content.performance :as performance]
+    [mino-site.content.bytecode-vm :as bytecode-vm]
     [mino-site.content.from-clojure :as from-clojure]
     [mino-site.content.compatibility-matrix :as compatibility-matrix]
     [mino-site.content.intentional-divergences :as intentional-divergences]
@@ -169,6 +170,13 @@
                           :description "Preliminary performance characteristics: per-operation costs, collection throughput, and where the time goes."
                           :active-page :documentation}
          (performance/performance-page)))
+
+     "/documentation/bytecode-vm/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Bytecode and VM"
+                          :description "How mino's register-based bytecode VM compiles function bodies, what its opcodes do, the soundness discipline behind compile-time folds, and where it sits relative to Lua, Janet, and BEAM."
+                          :active-page :documentation}
+         (bytecode-vm/bytecode-vm-page)))
 
      "/documentation/platforms/index.html"
      (fn [ctx]

@@ -3,6 +3,16 @@
   (:require
     [hiccup2.core :as h]))
 
+(def ^:private bench-base
+  "https://github.com/leifericf/mino-bench/blob/main/")
+
+(defn- src-link
+  "Render a small \"(source)\" pointer to a bench file path."
+  [path]
+  [:a.src-link {:href (str bench-base path)
+                :style "font-size: 0.85em; margin-left: 0.5em; font-weight: normal;"}
+   "(source)"])
+
 (defn performance-page
   "Generates the Performance page HTML body."
   []
@@ -11,156 +21,240 @@
       [:h1 "Performance"]
 
       [:p.banner
-       "Per-call cost numbers below were measured against mino v0.92.0 "
-       "on an Apple M3 Pro (6 performance cores plus 6 efficiency "
-       "cores) under normal desktop load. Treat them as directional. "
-       "Two performance cycles have shipped since: v0.104.0 cut "
-       "per-op cost by an average of about 24 percent across the "
-       "microbenchmark gate, and v0.144.x added a lazily-compiled "
-       "bytecode VM that drops tight-loop cost a further order of "
-       "magnitude. A tight integer-counter loop now runs in about "
-       "15 ms per 10 million iterations; an arithmetic-chain "
-       "microbench dropped 19×. Allocation shape per op is "
-       "unchanged; the gains come from cutting fixed eval-side "
-       "overhead. The shape relationships in the tables still hold; "
-       "a full rebench against the post-bytecode runtime is queued."]
+       "Numbers below were measured against mino v0.145.0 on x86_64 "
+       "Linux (WSL2, kernel 6.6) under normal desktop load. Treat them "
+       "as directional; different hardware will shift absolute numbers "
+       "but the ratios between rows hold. The full bench suite lives "
+       "in "
+       [:a {:href "https://github.com/leifericf/mino-bench/tree/main/benchmarks"}
+        "mino-bench/benchmarks/"]
+       " and the in-process / cold-start / footprint harnesses live in "
+       [:a {:href "https://github.com/leifericf/mino-bench/tree/main/tests"}
+        "mino-bench/tests/"]
+       ". Every table on this page links to the bench file the row was "
+       "measured against — click the section heading's source link to "
+       "see the actual code."]
 
-      [:p "mino runs user fns through a register-based bytecode VM "
-       "that is lazily populated on the first call to each fn. The "
-       "tree-walker remains as a fallback for fn shapes the bytecode "
-       "compiler declines and for non-fn forms at the top level. "
-       "There is no JIT. The numbers below reflect the tree-walker "
-       "era; the bytecode VM brings tight inner loops to within "
-       "constant factors of Lua 5.5 on the integer-counter and "
-       "arithmetic-chain shapes."]
+      [:p "mino's evaluator is now a layered system. The tree-walker "
+       "remains as the ground-truth interpreter; on top of it sits a "
+       "small register-based bytecode VM that compiles function bodies "
+       "lazily on first call. The compiler bails to the tree-walker on "
+       "any unsupported form, so behavior stays identical and the VM is "
+       "additive. The numbers below reflect this layered shape, not a "
+       "single-path rewrite."]
 
-      [:h2 "Core operations"]
+      [:h2 "Footprint"
+       (src-link "tests/min_embed.c")]
+      [:p "Two binary footprints worth knowing about — the floor that "
+       "an embedder commits to, and the ceiling that the standalone CLI "
+       "ships with."]
+      [:table
+       [:thead
+        [:tr [:th "Build"] [:th "Stripped size"] [:th "What's in it"]]]
+       [:tbody
+        [:tr [:td "Minimum embedded (" [:code "install_core"] " only)"]
+             [:td "~666 KB"]
+             [:td [:code "mino_state_new"] " + "
+                  [:code "mino_install_core"] " + "
+                  [:code "mino_eval_string"] ". No I/O, FS, processes, "
+                  "STM, agents, no bundled stdlib. Linked with "
+                  [:code "-ffunction-sections -Wl,--gc-sections"]
+                  " so unreferenced subsystems drop out at link time."]]
+        [:tr [:td "Full standalone (" [:code "install_all"] " + REPL)"]
+             [:td "~898 KB"]
+             [:td "Everything above plus I/O, FS, " [:code "subprocess"]
+                  ", STM, agents, all bundled " [:code "clojure.*"]
+                  " namespaces, the project resolver, the task/deps "
+                  "machinery, and the REPL crash handler. This is "
+                  "the released " [:code "mino"]
+                  " binary an end user receives from Homebrew (or "
+                  "downloads from a GitHub release; the release "
+                  "tarball is ~360 KB gzip-compressed). "
+                  "Stripped with " [:code "strip --strip-all"] "."]]]]
+      [:p "Source-side numbers for what an in-tree embedder pulls in:"]
+      [:table
+       [:thead
+        [:tr [:th "Item"] [:th "Size"] [:th "Notes"]]]
+       [:tbody
+        [:tr [:td "C source tree (" [:code "src/"] " minus vendor)"]
+             [:td "~1.6 MB"]
+             [:td "Hand-written C plus generated bundled-source headers"]]
+        [:tr [:td "Vendor (" [:code "imath"] " for BigInt)"]
+             [:td "~150 KB"]
+             [:td "Only loaded when arithmetic exceeds 64-bit range"]]
+        [:tr [:td "Bundled stdlib source (" [:code "clojure.*"] " "
+              "headers compiled into the binary)"]
+             [:td "~147 KB"]
+             [:td "Lazy-installed; the minimum-embed build drops these"]]
+        [:tr [:td [:code "core.clj"] " source"]
+             [:td "~113 KB"]
+             [:td "Embedded as a C string literal; evaluated at "
+                  [:code "mino_install_core"]]]]]
+
+      [:h2 "Cold startup"
+       (src-link "tests/refresh_perf.clj")]
+      [:p "Wall time from " [:code "fork+exec"] " to process exit. Each "
+       "row is the median of 50 invocations after three warmup runs to "
+       "prime the OS page cache."]
+      [:table
+       [:thead
+        [:tr [:th "Invocation"] [:th "Wall time"] [:th "Notes"]]]
+       [:tbody
+        [:tr [:td "Full standalone " [:code "./mino -e '(+ 1 2)'"]]
+             [:td "~7.5 ms (p90 7.9 ms)"]
+             [:td "Process spawn + state init + " [:code "install_all"]
+                  " + eval + exit"]]
+        [:tr [:td "Full standalone " [:code "./mino -e nil"]]
+             [:td "~7.5 ms (p90 7.9 ms)"]
+             [:td "Same path, no eval work — confirms the floor is "
+                  "init, not eval"]]
+        [:tr [:td "Minimum embedded " [:code "./min_embed '(+ 1 2)'"]]
+             [:td "~7.0 ms (p90 7.2 ms)"]
+             [:td "Process spawn + state init + " [:code "install_core"]
+                  " + eval + exit; ~0.5 ms saved by skipping the "
+                  "batteries-installation surface"]]]]
+      [:p "Per-process initialization cost, measured in-process over 50 "
+       "init/teardown cycles inside one binary (no fork/exec overhead). "
+       "An embedder that creates one runtime up-front pays this once; "
+       "an embedder that spins one runtime per request sees it on "
+       "every call."]
+      [:table
+       [:thead
+        [:tr [:th "Operation"] [:th "Median"] [:th "Notes"]]]
+       [:tbody
+        [:tr [:td [:code "mino_state_new"] " + "
+              [:code "mino_install_core"] " + " [:code "mino_state_free"]]
+             [:td "~5.4 ms"]
+             [:td "Parses " [:code "core.clj"]
+                  ", installs primitives. The floor for any embed."]]
+        [:tr [:td [:code "mino_state_new"] " + "
+              [:code "mino_install_all"] " + " [:code "mino_state_free"]]
+             [:td "~5.5 ms"]
+             [:td "Adds I/O, FS, STM, agents, bundled "
+                  [:code "clojure.*"]
+                  " registration (lazy; not evaluated until "
+                  [:code "require"] "d)"]]]]
+      [:p "About 5.4 ms of the cold-start wall time is "
+       [:code "core.clj"] " evaluation; the rest is OS process spawn, "
+       "dynamic loader, and process exit. The min-embed path saves "
+       "about 0.5 ms on cold start by deferring batteries until the "
+       "host opts in."]
+
+      [:h2 "Core operations"
+       (src-link "benchmarks/micro_bench.clj")
+       (src-link "benchmarks/eval_bench.clj")]
       [:p "Per-call cost for fundamental eval shapes, measured through "
-       "the full read plus eval path. Numbers are v0.104.0 perf-gate "
-       "baselines (median of three runs, " [:code "dotimes [_ N]"]
-       " amortized inside one call to "
-       [:code "(time ...)"] "). Lower is better."]
+       "the full read + eval path via the bytecode VM (mean of 100,000 "
+       "iterations, dominant fast-path). Lower is better."]
       [:table
        [:thead
         [:tr [:th "Operation"] [:th "Cost"] [:th "Notes"]]]
        [:tbody
         [:tr [:td "Primitive call " [:code "(+ 1 2)"]]
-             [:td "3.4 µs"]
-             [:td "Inline call cache hit, int+int fast lane, "
-              "no cons-spine build"]]
+             [:td "1.7 µs"]
+             [:td "Fused int-add fast lane, no boxing"]]
         [:tr [:td "User fn call (1 arg)"]
-             [:td "3.0 µs"]
-             [:td "Shape-pre-compiled binding, env child"]]
+             [:td "1.9 µs"]
+             [:td "Compiled to bytecode; register-window entry"]]
         [:tr [:td "User fn call (3 args)"]
-             [:td "3.5 µs"]
-             [:td "Cost grows about 0.2 µs per arg"]]
+             [:td "2.1 µs"]
+             [:td "Cost grows ~0.07 µs per arg in the bc path"]]
         [:tr [:td "Vector literal " [:code "[1 2 3]"]]
-             [:td "3.2 µs"]
+             [:td "1.7 µs"]
              [:td "32-way trie allocation"]]
-        [:tr [:td "Map literal " [:code "{:a 1 :b 2}"]]
-             [:td "3.2 µs"]
+        [:tr [:td "Map literal " [:code "{:a 1}"]]
+             [:td "1.8 µs"]
              [:td "HAMT insertion per key"]]
         [:tr [:td [:code "(get m k)"] " on 100-key map"]
-             [:td "4.9 µs"]
-             [:td "Hash plus HAMT traversal"]]
+             [:td "2.1 µs"]
+             [:td "Hash + HAMT traversal"]]
         [:tr [:td [:code "(read-string \"42\")"]]
-             [:td "3.4 µs"]
-             [:td "Tokenize plus parse"]]
+             [:td "2.6 µs"]
+             [:td "Tokenize + parse"]]
         [:tr [:td [:code "(read-string \"(+ 1 2 3)\")"]]
-             [:td "3.8 µs"]
-             [:td "Cons-list construction during read"]]
-        [:tr [:td "Symbol/keyword resolution"]
              [:td "3.0 µs"]
-             [:td "Eval shell, intern hash hit, hashed env probe"]]
-        [:tr [:td [:code "(re-find re s)"] " short string"]
-             [:td "4.3 µs"]
-             [:td "Compiled pattern, capture groups, "
-              "backtracking matcher"]]]]
+             [:td "Cons-list construction during read"]]
+        [:tr [:td "Symbol resolution (local " [:code "let"] ")"]
+             [:td "1.6 µs"]
+             [:td "Register read; no env walk"]]
+        [:tr [:td "Symbol resolution (global var)"]
+             [:td "1.6 µs"]
+             [:td "Inline-cache hit on the bc " [:code "GETGLOBAL"]
+                  " slot"]]]]
 
-      [:h2 "Bulk operations"]
-      [:p "Cost of working with collections at scale. These show where "
-       "interpreter overhead compounds. v0.104.0 numbers, measured "
-       "the same way the bench harness does (1000 calls amortized; "
-       "median of three runs)."]
+      [:h2 "Bulk operations"
+       (src-link "benchmarks/vec_bench.clj")
+       (src-link "benchmarks/map_bench.clj")
+       (src-link "benchmarks/micro_bench.clj")]
+      [:p "Cost of working with collections at scale. The fused "
+       "counted-loop opcodes (" [:code "OP_LOOP_INT_DEC"] " et al.) "
+       "and the int-fast-lane opcodes are responsible for most of the "
+       "movement here since the last bench."]
       [:table
        [:thead
         [:tr [:th "Operation"] [:th "Cost"] [:th "Per element"]]]
        [:tbody
         [:tr [:td [:code "(into [] (range 100))"]]
-             [:td "24 µs"]
-             [:td "0.24 µs"]]
-        [:tr [:td [:code "(into [] (range 1000))"]]
-             [:td "386 µs"]
-             [:td "0.39 µs"]]
+             [:td "29 µs"]
+             [:td "0.29 µs"]]
         [:tr [:td [:code "(reduce + 0 (range 100))"]]
-             [:td "6 µs"]
-             [:td "0.06 µs"]]
+             [:td "6.7 µs"]
+             [:td "0.067 µs"]]
         [:tr [:td [:code "(reduce + 0 (range 1000))"]]
-             [:td "7 µs"]
-             [:td "0.007 µs"]]
-        [:tr [:td [:code "(reduce + 0 (range 10000))"]]
-             [:td "9 µs"]
-             [:td "0.0009 µs"]]
-        [:tr [:td "Build 100-key map via " [:code "loop/recur"]]
-             [:td "174 µs"]
-             [:td "1.74 µs/key"]]
+             [:td "9.4 µs"]
+             [:td "0.009 µs"]]
         [:tr [:td [:code "loop/recur"] " 1,000 iterations"]
-             [:td "212 µs"]
-             [:td "0.21 µs"]]
+             [:td "13.2 µs"]
+             [:td "0.013 µs"]]
         [:tr [:td [:code "loop/recur"] " 10,000 iterations"]
-             [:td "2.3 ms"]
-             [:td "0.23 µs"]]
-        [:tr [:td [:code "(fib 20)"] " (~21k recursive calls)"]
-             [:td "9.0 ms"]
-             [:td "0.43 µs/call"]]
-        [:tr [:td [:code "(fib 25)"] " (~242k recursive calls)"]
-             [:td "96 ms"]
-             [:td "0.40 µs/call"]]]]
-      [:p "The three " [:code "(reduce + 0 (range N))"] " rows are "
-       "the same shape and almost the same cost because the int-range "
-       "fast path that landed in v0.104.0 walks the integer range in "
-       "C with overflow-aware arithmetic when the reducer is the "
-       "canonical " [:code "+"] " primitive. The reduction never "
-       "materializes thunks or cons cells; the result drops out of a "
-       "tight C loop."]
+             [:td "133 µs"]
+             [:td "0.013 µs"]]
+        [:tr [:td "Build 100-key map (" [:code "assoc"] " loop)"]
+             [:td "246 µs"]
+             [:td "2.46 µs/key"]]
+        [:tr [:td [:code "(fib 20)"] " recursive (~21k calls)"]
+             [:td "639 µs"]
+             [:td "0.030 µs/call"]]
+        [:tr [:td [:code "(fib 25)"] " recursive (~242k calls)"]
+             [:td "7.0 ms"]
+             [:td "0.029 µs/call"]]]]
+      [:p "Tight integer loops run at near-native speed when the "
+       "compiler can prove the iteration is int-typed. "
+       [:code "loop/recur"] " over 10,000 iterations and recursive "
+       "Fibonacci both clock in around 13 ns per step because the "
+       "fused-loop opcode collapses the test/dec/back-jump into a "
+       "single dispatch with two tagged-int checks."]
 
-      [:h2 "Eager collection builders"]
+      [:h2 "Eager collection builders"
+       (src-link "benchmarks/micro_bench.clj")
+       (src-link "benchmarks/lazy_bench.clj")]
       [:p "When laziness is not needed, " [:code "rangev"] ", "
        [:code "mapv"] ", and " [:code "filterv"] " produce vectors "
-       "directly in C, bypassing thunk allocation entirely."]
+       "directly in C, bypassing thunk allocation entirely. The bc "
+       "compiler also recognizes " [:code "reduce"] " over a vector "
+       "and dispatches straight to the C primitive walker."]
       [:table
        [:thead
-        [:tr [:th "Operation"] [:th "Cost"] [:th "Per element"]
+        [:tr [:th "Operation"] [:th "Cost"]
              [:th "vs. lazy equivalent"]]]
        [:tbody
         [:tr [:td [:code "(rangev 100)"]]
-             [:td "3.3 µs"]
-             [:td "0.033 µs"]
-             [:td "7× faster than " [:code "(into [] (range 100))"]]]
-        [:tr [:td [:code "(rangev 1000)"]]
-             [:td "55 µs"]
-             [:td "0.055 µs"]
-             [:td "7× faster than " [:code "(into [] (range 1000))"]]]
-        [:tr [:td [:code "(reduce + 0 (rangev 1000))"]]
-             [:td "160 µs"]
-             [:td "0.16 µs"]
-             [:td "Slower than " [:code "(reduce + 0 (range 1000))"]
-              ", which now hits the int-range fast path"]]
-        [:tr [:td [:code "(mapv inc (rangev 1000))"]]
-             [:td "350 µs"]
-             [:td "0.35 µs"]
-             [:td "Eliminates thunk plus cons cell per element"]]]]
-      [:p "The eager-builder speedup comes from skipping thunk "
-       "allocation and eval overhead per element. The picture for "
-       [:code "reduce + (range N)"] " specifically inverted in v0.104.0: "
-       "the lazy form now hits an int-range fast path that walks the "
-       "range directly in C with overflow-aware arithmetic, so it is "
-       "the fastest path for that shape. " [:code "rangev"] " still "
-       "wins when the result needs to live as a vector for further "
-       "indexed work; " [:code "mapv"] " and " [:code "filterv"]
-       " still win when laziness is not the goal."]
+             [:td "2.8 µs"]
+             [:td "10× faster than " [:code "(into [] (range 100))"]]]
+        [:tr [:td [:code "(mapv inc (rangev 100))"]]
+             [:td "15.2 µs"]
+             [:td "Eliminates per-element thunk + cons"]]
+        [:tr [:td [:code "(filterv odd? (rangev 100))"]]
+             [:td "13.8 µs"]
+             [:td "Same shape as " [:code "mapv"]]]]]
+      [:p "Use " [:code "rangev"] " for data generation and "
+       [:code "reduce"] " over vectors for the biggest wins. The "
+       "speedup over lazy comes from skipping thunk allocation and "
+       "eval overhead per element; once per-element work is dominated "
+       "by a user fn the gap narrows."]
 
-      [:h2 "Concurrency"]
+      [:h2 "Concurrency"
+       (src-link "benchmarks/async_bench.clj")]
       [:p "Standalone mino grants " [:code "cpu_count"] " worker threads "
        "at startup, so " [:code "future"] ", " [:code "promise"]
        ", " [:code "thread"] ", and the blocking channel ops "
@@ -172,122 +266,54 @@
        "recursive mutex; cross-state work runs fully concurrent and "
        "intra-state work is naturally race-free. Single-threaded states "
        "skip the mutex entirely and pay no lock cost."]
-      [:p "On the M3 Pro the OS scheduler places mino's workers on the "
-       "six performance cores first; the six efficiency cores absorb "
-       "additional workers when the count exceeds six."]
+      [:p "core.async numbers from the current bench run:"]
       [:table
        [:thead
         [:tr [:th "Operation"] [:th "Cost"] [:th "Notes"]]]
        [:tbody
-        [:tr [:td [:code "(future ...)"] " spawn + deref roundtrip"]
-             [:td "31 µs"]
-             [:td "Spawn-per-future path; pthread_create + cv_wait "
-              "handshake (pthread_join runs at quiesce, not per-future)"]]
-        [:tr [:td [:code "swap!"] " on shared atom (1 worker)"]
-             [:td "4.4 µs/op"]
-             [:td "Single-thread CAS, no contention"]]
-        [:tr [:td [:code "swap!"] " on shared atom (4 workers)"]
-             [:td "4.5 µs/op"]
-             [:td "Per-state lock keeps total throughput flat"]]
-        [:tr [:td [:code "swap!"] " on shared atom (8 workers)"]
-             [:td "4.5 µs/op"]
-             [:td "Same total throughput, more wakeup overhead"]]
-        [:tr [:td "Unbuffered channel ping-pong (" [:code "<!!"] "/" [:code ">!!"] ")"]
-             [:td "218 µs/msg"]
-             [:td "Two cross-thread wakeups per handshake"]]
-        [:tr [:td "Spawn 8 futures, await all"]
-             [:td "226 µs"]
-             [:td "Amortizes per-future cost across a fan-out batch"]]]]
-      [:p "The atom-CAS rows show the central performance pattern of "
-       "the per-state GIL: shared-state work scales to one core's "
-       "worth of throughput regardless of worker count. To get parallel "
-       "speedup, distribute work across runtime instances and pass "
-       "results back via the host or via " [:code "mino_clone"] ", "
-       "rather than across workers in one runtime."]
+        [:tr [:td [:code "offer!"] "/" [:code "poll!"] " on "
+              [:code "(chan 1024)"] " (no scheduler)"]
+             [:td "281 µs/op"]
+             [:td "Buffer + offer/poll data-structure cost only"]]
+        [:tr [:td [:code "offer!"] " on full buffer returns false"]
+             [:td "117 µs/op"]
+             [:td "Hot rejection path"]]
+        [:tr [:td [:code "poll!"] " on empty buffer returns nil"]
+             [:td "67 µs/op"]
+             [:td "Hot empty-buffer path"]]
+        [:tr [:td [:code "put!"] "/" [:code "take!"] " on "
+              [:code "(chan 1)"] " + " [:code "drain!"]]
+             [:td "363 µs/op"]
+             [:td "Callback path through the scheduler"]]
+        [:tr [:td [:code "go"] " block " [:code "(<! ch)"]
+              " with pending put + " [:code "drain!"]]
+             [:td "1.84 ms/op"]
+             [:td "IOC state machine + park/unpark roundtrip"]]
+        [:tr [:td [:code "go"] " producer/consumer hand-shake pair"]
+             [:td "3.67 ms/op"]
+             [:td "Two park/unpark cycles end-to-end"]]
+        [:tr [:td [:code "alts!"] " over 1 ready channel"]
+             [:td "405 µs/op"]
+             [:td "Arbitration on a single ready candidate"]]
+        [:tr [:td [:code "alts!"] " over 8 channels, last ready"]
+             [:td "1.03 ms/op"]
+             [:td "Linear walk through " [:code ":priority"] " order"]]
+        [:tr [:td [:code "alts!"] " with " [:code ":default"]]
+             [:td "159 µs/op"]
+             [:td "Fast non-block path"]]
+        [:tr [:td [:code "(timeout 0)"] " + " [:code "take!"]
+              " + drain"]
+             [:td "692 µs/op"]
+             [:td "Timer-chan path through the scheduler"]]]]
+      [:p "Shared-state work scales to one core's worth of throughput "
+       "regardless of worker count because the per-state recursive "
+       "mutex serializes script execution. To get parallel speedup, "
+       "distribute work across runtime instances and pass results back "
+       "via the host or via " [:code "mino_clone"] ", not across "
+       "workers in one runtime."]
 
-      [:h2 "Footprint and startup"]
-      [:p "What an embedder is shipping or evaluating up-front."]
-      [:table
-       [:thead
-        [:tr [:th "Item"] [:th "Size"] [:th "Notes"]]]
-       [:tbody
-        [:tr [:td "Stripped " [:code "mino"] " binary (arm64)"]
-             [:td "~770 KB"]
-             [:td "Single self-contained executable; no dynamic deps"]]
-        [:tr [:td "C source tree (" [:code "src/"] " minus vendor and "
-              "bundled-source headers)"]
-             [:td "~1.7 MB"]
-             [:td "What an embedder pulls in for an in-tree build"]]
-        [:tr [:td "Vendor (" [:code "imath"] " for BigInt)"]
-             [:td "~89 KB"]
-             [:td "Only used when arithmetic exceeds 64-bit range"]]
-        [:tr [:td "Bundled stdlib source"]
-             [:td "~190 KB"]
-             [:td "Compiled into the binary; no on-disk sidecar"]]]]
-      [:p "Cold startup (median of 20 invocations on the M3 Pro, "
-       "warm filesystem cache):"]
-      [:table
-       [:thead
-        [:tr [:th "Operation"] [:th "Wall time"] [:th "Notes"]]]
-       [:tbody
-        [:tr [:td [:code "./mino -e '(+ 1 2)'"]]
-             [:td "~9 ms"]
-             [:td "Process spawn, state init, eval, exit"]]
-        [:tr [:td [:code "./mino -e nil"]]
-             [:td "~9 ms"]
-             [:td "Same path, no eval work"]]
-        [:tr [:td [:code "mino_state_new"] " plus "
-              [:code "mino_install_all"] " (in-process)"]
-             [:td "~3.5 ms"]
-             [:td "Parses core.clj, installs primitives, registers "
-              "lazy bundled libs"]]]]
-      [:p "Roughly a third of the cold start is "
-       [:code "mino_new"] " evaluating " [:code "core.clj"]
-       "; the rest is OS process spawn, dynamic loader, and exit. "
-       "Embedders that create one runtime up-front pay the "
-       "3.5 ms once."]
-
-      [:h2 "Cross-state cloning"]
-      [:p "Cost of deep-copying data between runtime instances. "
-       [:code "mino_clone"] " is the primitive for moving immutable "
-       "values across states; hosts that manage more than one "
-       [:code "mino_state_t"] " (for example, one state per OS thread "
-       "for true parallelism) use it at the boundary."]
-      [:table
-       [:thead
-        [:tr [:th "Operation"] [:th "Cost"] [:th "Notes"]]]
-       [:tbody
-        [:tr [:td "Clone: 5-element vector"]
-             [:td "0.19 µs"]
-             [:td "Deep copy, allocates in destination state"]]
-        [:tr [:td "Clone: 100-element vector"]
-             [:td "2.2 µs"]
-             [:td "Linear in element count"]]
-        [:tr [:td "Clone: nested map (2 levels, ~6 keys)"]
-             [:td "1.7 µs"]
-             [:td "Recursive traversal"]]
-        [:tr [:td "Clone: 100-key string-keyed map"]
-             [:td "29 µs"]
-             [:td "Re-interns keys in destination state"]]]]
-
-      [:h2 "Lifecycle"]
-      [:p "Cost of creating and destroying runtime objects. These "
-       "matter most for hosts that create many short-lived runtimes."]
-      [:table
-       [:thead
-        [:tr [:th "Operation"] [:th "Cost"] [:th "Notes"]]]
-       [:tbody
-        [:tr [:td [:code "mino_state_new"] " + " [:code "mino_state_free"]]
-             [:td "0.8 µs"]
-             [:td "Bare state with no bindings"]]
-        [:tr [:td [:code "mino_new"] " (state + core + I/O)"]
-             [:td "~3.5 ms"]
-             [:td "Parses and evaluates core.clj"]]
-        [:tr [:td [:code "mino_env_clone"]]
-             [:td "2.5 µs"]
-             [:td "Thin clone; values shared with the parent env"]]]]
-
-      [:h2 "Garbage collection"]
+      [:h2 "Garbage collection"
+       (src-link "benchmarks/realistic_bench.clj")]
       [:p "mino uses a non-moving two-generation tracing collector. "
        "Short-lived values live in a young-gen nursery that is swept "
        "in bounded minor collections. Survivors are promoted to "
@@ -296,38 +322,38 @@
        "minors stay proportional to young reachability. The collector "
        "is stop-the-world at slice boundaries; there are no collector "
        "threads."]
-      [:p "On realistic multi-subsystem benches the max pause sits at "
-       "~19 ms under the default slice budget, with GC share between "
-       "15 and 50 percent of wall clock depending on the allocation "
-       "rate of the workload. Tail-heavy workloads (deeply nested "
-       "lazy pipelines, large transient vectors, deep recursion) were "
-       "the headline target for the incremental-major cycle; minor "
-       "and major are paced together so the worst case stays bounded."]
+      [:p "GC share is a function of allocation pressure, not "
+       "absolute speed. The bytecode VM cut the constant-factor cost "
+       "of computation but left allocation rates largely unchanged, so "
+       "GC share rose proportionally on the same workloads:"]
       [:table
        [:thead
         [:tr [:th "Workload"] [:th "GC share"] [:th "Max pause"]]]
        [:tbody
         [:tr [:td "Small function calls (empty, identity, let)"]
-             [:td "~7%"]
-             [:td "~2 ms"]]
+             [:td "~10%"]
+             [:td "~0.5 ms"]]
         [:tr [:td [:code "loop/recur"] " 10,000 iterations"]
-             [:td "~15%"]
-             [:td "~1.3 ms"]]
+             [:td "~3%"]
+             [:td "~0.4 ms"]]
         [:tr [:td "Build 1,000-element vector via " [:code "conj"]]
-             [:td "~25%"]
-             [:td "~4 ms"]]
+             [:td "~28%"]
+             [:td "~1.6 ms"]]
         [:tr [:td "Build 10,000-element vector via " [:code "conj"]]
-             [:td "~26%"]
-             [:td "~7 ms"]]
-        [:tr [:td "map/filter/map/reduce over 50,000"]
-             [:td "~46%"]
-             [:td "~19 ms"]]
-        [:tr [:td "Nested vectors 500x100"]
-             [:td "~41%"]
-             [:td "~19 ms"]]
-        [:tr [:td [:code "(fib 25)"] " (recursive)"]
              [:td "~29%"]
-             [:td "~19 ms"]]]]
+             [:td "~1.6 ms"]]
+        [:tr [:td "Build 5k int-map and sum"]
+             [:td "~29%"]
+             [:td "~1.5 ms"]]
+        [:tr [:td "map/filter/map/reduce over 50,000"]
+             [:td "~34%"]
+             [:td "~2.2 ms"]]
+        [:tr [:td "Nested vectors 500x100"]
+             [:td "~34%"]
+             [:td "~2.2 ms"]]
+        [:tr [:td "Realize 10k of lazy range"]
+             [:td "~38%"]
+             [:td "~3.8 ms"]]]]
       [:p "Five tuning knobs are exposed through "
        [:code "mino_gc_set_param"] ": nursery size, major growth "
        "multiplier, promotion age, incremental slice budget, and "
@@ -339,115 +365,51 @@
       [:h2 "Where the time goes"]
       [:p "The cost centers in order of impact:"]
       [:ul
-       [:li [:strong "Lazy sequence realization."]
-        " Each element in a lazy sequence allocates a thunk, "
-        "evaluates it, and produces a cons cell. This is the "
-        "per-element cost in " [:code "range"] ", " [:code "map"]
-        ", " [:code "filter"] ", " [:code "take"] ", and "
-        [:code "concat"] ". For tight loops, " [:code "loop/recur"]
-        " (about 0.23 µs per iteration in v0.104.0) is several times "
-        "faster than the lazy reduce equivalent. The eager variants "
-        [:code "rangev"] ", " [:code "mapv"] ", and " [:code "filterv"]
-        " eliminate thunk overhead entirely when laziness is not "
-        "needed. Lazy combinators " [:code "recur"] " on skip rather "
-        "than allocating a thunk for every dropped element, and the "
-        "chunked-seq family ("
-        [:code "chunk-buffer"] " / " [:code "chunk-cons"]
-        ") amortizes thunk overhead in batches of 32 when the "
-        "consumer explicitly constructs a chunked seq."]
+       [:li [:strong "Allocation pressure."]
+        " Persistent collections, cons cells, and intermediate seqs "
+        "are the dominant source of work in any realistic pipeline. "
+        "Recent " [:code "reduce"] " and "
+        [:code "assoc"] "/identity short-circuits cut redundant "
+        "allocation, but laziness still pays a thunk + cons-cell per "
+        "element. Use " [:code "rangev"] "/" [:code "mapv"] "/"
+        [:code "filterv"] " when laziness is not needed; use "
+        [:code "loop/recur"] " when iterating without building a "
+        "collection."]
        [:li [:strong "Core library initialization."]
         " Every new " [:code "mino_state_t"] " parses and evaluates "
-        [:code "core.clj"] " at " [:code "mino_install_core"]
-        " (~3.5 ms). Parsed forms are cached per state, so creating "
-        "additional environments within one state avoids re-parsing. "
-        "The other bundled namespaces (" [:code "clojure.string"] ", "
-        [:code "clojure.set"] ", " [:code "clojure.walk"] ", "
-        [:code "clojure.edn"] ", and so on) are registered at "
-        [:code "mino_install_all"] " but not evaluated; they only pay "
-        "when a script first " [:code "require"] "s them."]
-       [:li [:strong "Cons-list argument passing (residual)."]
-        " The original eval path built a linked list of cons cells "
-        "for every function call's arguments and walked it on the "
-        "callee side to bind parameters. As of v0.104.0 the hot "
-        "fixed-arity primitives (" [:code "inc"] ", " [:code "dec"]
-        ", " [:code "count"] ", " [:code "first"] ", " [:code "rest"]
-        ", " [:code "cons"] ", and the type predicates) take their "
-        "arguments through a flat C array instead, and user "
-        "functions whose parameter vector is a list of plain "
-        "interned symbols dispatch through a shape-pre-compiled "
-        "binding path. The variadic " [:code "+"] " " [:code "-"]
-        " " [:code "*"] " " [:code "/"] " " [:code "<"] " "
-        [:code "<="] " " [:code ">"] " " [:code ">="]
-        " primitives also take this path for calls with three or "
-        "more arguments. The cons-spine cost remains for "
-        "destructuring parameter shapes, rest arguments, and "
-        "non-hot prims, but it is no longer the per-call default."]
-       [:li [:strong "Per-state lock at every eval entry (when threaded)."]
-        " Once a state is multi-threaded (host has granted workers, or "
-        "the standalone has run " [:code "mino_install_all"] "), each "
-        "script entry through " [:code "mino_eval_string"] " or a "
-        "worker " [:code "mino_call"] " takes the per-state recursive "
-        "mutex. The uncontested cost is ~10 ns per entry, far below "
-        "per-eval cost; contended throughput is bound by the lock and "
-        "is the topic of the Concurrency section. Single-threaded "
-        "states skip the mutex entirely."]
-       [:li [:strong "Bytecode VM and tree-walker fallback."]
-        " As of v0.144.x, user fns are lazily compiled to bytecode "
-        "on first call and executed by a register-based VM with "
-        "inline-cache slots for global symbol resolution, "
-        "immediate-operand opcodes for the canonical numeric and "
-        "comparison primitives, fused counted-loop opcodes for the "
-        [:code "(recur (dec ...))"] " / " [:code "(recur (inc ...))"]
-        " shapes, and a pointer-tagged value representation that "
-        "skips heap allocation for small integers and booleans. "
-        "Compilation declines (rest args, complex destructure, "
-        "exotic forms) fall back to the tree-walker. The bytecode "
-        "VM brings tight inner loops to within constant factors of "
-        "Lua 5.5; the tree-walker still handles non-fn top-level "
-        "evaluation and the slow path for declined forms."]]
-
-      [:h2 "Known issues"]
-      [:p "Two performance characteristics are inherent to the current "
-       "architecture. Both have mitigations."]
-      [:ul
-       [:li [:strong "core.clj initialization (~3.5 ms per runtime)."]
-        " Every new runtime instance parses and evaluates "
-        [:code "core.clj"] " from the embedded C string literal. "
-        "Parsed forms are cached per state, so creating additional "
-        "environments within one state avoids re-parsing. Cross-state "
-        "sharing is not possible because parsed forms contain "
-        "state-specific interned pointers. A bytecode format would "
-        "let parsed cores ride along the binary, but it doesn't exist "
-        "yet. The other bundled namespaces are lazy and don't add to "
-        "this cost."]
-       [:li [:strong "Lazy sequence per-element overhead."]
-        " Lazy-by-default sequences pay for a thunk allocation, an "
-        "eval, and a cons cell on every element. The eager variants "
-        [:code "rangev"] ", " [:code "mapv"] ", and "
-        [:code "filterv"] " eliminate this overhead when laziness "
-        "is not needed (see table above). For iteration without "
-        "building a collection, " [:code "loop/recur"]
-        " remains the fastest option. The chunked-seq family ("
-        [:code "chunk-buffer"] " / " [:code "chunk-cons"]
-        ") amortizes thunk overhead in batches of 32, and as of "
-        "v0.98.3 default sources (" [:code "(seq [...])"] ", lazy "
-        [:code "range"] ") auto-chunk through the same pipeline."]]
+        [:code "core.clj"] " (~5.4 ms here, smaller on faster "
+        "hardware). Parsed forms are cached per state; additional "
+        "envs in one state avoid re-parsing. Bundled "
+        [:code "clojure.*"] " namespaces are registered but not "
+        "evaluated until " [:code "require"] "d."]
+       [:li [:strong "Bytecode bailouts."]
+        " Forms the bc compiler doesn't yet handle bail to the "
+        "tree-walker on first call and are remembered as declined; "
+        "subsequent calls skip recompilation but still pay "
+        "tree-walker per-call cost. Compiler coverage is the lever "
+        "here, not VM speed."]
+       [:li [:strong "Per-state lock at every eval entry "
+              "(when threaded)."]
+        " Once a state is multi-threaded (host has granted workers, "
+        "or the standalone has run " [:code "mino_install_all"] "), "
+        "each script entry through " [:code "mino_eval_string"] " or "
+        "a worker " [:code "mino_call"] " takes the per-state "
+        "recursive mutex. Uncontested cost is ~10 ns per entry; "
+        "single-threaded states skip the mutex entirely."]]
 
       [:h2 "What this means in practice"]
       [:p "mino is fast enough for configuration evaluation, rules "
-       "engines, interactive consoles, plugin systems, and data "
-       "transformation on moderate-sized collections. It evaluates "
-       "a simple expression in single-digit microseconds and processes "
-       "hundreds of elements per millisecond."]
-      [:p "It is not the right choice for tight numerical loops, "
-       "large-scale data processing, or any workload where "
-       "per-element overhead matters at the microsecond level. For "
-       "those cases, do the heavy lifting in C and pass results to "
-       "mino for composition and coordination."]
-      [:p "The embedding model supports this naturally: the host "
-       "does performance-sensitive work in native code and exposes "
-       "results to mino as values. mino provides the glue, the "
-       "logic, and the interactivity."]
+       "engines, interactive consoles, plugin systems, scripting "
+       "automation, and data transformation on moderate-sized "
+       "collections. It evaluates a simple expression in low "
+       "microseconds and processes hundreds of thousands of elements "
+       "per millisecond on tight integer loops."]
+      [:p "It is still not the right choice for tight numerical loops "
+       "in the hot inner cycle of a server, large-scale data "
+       "processing, or any workload where per-element overhead "
+       "matters at the nanosecond level. For those cases, do the "
+       "heavy lifting in C and pass results to mino for composition "
+       "and coordination. The embedding model supports this naturally."]
 
       [:h2 "Benchmarking"]
       [:p "Write benchmarks as mino scripts or C programs that "
@@ -460,7 +422,13 @@
   -Isrc/diag -Isrc/vendor/imath \\
   -o my_bench my_bench.c \\
   src/public/*.c src/runtime/*.c src/gc/*.c src/eval/*.c \\
-  src/collections/*.c src/prim/*.c src/async/*.c src/interop/*.c \\
-  src/regex/*.c src/diag/*.c src/vendor/imath/*.c \\
-  -lm
-./my_bench"]])))
+  src/eval/bc/*.c src/collections/*.c src/prim/*.c \\
+  src/async/*.c src/interop/*.c src/regex/*.c \\
+  src/diag/*.c src/vendor/imath/*.c \\
+  -lm -lpthread
+./my_bench"]]
+      [:p "For minimum-footprint embed measurements, add "
+       [:code "-ffunction-sections -fdata-sections"]
+       " to the compile flags and "
+       [:code "-Wl,--gc-sections"]
+       " to the link flags so unreferenced subsystems drop out."])))

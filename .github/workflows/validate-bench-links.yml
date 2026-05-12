@@ -1,0 +1,70 @@
+name: Validate bench links
+
+# The Performance and Landing pages cite source links into mino-bench.
+# This job shallow-clones mino-bench, builds the site, greps the
+# rendered HTML for cited links, and fails the build if any cited
+# path no longer resolves in mino-bench main. Catches the
+# "we renamed a bench file and forgot to update the page" failure
+# mode without us having to track it by hand.
+#
+# Follow-up: also fail on factual-claim drift (cited footprint and
+# cold-start numbers) by reading results/perf_summary.edn from a
+# refreshed mino-bench run. The pieces are in place (refresh_perf.clj
+# in mino-bench writes a stable EDN summary) but plumbing the
+# comparison into this workflow is a separate cycle.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Re-run weekly so a drift in mino-bench main since the last site
+    # deploy surfaces even without a site-side change.
+    - cron: "23 4 * * 1"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: DeLaGuardo/setup-clojure@13
+        with:
+          cli: latest
+
+      - name: Shallow-clone mino-bench
+        run: git clone --depth 1 https://github.com/leifericf/mino-bench.git /tmp/mino-bench
+
+      - name: Bootstrap mino (needed by site build)
+        working-directory: mino
+        run: make
+
+      - name: Build site
+        run: clojure -X:build
+
+      - name: Extract mino-bench links from rendered HTML
+        run: |
+          grep -RhoE 'https://github.com/leifericf/mino-bench/blob/[^"]+' _site/ \
+            | sort -u > /tmp/cited-links.txt
+          wc -l /tmp/cited-links.txt
+          cat /tmp/cited-links.txt
+
+      - name: Verify each cited path exists in mino-bench main
+        run: |
+          fail=0
+          while IFS= read -r url; do
+            path="${url#https://github.com/leifericf/mino-bench/blob/main/}"
+            if [ ! -e "/tmp/mino-bench/$path" ]; then
+              echo "::error::missing in mino-bench main: $path"
+              fail=1
+            fi
+          done < /tmp/cited-links.txt
+          if [ "$fail" = "1" ]; then
+            echo "::error::Fix the page link or restore the bench file. See src/mino_site/content/performance.clj for the link list."
+            exit 1
+          fi
+          echo "All bench-source links resolve."

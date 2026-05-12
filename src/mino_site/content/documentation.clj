@@ -115,6 +115,14 @@
       [:p "How the runtime works under the hood. Skim if you are "
        "tuning, profiling, porting, or wiring up a mino project."]
       [:div.card-grid
+       [:a.card {:href "/documentation/bytecode-vm/"}
+        [:div.card-title "Bytecode and VM"]
+        [:div.card-desc
+         "Register-based bytecode layered on the tree-walker: value "
+         "representation, opcode families, inline caches, fused "
+         "loops, the soundness discipline, and how mino's VM "
+         "compares to Lua, Janet, and BEAM."]]
+
        [:a.card {:href "/documentation/garbage-collection/"}
         [:div.card-title "Garbage Collection"]
         [:div.card-desc

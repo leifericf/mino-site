@@ -85,6 +85,38 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
         [:a.cta-primary {:href "/get-started/"} "Get Started"]
         [:a.cta-secondary {:href "/documentation/"} "Documentation"]]]
       [:section {:style "margin-top: 3rem;"}
+       [:h2 "Small enough to drop in. Fast enough to be useful."]
+       [:p {:style "margin-bottom: 1rem;"}
+        "Two footprints: the floor an embedder commits to and the "
+        "ceiling the standalone CLI ships with. Wall-clock cold start "
+        "is the median of 100 invocations on x86_64 Linux."]
+       [:div.use-case-grid
+        [:div.use-case
+         [:strong "Embedded — minimum"]
+         [:p [:strong "~666 KB"] " stripped binary. Cold start "
+          [:strong "~7.0 ms"]
+          ". State plus core only, no batteries, no I/O capabilities — "
+          "what an embedder commits to."]]
+        [:div.use-case
+         [:strong "Standalone — full"]
+         [:p [:strong "~898 KB"] " stripped binary (Homebrew bottle). "
+          "Cold start " [:strong "~7.5 ms"]
+          ". Everything: I/O, FS, STM, agents, bundled "
+          [:code "clojure.*"] " stdlib, REPL, and crash handler."]]
+        [:div.use-case
+         [:strong "In-process init"]
+         [:p [:strong "~5.4 ms"] " from "
+          [:code "mino_state_new"] " to ready. An embedder that "
+          "creates one runtime up-front pays this once; one per "
+          "request pays it every time."]]
+        [:div.use-case
+         [:strong "Headroom"]
+         [:p "Register-based bytecode VM under the hood. Tight "
+          "integer loops at near-native speed; primitive calls in "
+          "low microseconds. See "
+          [:a {:href "/documentation/performance/"} "Performance"]
+          " for the full numbers."]]]]
+      [:section {:style "margin-top: 3rem;"}
        [:div.use-case-grid
         [:div.use-case
          [:strong "Drop into any host with C FFI"]
