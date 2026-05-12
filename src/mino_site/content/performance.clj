@@ -21,7 +21,7 @@
       [:h1 "Performance"]
 
       [:p.banner
-       "Numbers below were measured against mino v0.145.0 on x86_64 "
+       "Numbers below were measured against mino v0.147.0 on x86_64 "
        "Linux (WSL2, kernel 6.6) under normal desktop load. Treat them "
        "as directional; different hardware will shift absolute numbers "
        "but the ratios between rows hold. The full bench suite lives "
@@ -44,33 +44,48 @@
        "single-path rewrite."]
 
       [:h2 "Footprint"
-       (src-link "tests/min_embed.c")]
-      [:p "Two binary footprints worth knowing about — the floor that "
-       "an embedder commits to, and the ceiling that the standalone CLI "
-       "ships with."]
+       (src-link "tests/min_embed.c")
+       (src-link "tests/min_embed_floor.c")]
+      [:p "Three binary footprints worth knowing about — the Floor "
+       "tier that an embedder commits to, the Standard tier with the "
+       "canonical Clojure surface, and the Standalone ceiling that "
+       "ships from Homebrew. All linked with "
+       [:code "-ffunction-sections -Wl,--gc-sections"]
+       " so unreferenced subsystems drop out at link time, and "
+       "stripped with " [:code "strip --strip-all"] "."]
       [:table
        [:thead
         [:tr [:th "Build"] [:th "Stripped size"] [:th "What's in it"]]]
        [:tbody
-        [:tr [:td "Minimum embedded (" [:code "install_core"] " only)"]
-             [:td "~666 KB"]
+        [:tr [:td "Floor (" [:code "install_minimal"] " only)"]
+             [:td "~590 KB"]
              [:td [:code "mino_state_new"] " + "
-                  [:code "mino_install_core"] " + "
-                  [:code "mino_eval_string"] ". No I/O, FS, processes, "
-                  "STM, agents, no bundled stdlib. Linked with "
-                  [:code "-ffunction-sections -Wl,--gc-sections"]
-                  " so unreferenced subsystems drop out at link time."]]
-        [:tr [:td "Full standalone (" [:code "install_all"] " + REPL)"]
-             [:td "~898 KB"]
-             [:td "Everything above plus I/O, FS, " [:code "subprocess"]
-                  ", STM, agents, all bundled " [:code "clojure.*"]
+                  [:code "mino_install_minimal"] " + "
+                  [:code "mino_eval_string"] ". Reader, evaluator, GC, "
+                  "persistent collections, numeric ops, foundational "
+                  "macros. No " [:code "core.clj"] " evaluation, no "
+                  "regex / bignum / multimethods / protocols / "
+                  "transducers, no I/O. Capability-gated names like "
+                  [:code "re-find"] " or " [:code "slurp"]
+                  " raise the MNS002 capability-disabled diagnostic if "
+                  "user code references them."]]
+        [:tr [:td "Standard (" [:code "install_core"] " back-compat alias)"]
+             [:td "~706 KB"]
+             [:td "Floor plus regex, bignum, multimethods, protocols, "
+                  "transducers — every name a Clojure scripter expects. "
+                  "Still no I/O, FS, processes, STM, agents, async, "
+                  "no bundled " [:code "clojure.*"] " stdlib."]]
+        [:tr [:td "Standalone (" [:code "install_all"] " + REPL)"]
+             [:td "~895 KB"]
+             [:td "Standard plus I/O, FS, " [:code "subprocess"]
+                  ", STM, agents, async, host-interop, all bundled "
+                  [:code "clojure.*"]
                   " namespaces, the project resolver, the task/deps "
-                  "machinery, and the REPL crash handler. This is "
-                  "the released " [:code "mino"]
+                  "machinery, and the REPL crash handler. The "
+                  "released " [:code "mino"]
                   " binary an end user receives from Homebrew (or "
                   "downloads from a GitHub release; the release "
-                  "tarball is ~360 KB gzip-compressed). "
-                  "Stripped with " [:code "strip --strip-all"] "."]]]]
+                  "tarball is ~360 KB gzip-compressed)."]]]]
       [:p "Source-side numbers for what an in-tree embedder pulls in:"]
       [:table
        [:thead
@@ -92,27 +107,48 @@
                   [:code "mino_install_core"]]]]]
 
       [:h2 "Cold startup"
+       (src-link "tests/coldstart_compare.clj")
        (src-link "tests/refresh_perf.clj")]
       [:p "Wall time from " [:code "fork+exec"] " to process exit. Each "
        "row is the median of 50 invocations after three warmup runs to "
-       "prime the OS page cache."]
+       "prime the OS page cache. Lua 5.5, Janet 1.41, and Babashka 1.12 "
+       "are shown from the same host (x86_64 Linux) for reference; the "
+       "Floor tier is what an embedder pays today."]
       [:table
        [:thead
-        [:tr [:th "Invocation"] [:th "Wall time"] [:th "Notes"]]]
+        [:tr [:th "Interpreter / tier"] [:th "Wall time (median)"]
+         [:th "Footprint"] [:th "Notes"]]]
        [:tbody
-        [:tr [:td "Full standalone " [:code "./mino -e '(+ 1 2)'"]]
-             [:td "~7.5 ms (p90 7.9 ms)"]
-             [:td "Process spawn + state init + " [:code "install_all"]
-                  " + eval + exit"]]
-        [:tr [:td "Full standalone " [:code "./mino -e nil"]]
-             [:td "~7.5 ms (p90 7.9 ms)"]
-             [:td "Same path, no eval work — confirms the floor is "
-                  "init, not eval"]]
-        [:tr [:td "Minimum embedded " [:code "./min_embed '(+ 1 2)'"]]
-             [:td "~7.0 ms (p90 7.2 ms)"]
-             [:td "Process spawn + state init + " [:code "install_core"]
-                  " + eval + exit; ~0.5 ms saved by skipping the "
-                  "batteries-installation surface"]]]]
+        [:tr [:td "Lua 5.5"]
+             [:td "0.77 ms"]
+             [:td "33 KB"]
+             [:td "Reference. Different language, far smaller surface."]]
+        [:tr [:td "mino Floor (" [:code "install_minimal"] ")"]
+             [:td "1.02 ms"]
+             [:td "590 KB"]
+             [:td "Process spawn + " [:code "mino_state_new"] " + "
+                  [:code "mino_install_minimal"] " + eval + exit. No "
+                  [:code "core.clj"] " parse / eval. Within 30% of Lua "
+                  "on cold start."]]
+        [:tr [:td "Janet 1.41"]
+             [:td "1.95 ms"]
+             [:td "888 KB"]
+             [:td "Reference."]]
+        [:tr [:td "Babashka 1.12"]
+             [:td "3.66 ms"]
+             [:td "67 MB"]
+             [:td "Reference. GraalVM AOT, Clojure dialect."]]
+        [:tr [:td "mino Standard (" [:code "install_core"] ")"]
+             [:td "6.69 ms"]
+             [:td "706 KB"]
+             [:td "Floor + regex + bignum + multimethods + protocols "
+                  "+ transducers. Parses and evaluates "
+                  [:code "core.clj"] " at install."]]
+        [:tr [:td "mino Standalone (" [:code "./mino -e ..."] ")"]
+             [:td "7.17 ms"]
+             [:td "895 KB"]
+             [:td "Standard plus I/O, FS, processes, STM, agents, async, "
+                  "bundled " [:code "clojure.*"] ". The Homebrew binary."]]]]
       [:p "Per-process initialization cost, measured in-process over 50 "
        "init/teardown cycles inside one binary (no fork/exec overhead). "
        "An embedder that creates one runtime up-front pays this once; "
@@ -123,22 +159,36 @@
         [:tr [:th "Operation"] [:th "Median"] [:th "Notes"]]]
        [:tbody
         [:tr [:td [:code "mino_state_new"] " + "
-              [:code "mino_install_core"] " + " [:code "mino_state_free"]]
-             [:td "~5.4 ms"]
-             [:td "Parses " [:code "core.clj"]
-                  ", installs primitives. The floor for any embed."]]
+              [:code "mino_install_minimal"] " + "
+              [:code "mino_state_free"]]
+             [:td "0.22 ms"]
+             [:td "Floor tier. No " [:code "core.clj"] " parse / eval."]]
+        [:tr [:td [:code "mino_state_new"] " + "
+              [:code "mino_install_clojure_core"] " (all canonical caps on) "
+              "+ " [:code "mino_state_free"]]
+             [:td "5.22 ms"]
+             [:td "Standard tier. Parses and evaluates "
+                  [:code "core.clj"] " with regex, bignum, "
+                  "multimethods, protocols, transducers enabled."]]
+        [:tr [:td [:code "mino_state_new"] " + "
+              [:code "mino_install_core"] " + "
+              [:code "mino_state_free"]]
+             [:td "5.32 ms"]
+             [:td "Back-compat alias. Same surface as Standard."]]
         [:tr [:td [:code "mino_state_new"] " + "
               [:code "mino_install_all"] " + " [:code "mino_state_free"]]
-             [:td "~5.5 ms"]
+             [:td "5.67 ms"]
              [:td "Adds I/O, FS, STM, agents, bundled "
                   [:code "clojure.*"]
                   " registration (lazy; not evaluated until "
-                  [:code "require"] "d)"]]]]
-      [:p "About 5.4 ms of the cold-start wall time is "
-       [:code "core.clj"] " evaluation; the rest is OS process spawn, "
-       "dynamic loader, and process exit. The min-embed path saves "
-       "about 0.5 ms on cold start by deferring batteries until the "
-       "host opts in."]
+                  [:code "require"] "d). The standalone CLI path."]]]]
+      [:p "The Floor tier saves ~5 ms on every cold start by skipping "
+       [:code "core.clj"] " evaluation. The cost is that "
+       "capability-gated names (e.g. " [:code "re-find"] ", "
+       [:code "defmulti"] ", " [:code "slurp"]
+       ") are not bound; user code calling them raises an MNS002 "
+       "capability-disabled diagnostic until the host installs the "
+       "corresponding capability."]
 
       [:h2 "Core operations"
        (src-link "benchmarks/micro_bench.clj")
@@ -376,10 +426,12 @@
         [:code "loop/recur"] " when iterating without building a "
         "collection."]
        [:li [:strong "Core library initialization."]
-        " Every new " [:code "mino_state_t"] " parses and evaluates "
-        [:code "core.clj"] " (~5.4 ms here, smaller on faster "
-        "hardware). Parsed forms are cached per state; additional "
-        "envs in one state avoid re-parsing. Bundled "
+        " A " [:code "mino_state_t"] " on the Standard or Standalone "
+        "tier parses and evaluates " [:code "core.clj"]
+        " (~5.2 ms here, smaller on faster hardware). The Floor tier "
+        "(" [:code "mino_install_minimal"] ") skips this entirely "
+        "and pays only ~0.22 ms. Parsed forms are cached per state, "
+        "so additional envs in one state avoid re-parsing. Bundled "
         [:code "clojure.*"] " namespaces are registered but not "
         "evaluated until " [:code "require"] "d."]
        [:li [:strong "Bytecode bailouts."]

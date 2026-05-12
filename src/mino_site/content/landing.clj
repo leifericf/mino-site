@@ -87,43 +87,50 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
       [:section {:style "margin-top: 3rem;"}
        [:h2 "Small enough to drop in. Fast enough to be useful."]
        [:p {:style "margin-bottom: 1rem;"}
-        "Two footprints — the floor an embedder commits to and the "
-        "ceiling the standalone CLI ships with — plus the in-process "
-        "init cost an embedder pays per runtime. Cold start is the "
-        "median of 100 invocations on x86_64 Linux."]
+        "Three tiers — Floor (the minimum embedder commits to), "
+        "Standard (full Clojure stdlib surface), and Standalone (the "
+        "Homebrew bottle). Each row pairs stripped footprint with the "
+        "in-process init cost from "
+        [:code "mino_state_new"] " through the install call."]
        [:div.stat-grid
         [:div.stat-card
-         [:div.stat-eyebrow "Embedded — minimum"]
+         [:div.stat-eyebrow "Floor — minimum"]
          [:div.stat-row
-          [:span.stat-value "666 KB"]
-          [:span.stat-aside "~7.0 ms cold start"]]
+          [:span.stat-value "590 KB"]
+          [:span.stat-aside "0.22 ms init"]]
          [:p.stat-detail
-          "State plus core only — no batteries, no I/O capabilities. "
-          "What an embedder commits to."]]
+          "Reader, evaluator, GC, persistent collections, numeric ops, "
+          "foundational macros. No "
+          [:code "core.clj"] " eval. Call "
+          [:code "mino_install_minimal"] " and you are running."]]
         [:div.stat-card
-         [:div.stat-eyebrow "Standalone — full"]
+         [:div.stat-eyebrow "Standard — full Clojure"]
          [:div.stat-row
-          [:span.stat-value "898 KB"]
-          [:span.stat-aside "~7.5 ms cold start"]]
+          [:span.stat-value "706 KB"]
+          [:span.stat-aside "5.2 ms init"]]
          [:p.stat-detail
-          "Everything: I/O, FS, STM, agents, bundled "
+          "Floor plus regex, bignum, multimethods, protocols, "
+          "transducers — every name a Clojure scripter expects. The "
+          "back-compat "
+          [:code "mino_install_core"] " path. No I/O capabilities yet; "
+          "the host opts into those individually."]]
+        [:div.stat-card
+         [:div.stat-eyebrow "Standalone — everything"]
+         [:div.stat-row
+          [:span.stat-value "895 KB"]
+          [:span.stat-aside "5.7 ms init"]]
+         [:p.stat-detail
+          "Standard plus I/O, FS, STM, agents, async, bundled "
           [:code "clojure.*"] " stdlib, REPL, crash handler. The "
-          "released Homebrew bottle."]]
-        [:div.stat-card
-         [:div.stat-eyebrow "In-process init"]
-         [:div.stat-row
-          [:span.stat-value "5.4 ms"]
-          [:span.stat-aside
-           [:code "mino_state_new"] " → ready"]]
-         [:p.stat-detail
-          "Paid once per runtime. An embedder that spins one per "
-          "request pays it every time; one runtime up-front pays it "
-          "once."]]]
+          "released Homebrew bottle. Same surface a Clojure scripter "
+          "sees today."]]]
        [:p.stat-footnote
-        "See "
+        "Wall-time cold start (full process spawn) on x86_64 Linux: "
+        "Floor 1.02 ms (median, 50 runs), comparable to Lua 5.5 at "
+        "0.77 ms and ahead of Janet at 1.95 ms. See "
         [:a {:href "/documentation/performance/"} "Performance"]
-        " for the full bench numbers and the per-operation costs "
-        "behind these."]]
+        " for the full table, per-operation costs, and capability "
+        "opt-in mechanics."]]
       [:section {:style "margin-top: 3rem;"}
        [:div.use-case-grid
         [:div.use-case

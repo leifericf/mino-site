@@ -42,6 +42,73 @@ mino_install_core(S, env);            /* pure functions only     */"]]
 "mino_env_free(S, env);
 mino_state_free(S);"]]
 
+      [:h3 "Capability-gated install"]
+      [:p "Three install tiers let a host pay only for the surface it "
+       "needs. Each tier sets capability bits the runtime consults at "
+       "symbol-resolution time; a name from a disabled capability "
+       "raises an MNS002 capability-disabled diagnostic instead of a "
+       "bare unbound-symbol error."]
+      [:table
+       [:thead
+        [:tr [:th "Tier"] [:th "Call"] [:th "What you get"]]]
+       [:tbody
+        [:tr [:td "Floor"]
+             [:td [:code "mino_install_minimal(S, env)"]]
+             [:td "Reader, evaluator, GC, persistent collections, "
+                  "numeric ops, foundational macros. No "
+                  [:code "core.clj"] " evaluation. ~0.22 ms init, "
+                  "~590 KB stripped."]]
+        [:tr [:td "Standard"]
+             [:td [:code "mino_install_core(S, env)"]]
+             [:td "Floor plus regex, bignum, multimethods, protocols, "
+                  "transducers — the canonical Clojure surface. "
+                  "Evaluates " [:code "core.clj"] ". ~5.2 ms init, "
+                  "~706 KB stripped. Back-compat preserved: existing "
+                  "embedders see no behaviour change."]]
+        [:tr [:td "Standalone"]
+             [:td [:code "mino_install_all(S, env)"]]
+             [:td "Standard plus I/O, FS, processes, STM, agents, "
+                  "async, host-interop, bundled " [:code "clojure.*"]
+                  ". The Homebrew binary surface. ~5.7 ms init, "
+                  "~895 KB stripped."]]]]
+      [:p "Between Floor and Standard sit per-capability install "
+       "hooks the host can call individually: "
+       [:code "mino_install_regex"] ", "
+       [:code "mino_install_bignum"] ", "
+       [:code "mino_install_multimethods"] ", "
+       [:code "mino_install_protocols"] ", "
+       [:code "mino_install_transducers"] ". "
+       "Between Standard and Standalone: "
+       [:code "mino_install_io"] ", "
+       [:code "mino_install_fs"] ", "
+       [:code "mino_install_proc"] ", "
+       [:code "mino_install_stm"] ", "
+       [:code "mino_install_agent"] ", "
+       [:code "mino_install_async"] ", "
+       [:code "mino_install_host"]
+       ". Capability bits must be set "
+       [:strong "before"] " "
+       [:code "mino_install_clojure_core"] " so " [:code "core.clj"]
+       "'s capability-gated sections (regex, multimethods, protocols, "
+       "transducers, bignum-aware "
+       [:code "integer?"] ") evaluate."]
+      [:p "Query what is installed at any time:"]
+      [:pre [:code {:data-lang "c"}
+"unsigned int caps = mino_capabilities(S);
+int has_regex = mino_capability_installed(S, MINO_CAP_REGEX);
+
+/* Iterate the registry, printing what is on / off */
+for (const mino_capability_info_t *p = mino_capability_list();
+     p->name != NULL; p++) {
+    printf(\"  %s: %s\\n\", p->name,
+           mino_capability_installed(S, p->bit) ? \"on\" : \"off\");
+}"]]
+      [:p "At the REPL, "
+       [:code ":capabilities"] " (alias " [:code ":caps"]
+       ") prints the table interactively. The banner shows "
+       [:em "(embedded, N of M capabilities installed)"]
+       " whenever a runtime is in a partial-install state."]
+
       [:h2 "Evaluating code"]
       [:p "The simplest way to run mino code is " [:code "mino_eval_string"]
        ". It reads and evaluates all forms in a string and returns the "
