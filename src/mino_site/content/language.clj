@@ -106,8 +106,10 @@
   [io-prims examples prim-docs]
   [:section.api-section {:id "io"}
    [:h2 "I/O primitives"]
-   [:p "Available only after the host calls "
-    [:code "mino_install_io()"] ". Not present in sandboxed environments."]
+   [:p "Available only when the host installs "
+    [:code "MINO_CAP_IO"] " (via "
+    [:code "mino_install(S, env, MINO_CAP_IO | ...)"]
+    "). Not present in sandboxed environments."]
    (for [prim io-prims]
      (render-primitive prim examples prim-docs))])
 

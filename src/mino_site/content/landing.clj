@@ -7,7 +7,8 @@
 (def ^:private embed-example
   "// Create a runtime and register a C++ type.
 mino_state_t *S   = mino_state_new();
-mino_env_t   *env = mino_new(S);
+mino_env_t   *env = mino_env_new(S);
+mino_install(S, env, MINO_CAP_DEFAULT | MINO_CAP_HOST);
 
 mino_host_enable(S);
 mino_host_register_ctor(S, \"EventSource\", 0, source_new, NULL);
@@ -111,9 +112,10 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
          [:p.stat-detail
           "Floor plus regex, bignum, multimethods, protocols, "
           "transducers — every name a Clojure scripter expects. The "
-          "back-compat "
-          [:code "mino_install_core"] " path. No I/O capabilities yet; "
-          "the host opts into those individually."]]
+          "sandbox preset, "
+          [:code "mino_install(S, env, MINO_CAP_DEFAULT)"]
+          ". No I/O capabilities yet; the host opts into those "
+          "individually."]]
         [:div.stat-card
          [:div.stat-eyebrow "Standalone — everything"]
          [:div.stat-row

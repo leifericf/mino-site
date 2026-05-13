@@ -103,8 +103,9 @@
              [:td "Lazy-installed; the minimum-embed build drops these"]]
         [:tr [:td [:code "core.clj"] " source"]
              [:td "~113 KB"]
-             [:td "Embedded as a C string literal; evaluated at "
-                  [:code "mino_install_core"]]]]]
+             [:td "Embedded as a C string literal; evaluated the first "
+                  "time " [:code "mino_install"]
+                  " brings in a non-floor capability"]]]]
 
       [:h2 "Cold startup"
        (src-link "tests/coldstart_compare.clj")
@@ -138,12 +139,13 @@
              [:td "3.58 ms"]
              [:td "67 MB"]
              [:td "Reference. GraalVM AOT, Clojure dialect."]]
-        [:tr [:td "mino Standard (" [:code "install_core"] ")"]
+        [:tr [:td "mino Standard ("
+              [:code "install_sandbox"] ")"]
              [:td "6.77 ms"]
              [:td "710 KB"]
              [:td "Floor + regex + bignum + multimethods + protocols "
-                  "+ transducers. Parses and evaluates "
-                  [:code "core.clj"] " at install."]]
+                  "+ transducers + the safe bundled libs. Parses and "
+                  "evaluates " [:code "core.clj"] " at install."]]
         [:tr [:td "mino Standalone (" [:code "./mino -e ..."] ")"]
              [:td "7.27 ms"]
              [:td "899 KB"]
@@ -164,17 +166,15 @@
              [:td "0.23 ms"]
              [:td "Floor tier. No " [:code "core.clj"] " parse / eval."]]
         [:tr [:td [:code "mino_state_new"] " + "
-              [:code "mino_install_clojure_core"] " (all canonical caps on) "
-              "+ " [:code "mino_state_free"]]
+              [:code "mino_install_sandbox"]
+              " + " [:code "mino_state_free"]]
              [:td "5.25 ms"]
-             [:td "Standard tier. Parses and evaluates "
+             [:td "Standard tier. Equivalent to "
+                  [:code "mino_install(S, env, MINO_CAP_DEFAULT)"]
+                  ". Parses and evaluates "
                   [:code "core.clj"] " with regex, bignum, "
-                  "multimethods, protocols, transducers enabled."]]
-        [:tr [:td [:code "mino_state_new"] " + "
-              [:code "mino_install_core"] " + "
-              [:code "mino_state_free"]]
-             [:td "5.33 ms"]
-             [:td "Back-compat alias. Same surface as Standard."]]
+                  "multimethods, protocols, transducers, and the safe "
+                  "bundled libs enabled."]]
         [:tr [:td [:code "mino_state_new"] " + "
               [:code "mino_install_all"] " + " [:code "mino_state_free"]]
              [:td "5.48 ms"]

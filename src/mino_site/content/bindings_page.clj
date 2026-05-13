@@ -17,7 +17,7 @@ pub fn main() !void {
     const S = mino.mino_state_new();
     defer mino.mino_state_free(S);
 
-    const env = mino.mino_new(S);
+    const env = mino.mino_env_new_default(S);
     defer mino.mino_env_free(S, env);
 
     const result = mino.mino_eval_string(S,
@@ -29,7 +29,7 @@ pub fn main() !void {
   "extern \"C\" {
     fn mino_state_new() -> *mut MinoState;
     fn mino_state_free(s: *mut MinoState);
-    fn mino_new(s: *mut MinoState) -> *mut MinoEnv;
+    fn mino_env_new_default(s: *mut MinoState) -> *mut MinoEnv;
     fn mino_env_free(s: *mut MinoState, e: *mut MinoEnv);
     fn mino_eval_string(
         s: *mut MinoState, src: *const c_char,
@@ -41,7 +41,7 @@ pub fn main() !void {
 fn main() {
     unsafe {
         let s = mino_state_new();
-        let e = mino_new(s);
+        let e = mino_env_new_default(s);
         let src = CString::new(\"(+ 1 2)\").unwrap();
         let r = mino_eval_string(s, src.as_ptr(), e);
         if !r.is_null() { mino_println(s, r); }
@@ -56,7 +56,7 @@ fn main() {
 class Mino {
     [DllImport(\"mino\")] static extern IntPtr mino_state_new();
     [DllImport(\"mino\")] static extern void mino_state_free(IntPtr s);
-    [DllImport(\"mino\")] static extern IntPtr mino_new(IntPtr s);
+    [DllImport(\"mino\")] static extern IntPtr mino_env_new_default(IntPtr s);
     [DllImport(\"mino\")] static extern void mino_env_free(
         IntPtr s, IntPtr e);
     [DllImport(\"mino\")] static extern IntPtr mino_eval_string(
@@ -66,7 +66,7 @@ class Mino {
 
     static void Main() {
         var s = mino_state_new();
-        var e = mino_new(s);
+        var e = mino_env_new_default(s);
         var r = mino_eval_string(s, \"(+ 1 2)\", e);
         if (r != IntPtr.Zero) mino_println(s, r);
         mino_env_free(s, e);
@@ -83,7 +83,7 @@ func main() {
     s := C.mino_state_new()
     defer C.mino_state_free(s)
 
-    e := C.mino_new(s)
+    e := C.mino_env_new_default(s)
     defer C.mino_env_free(s, e)
 
     src := C.CString(\"(+ 1 2)\")
@@ -99,7 +99,7 @@ func main() {
 let s = mino_state_new()!
 defer { mino_state_free(s) }
 
-let e = mino_new(s)!
+let e = mino_env_new_default(s)!
 defer { mino_env_free(s, e) }
 
 if let r = mino_eval_string(s, \"(+ 1 2)\", e) {

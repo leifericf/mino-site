@@ -97,7 +97,7 @@ static mino_val_t *host_add_tax(mino_state_t *S, mino_val_t *args,
 {
     long long amount;
     (void)env;
-    if (!mino_is_cons(args) || !mino_to_int(args->as.cons.car, &amount))
+    if (!mino_is_cons(args) || !mino_to_int(mino_car(args), &amount))
         return mino_nil(S);
     return mino_float(S, (double)amount * 1.08);
 }
@@ -105,7 +105,8 @@ static mino_val_t *host_add_tax(mino_state_t *S, mino_val_t *args,
 int main(void)
 {
     mino_state_t *S   = mino_state_new();
-    mino_env_t   *env = mino_new(S);       /* env + core + I/O   */
+    mino_env_t   *env = mino_env_new(S);
+    mino_install(S, env, MINO_CAP_DEFAULT);  /* sandbox preset      */
     mino_register_fn(S, env, \"add-tax\", host_add_tax);
 
     mino_val_t *result = mino_eval_string(S,
@@ -128,8 +129,9 @@ int main(void)
        [:li [:code "mino_state_new()"] " creates an isolated runtime "
         "state that owns the GC, intern tables, and all allocated "
         "objects."]
-       [:li [:code "mino_new(S)"] " creates an environment with core "
-        "and I/O bindings installed."]
+       [:li [:code "mino_env_new(S)"] " creates an empty environment; "
+        [:code "mino_install(S, env, MINO_CAP_DEFAULT)"]
+        " loads the sandbox preset (core + safe stdlib, no I/O)."]
        [:li [:code "mino_register_fn()"] " exposes a C function to "
         "mino code under any name."]
        [:li [:code "mino_eval_string()"] " reads and evaluates all "

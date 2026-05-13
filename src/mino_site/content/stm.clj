@@ -103,13 +103,13 @@
 
       [:h2 "Embedded use"]
       [:p "STM is opt-in via "
-       [:code "mino_install_stm(S, env)"]
+       [:code "mino_install(S, env, MINO_CAP_STM)"]
        ". The standalone "
        [:code "./mino"] " binary calls "
        [:code "mino_install_all"] ", which installs it; embedders "
-       "calling only " [:code "mino_new"]
-       " stay opt-out. Anything a Clojure programmer can do, a C "
-       "host can do via the mirroring "
+       "using only " [:code "mino_env_new_default"]
+       " (the sandbox preset) stay opt-out. Anything a Clojure "
+       "programmer can do, a C host can do via the mirroring "
        [:code "mino_tx_*"] " API:"]
       [:ul
        [:li [:code "mino_tx_ref(S, val)"] ", "
