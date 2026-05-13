@@ -4,6 +4,19 @@ All notable changes to mino-site are documented here.
 
 ## Unreleased
 
+- Submodule pointer bumped to mino v0.151.1. Picks up the v0.150.0
+  and v0.151.0 embedding-API revamp (opaque `struct mino_val`,
+  single `mino_install(S, env, caps)` bitmask entry point, full
+  predicate grid, `_ex` matrix with structured error access,
+  collection builders, unified iterator, host-syntax routing
+  through the BC tree-walker, namespace-resolved `host/new`,
+  `mino_int` auto-promote to bigint with `MINO_CAP_BIGNUM`) plus
+  the v0.151.1 embedding hardening (NULL-arg guards on
+  `mino_eval_string` and `mino_read`, sorted-map / sorted-set
+  iter walks via in-order RB traversal, `_ex` family delivers the
+  raw thrown payload through `out_ex`, `mino_to_int` accepts
+  bigints to close the auto-promote round-trip).
+
 - Submodule pointer bumped to mino v0.149.1. Covers five minor
   cycles since v0.144.5 plus the v0.149.1 bug-fix roll-up: hash
   contract for sequential and sorted collections, sorted-collection
