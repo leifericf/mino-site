@@ -125,9 +125,9 @@
                  [:span.section-badge.unstable " subject to change"])]
      (when unstable
        [:p.section-preamble
-        "This section is provisional for the v1.0.0-alpha series. "
-        "Symbols below may change in patch releases. Pin your usage "
-        "and re-test on alpha bumps."])
+        "This section is provisional. Symbols below may change in "
+        "subsequent releases; pin your usage and re-test on each "
+        "version bump."])
      (for [decl declarations]
        (render-declaration decl))]))
 
