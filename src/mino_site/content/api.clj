@@ -171,8 +171,13 @@
      " for the full model."]
 
     [:dt "Threading"]
-    [:dd "A " [:code "mino_state_t"] " is single-threaded. The host "
+    [:dd "A " [:code "mino_state_t"] " is not thread-safe: the host "
      "must not call into one state from multiple threads at once. "
+     "Worker threads for agents, futures, and the blocking async ops "
+     "are spawned by the runtime itself, but only after the host "
+     "raises the per-state ceiling via "
+     [:code "mino_set_thread_limit"]
+     " (default 1, which disables host-threaded primitives). "
      [:code "mino_interrupt(S)"] " is the only function in this "
      "reference that is safe to call from a non-owning thread."]]])
 
