@@ -479,6 +479,24 @@
                         :padding       "0.5rem 0.75rem"
                         :margin-bottom "1rem"
                         :font-style    "italic"}]
+   ;; Whole-reference conventions callout above the filter bar.
+   [:.api-preamble {:border        (str "1px solid " (:border colors))
+                    :background    "#fafbfc"
+                    :padding       "0.75rem 1rem 0.5rem"
+                    :margin-bottom "1.25rem"
+                    :border-radius "4px"}]
+   [".api-preamble > h2" {:font-size      "1rem"
+                          :margin         "0 0 0.5rem"
+                          :padding-bottom "0.25rem"
+                          :border         "none"}]
+   [:.api-conventions {:margin 0
+                       :font-size "0.9rem"
+                       :line-height "1.55"}]
+   [".api-conventions dt" {:font-weight "600"
+                           :margin-top "0.4rem"
+                           :color (:text colors)}]
+   [".api-conventions dd" {:margin       "0 0 0.25rem 0"
+                           :color        (:text-muted colors)}]
    [:.decl-meta {:font-size "0.8rem"
                  :color     (:text-muted colors)}]
    [:.decl-doc {:color       (:text colors)

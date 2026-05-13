@@ -144,6 +144,38 @@
 
 ;; --- Public API ---
 
+(defn- conventions-preamble
+  "Short ownership/lifetime/threading note that applies to the whole
+  reference. Lifted from the architecture contract so embedders see
+  the cross-cutting rules before scrolling into per-symbol detail."
+  []
+  [:section.api-preamble
+   [:h2 "Conventions"]
+   [:dl.api-conventions
+    [:dt "Naming"]
+    [:dd [:code "*_new"] " and " [:code "*_alloc"]
+     " return values the caller owns; release them with the matching "
+     [:code "*_free"] " or " [:code "*_destroy"] ". "
+     [:code "*_get"] " and " [:code "*_peek"]
+     " return borrowed pointers that must not be freed. "
+     [:code "*_take"] " transfers ownership from the runtime to the caller."]
+
+    [:dt "Lifetime"]
+    [:dd "Values returned by the runtime are borrowed: they stay valid "
+     "until the next allocation, which can trigger collection. To keep "
+     "a value alive across multiple runtime calls, root it with "
+     [:code "mino_ref"] " and release it with " [:code "mino_unref"]
+     ". Values bound in a live environment are rooted automatically. "
+     "See "
+     [:a {:href "/documentation/embedding/"} "Embedding Guide"]
+     " for the full model."]
+
+    [:dt "Threading"]
+    [:dd "A " [:code "mino_state_t"] " is single-threaded. The host "
+     "must not call into one state from multiple threads at once. "
+     [:code "mino_interrupt(S)"] " is the only function in this "
+     "reference that is safe to call from a non-owning thread."]]])
+
 (defn api-page
   "Generates the C API Reference page HTML body.
   api-data is the output of parse/header.clj."
@@ -154,6 +186,7 @@
         [:h1 "C API Reference"]
         [:p "Every public function, type, enum, and macro in "
          [:code "mino.h"] ". Auto-generated from the source."]
+        (conventions-preamble)
         [:div.filter-bar
          [:input#api-filter {:type "text"
                              :placeholder "Filter declarations..."
