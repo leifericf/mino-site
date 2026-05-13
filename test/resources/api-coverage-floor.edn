@@ -1,0 +1,9 @@
+{:sections 25,
+ :total 248,
+ :by-kind
+ {:define 42,
+  :enum 3,
+  :function 186,
+  :struct 3,
+  :typedef 6,
+  :typedef-fn 8}}

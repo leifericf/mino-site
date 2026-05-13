@@ -3,22 +3,41 @@
 
   Splits on section banners, then extracts function signatures, enums,
   structs, typedefs, defines, and preceding doc comments within each
-  section."
+  section.
+
+  Warnings accumulate into *warnings* when bound; strict mode escalates
+  them at the end."
   (:require
     [clojure.string :as str]))
+
+;; --- Forward declarations (file is read top-down by the compiler) ---
+
+(declare collapse-block-comments struct-fields)
+
+;; --- Warning surface ---
+
+(def ^:dynamic *warnings* nil)
+
+(defn- warn!
+  "Push a warning into the active accumulator, if one is bound."
+  [m]
+  (when *warnings* (swap! *warnings* conj m)))
 
 ;; --- Section splitting ---
 
 (defn- split-sections
   "Splits the header text on /* ---...--- */ banner lines.
-  Returns a seq of {:name \"Section Name\" :body \"...lines...\"}."
+  Returns a seq of {:name \"Section Name\" :body \"...lines...\" :start-line N}.
+  A banner opener with no matching name+closer pair within two lines emits
+  a :banner-opener-without-name warning."
   [text]
-  (let [lines (str/split-lines text)
+  (let [all-lines (str/split-lines text)
         banner-re #"^/\*\s*-{10,}\s*\*/$"
         name-re   #"^/\*\s+(.+?)\s+\*/$"]
-    (loop [lines lines
-           sections []
-           current nil]
+    (loop [lines     all-lines
+           line-no   1
+           sections  []
+           current   nil]
       (if (empty? lines)
         (if current
           (conj sections (update current :body str/trim))
@@ -35,24 +54,29 @@
                        maybe-close
                        (re-matches banner-re maybe-close))
                 (let [name (second (re-matches name-re maybe-name))
-                      new-section {:name name :body ""}]
+                      new-section {:name name :body "" :start-line line-no}]
                   (recur (drop 2 rest-lines)
+                         (+ line-no 3)
                          (if current
                            (conj sections (update current :body str/trim))
                            sections)
                          new-section))
-                (recur rest-lines sections
-                       (when current
-                         (update current :body str "\n" line)))))
+                (do
+                  (warn! {:line line-no
+                          :reason :banner-opener-without-name
+                          :snippet line})
+                  (recur rest-lines (inc line-no) sections
+                         (when current
+                           (update current :body str "\n" line))))))
 
             ;; Regular line inside a section
             current
-            (recur rest-lines sections
+            (recur rest-lines (inc line-no) sections
                    (update current :body str (when (seq (:body current)) "\n") line))
 
             ;; Before any section
             :else
-            (recur rest-lines sections current)))))))
+            (recur rest-lines (inc line-no) sections current)))))))
 
 ;; --- Doc comment extraction ---
 
@@ -117,9 +141,11 @@
          :signature (str/trim line)}))))
 
 (defn- parse-typedef-fn
-  "Parses a function pointer typedef."
+  "Parses a function pointer typedef. Accepts single or multi-line input
+  joined on a single string. Trailing C arg lists with internal commas
+  are preserved verbatim in :params."
   [line]
-  (let [m (re-find #"typedef\s+(.+?)\(\*(\w+)\)\s*\(([^)]*)\)\s*;" line)]
+  (let [m (re-find #"typedef\s+(.+?)\(\*(\w+)\)\s*\((.*)\)\s*;" line)]
     (when m
       {:kind :typedef-fn
        :name (nth m 2)
@@ -137,6 +163,22 @@
        :struct-name (nth m 1)
        :signature (str/trim line)})))
 
+(defn- parse-typedef-struct-def
+  "Parses a typedef struct definition, named or anonymous:
+    typedef struct { ... } NAME_t;
+    typedef struct foo { ... } NAME_t;
+  Returns {:kind :struct :name NAME_t :struct-tag foo|nil :fields [...]}."
+  [text]
+  (let [m (re-find #"(?s)typedef\s+struct\s*(\w*)\s*\{(.+)\}\s*(\w+)\s*;" text)]
+    (when m
+      (let [struct-tag (let [t (nth m 1)] (when-not (str/blank? t) t))
+            body       (nth m 2)
+            name       (nth m 3)]
+        (cond-> {:kind :struct
+                 :name name
+                 :fields (struct-fields body)}
+          struct-tag (assoc :struct-tag struct-tag))))))
+
 (defn- parse-define
   "Parses a #define line."
   [line]
@@ -149,10 +191,32 @@
          :inline-comment (when comment-m (nth comment-m 1))
          :signature (str/trim line)}))))
 
-(defn- parse-enum
-  "Parses an enum block into {:kind :enum :name ... :variants [...]}."
+(defn- collapse-block-comments
+  "Collapse each /* ... */ block in text into a single-line /* ... */.
+  Multi-line comments with leading `*` decoration are flattened to one
+  space-separated comment, so per-line scanning of the surrounding code
+  sees each variant or field with its complete trailing comment intact."
   [text]
-  (let [m (re-find #"(?s)typedef\s+enum\s*\{([^}]+)\}\s*(\w+)\s*;" text)]
+  (str/replace text
+    #"(?s)/\*(.*?)\*/"
+    (fn [match-vec]
+      (let [inner (nth match-vec 1)
+            flat  (-> inner
+                      (str/replace #"\n\s*\*\s*" " ")
+                      (str/replace #"\s+" " ")
+                      str/trim)]
+        (java.util.regex.Matcher/quoteReplacement
+          (str "/* " flat " */"))))))
+
+(defn- parse-enum
+  "Parses an enum block into {:kind :enum :name ... :variants [...]}.
+
+  Greedy body capture handles `}` inside comment text (e.g. `{fn, args}`
+  on a trampoline-sentinel doc line) by anchoring on the trailing
+  `} NAME ;` instead of the first `}`."
+  [text]
+  (let [collapsed (collapse-block-comments text)
+        m (re-find #"(?s)typedef\s+enum\s*\{(.+)\}\s*(\w+)\s*;" collapsed)]
     (when m
       (let [body (nth m 1)
             name (nth m 2)
@@ -161,7 +225,13 @@
                  (map str/trim)
                  (remove str/blank?)
                  (mapv (fn [line]
-                         (let [vm (re-find #"(\w+)(?:\s*,)?\s*(?:/\*\s*(.+?)\s*\*/)?" line)]
+                         ;; Require the line to begin with an enum-style
+                         ;; identifier (uppercase or underscore-led), so
+                         ;; comment-continuation fragments don't masquerade
+                         ;; as variants.
+                         (let [vm (re-find
+                                    #"^([A-Z_][A-Z0-9_]*)(?:\s*,)?\s*(?:/\*\s*(.+?)\s*\*/)?"
+                                    line)]
                            (when vm
                              {:name (nth vm 1)
                               :comment (nth vm 2)}))))
@@ -170,52 +240,60 @@
          :name name
          :variants variants}))))
 
+(defn- struct-fields
+  "Extract field rows from the body of a struct (or typedef struct).
+  Lines that don't parse cleanly (e.g. function-pointer fields) are
+  skipped; the renderer still shows the struct heading."
+  [body]
+  (let [collapsed (collapse-block-comments body)]
+    (->> (str/split-lines collapsed)
+         (map str/trim)
+         (remove str/blank?)
+         (remove #(str/starts-with? % "union"))
+         (remove #(str/starts-with? % "struct"))
+         (remove #(= % "{"))
+         (remove #(re-matches #"\}.*" %))
+         (mapv (fn [line]
+                 (let [comment-m (re-find #"/\*\s*(.+?)\s*\*/" line)
+                       clean (str/trim (str/replace line #"/\*.*?\*/" ""))
+                       clean (str/replace clean #";$" "")
+                       clean (str/trim clean)
+                       fm (re-find #"^(.+)\s+(\*?\w+(?:\[\d+\])?)$" clean)]
+                   (when fm
+                     (let [raw-type (str/trim (nth fm 1))
+                           raw-name (str/trim (nth fm 2))
+                           [t n] (if (str/starts-with? raw-name "*")
+                                   [(str raw-type " *") (subs raw-name 1)]
+                                   [raw-type raw-name])]
+                       {:type t
+                        :name n
+                        :comment (when comment-m (nth comment-m 1))})))))
+         (filterv some?))))
+
 (defn- parse-struct
-  "Parses a struct definition into {:kind :struct :name ... :fields [...]}."
+  "Parses a bare struct definition into {:kind :struct :name ... :fields [...]}."
   [text]
   (let [m (re-find #"(?s)struct\s+(\w+)\s*\{(.+)\}" text)]
     (when m
       (let [name (nth m 1)
-            body (nth m 2)
-            ;; Extract top-level fields and union members
-            fields
-            (->> (str/split-lines body)
-                 (map str/trim)
-                 (remove str/blank?)
-                 (remove #(str/starts-with? % "union"))
-                 (remove #(str/starts-with? % "struct"))
-                 (remove #(= % "{"))
-                 (remove #(re-matches #"\}.*" %))
-                 (mapv (fn [line]
-                         (let [comment-m (re-find #"/\*\s*(.+?)\s*\*/" line)
-                               clean (str/trim (str/replace line #"/\*.*?\*/" ""))
-                               clean (str/replace clean #";$" "")
-                               clean (str/trim clean)
-                               ;; Split on the last whitespace-separated word
-                               ;; to handle multi-word types like "long long"
-                               fm (re-find #"^(.+)\s+(\*?\w+(?:\[\d+\])?)$" clean)]
-                           (when fm
-                             (let [raw-type (str/trim (nth fm 1))
-                                   raw-name (str/trim (nth fm 2))
-                                   [t n] (if (str/starts-with? raw-name "*")
-                                           [(str raw-type " *") (subs raw-name 1)]
-                                           [raw-type raw-name])]
-                               {:type t
-                                :name n
-                                :comment (when comment-m (nth comment-m 1))})))))
-                 (filterv some?))]
+            body (nth m 2)]
         {:kind :struct
          :name name
-         :fields fields}))))
+         :fields (struct-fields body)}))))
 
 ;; --- Section body parser ---
 
 (defn- parse-section-body
-  "Parses a section body into a list of declarations with doc comments."
-  [body]
-  (let [lines (str/split-lines body)]
-    (loop [lines lines
-           idx 0
+  "Parses a section body into a list of declarations with doc comments.
+  section-name and start-line are used to locate warnings."
+  [section-name start-line body]
+  (let [lines (str/split-lines body)
+        warn-skip (fn [reason snippet idx]
+                    (warn! {:section section-name
+                            :line (+ start-line idx)
+                            :reason reason
+                            :snippet snippet}))]
+    (loop [idx 0
            preceding []
            declarations []]
       (if (>= idx (count lines))
@@ -225,69 +303,119 @@
           (cond
             ;; Blank line resets preceding context
             (str/blank? trimmed)
-            (recur lines (inc idx) [] declarations)
+            (recur (inc idx) [] declarations)
 
             ;; Comment lines accumulate
             (or (str/starts-with? trimmed "/*")
                 (str/starts-with? trimmed "*")
                 (str/starts-with? trimmed "//")
                 (= trimmed "*/"))
-            (recur lines (inc idx) (conj preceding trimmed) declarations)
+            (recur (inc idx) (conj preceding trimmed) declarations)
 
             ;; #include — skip
             (str/starts-with? trimmed "#include")
-            (recur lines (inc idx) [] declarations)
+            (recur (inc idx) [] declarations)
 
             ;; #ifdef / #endif / extern — skip
             (or (str/starts-with? trimmed "#ifdef")
                 (str/starts-with? trimmed "#ifndef")
                 (str/starts-with? trimmed "#endif")
                 (str/starts-with? trimmed "extern"))
-            (recur lines (inc idx) [] declarations)
+            (recur (inc idx) [] declarations)
 
             ;; #define
             (str/starts-with? trimmed "#define")
             (let [decl (parse-define trimmed)
                   doc (extract-doc-comment preceding)]
-              (recur lines (inc idx) []
+              (when-not decl
+                (warn-skip :unparseable-define trimmed idx))
+              (recur (inc idx) []
                      (if decl
                        (conj declarations (assoc decl :doc doc))
                        declarations)))
 
-            ;; typedef with function pointer
+            ;; typedef with function pointer (may span multiple lines)
             (and (str/starts-with? trimmed "typedef")
                  (str/includes? trimmed "(*"))
-            (let [decl (parse-typedef-fn trimmed)
-                  doc (extract-doc-comment preceding)]
-              (recur lines (inc idx) []
-                     (if decl
-                       (conj declarations (assoc decl :doc doc))
-                       declarations)))
-
-            ;; typedef enum — collect until closing ;
-            (and (str/starts-with? trimmed "typedef enum")
-                 (str/includes? trimmed "{"))
             (let [block-lines (loop [j idx collected []]
                                 (if (>= j (count lines))
                                   collected
-                                  (let [l (nth lines j)]
-                                    (if (str/includes? l ";")
+                                  (let [l (str/trim (nth lines j))]
+                                    (if (str/ends-with? l ";")
                                       (conj collected l)
                                       (recur (inc j) (conj collected l))))))
-                  block-text (str/join "\n" block-lines)
-                  decl (parse-enum block-text)
+                  full-line (str/join " " block-lines)
+                  decl (parse-typedef-fn full-line)
                   doc (extract-doc-comment preceding)]
-              (recur lines (+ idx (count block-lines)) []
+              (when-not decl
+                (warn-skip :unparseable-typedef-fn full-line idx))
+              (recur (+ idx (count block-lines)) []
                      (if decl
                        (conj declarations (assoc decl :doc doc))
                        declarations)))
 
-            ;; typedef struct forward declaration
+            ;; typedef enum — collect with brace-depth so `;` inside
+            ;; comments (e.g. `construction); arithmetic`) is not
+            ;; mistaken for the closing of the typedef.
+            (and (str/starts-with? trimmed "typedef enum")
+                 (str/includes? trimmed "{"))
+            (let [block-lines (loop [j idx collected [] depth 0]
+                                (if (>= j (count lines))
+                                  collected
+                                  (let [l (nth lines j)
+                                        opens (count (re-seq #"\{" l))
+                                        closes (count (re-seq #"\}" l))
+                                        new-depth (+ depth opens (- closes))]
+                                    (if (and (pos? (+ depth opens))
+                                             (<= new-depth 0))
+                                      (conj collected l)
+                                      (recur (inc j) (conj collected l)
+                                             new-depth)))))
+                  block-text (str/join "\n" block-lines)
+                  decl (parse-enum block-text)
+                  doc (extract-doc-comment preceding)]
+              (when-not decl
+                (warn-skip :unparseable-typedef-enum block-text idx))
+              (recur (+ idx (count block-lines)) []
+                     (if decl
+                       (conj declarations (assoc decl :doc doc))
+                       declarations)))
+
+            ;; typedef struct forward declaration (one-line opaque)
             (and (str/starts-with? trimmed "typedef struct")
                  (str/ends-with? trimmed ";"))
             (let [decl (parse-typedef-struct trimmed)
                   doc (extract-doc-comment preceding)]
-              (recur lines (inc idx) []
+              (when-not decl
+                (warn-skip :unparseable-typedef-struct trimmed idx))
+              (recur (inc idx) []
+                     (if decl
+                       (conj declarations (assoc decl :doc doc))
+                       declarations)))
+
+            ;; typedef struct definition (named or anonymous):
+            ;;   typedef struct foo { ... } foo_t;
+            ;;   typedef struct      { ... } foo_t;
+            (and (str/starts-with? trimmed "typedef struct")
+                 (str/includes? trimmed "{"))
+            (let [block-lines (loop [j idx collected [] depth 0]
+                                (if (>= j (count lines))
+                                  collected
+                                  (let [l (nth lines j)
+                                        opens (count (re-seq #"\{" l))
+                                        closes (count (re-seq #"\}" l))
+                                        new-depth (+ depth opens (- closes))]
+                                    (if (and (pos? (+ depth opens))
+                                             (<= new-depth 0))
+                                      (conj collected l)
+                                      (recur (inc j) (conj collected l)
+                                             new-depth)))))
+                  block-text (str/join "\n" block-lines)
+                  decl (parse-typedef-struct-def block-text)
+                  doc (extract-doc-comment preceding)]
+              (when-not decl
+                (warn-skip :unparseable-typedef-struct-def block-text idx))
+              (recur (+ idx (count block-lines)) []
                      (if decl
                        (conj declarations (assoc decl :doc doc))
                        declarations)))
@@ -309,7 +437,9 @@
                   block-text (str/join "\n" block-lines)
                   decl (parse-struct block-text)
                   doc (extract-doc-comment preceding)]
-              (recur lines (+ idx (count block-lines)) []
+              (when-not decl
+                (warn-skip :unparseable-struct block-text idx))
+              (recur (+ idx (count block-lines)) []
                      (if decl
                        (conj declarations (assoc decl :doc doc))
                        declarations)))
@@ -328,7 +458,9 @@
                                       (recur (inc j) (conj collected l)))))))
                   decl (parse-function full-line)
                   doc (extract-doc-comment preceding)]
-              (recur lines (inc idx) []
+              (when-not decl
+                (warn-skip :unparseable-function full-line idx))
+              (recur (inc idx) []
                      (if decl
                        (conj declarations (assoc decl :doc doc))
                        declarations)))
@@ -347,14 +479,16 @@
                   full-line (str/join " " block-lines)
                   decl (parse-function full-line)
                   doc (extract-doc-comment preceding)]
-              (recur lines (+ idx (count block-lines)) []
+              (when-not decl
+                (warn-skip :unparseable-function full-line idx))
+              (recur (+ idx (count block-lines)) []
                      (if decl
                        (conj declarations (assoc decl :doc doc))
                        declarations)))
 
             ;; Anything else — accumulate as context
             :else
-            (recur lines (inc idx) (conj preceding trimmed) declarations)))))))
+            (recur (inc idx) (conj preceding trimmed) declarations)))))))
 
 ;; --- Public API ---
 
@@ -362,27 +496,56 @@
   "Detect a trailing `[MINO_UNSTABLE_*]` marker on a section name.
   Returns [clean-name unstable?] where clean-name is the user-visible
   label with the marker stripped, and unstable? is truthy when the
-  section is provisional."
-  [name]
+  section is provisional.
+
+  Section names that look like they contain an unstable tag but do not
+  match the canonical regex emit a :malformed-unstable-tag warning."
+  [name start-line]
   (let [m (re-find #"^(.*?)\s*\[MINO_UNSTABLE_[A-Z_]+\]\s*$" name)]
-    (if m
+    (cond
+      m
       [(str/trim (nth m 1)) true]
+
+      (str/includes? name "[MINO_UNSTABLE")
+      (do (warn! {:line start-line
+                  :reason :malformed-unstable-tag
+                  :snippet name})
+          [name false])
+
+      :else
       [name false])))
 
 (defn parse
   "Parse a mino.h file and return structured API data.
-  Returns {:sections [{:name \"...\" :declarations [...] :unstable bool}]}."
-  [path]
-  (let [text (slurp path)
-        raw-sections (split-sections text)]
-    {:sections
-     (mapv (fn [{:keys [name body]}]
-             (let [[clean unstable?] (split-unstable-tag name)
-                   decls (parse-section-body body)
-                   decls (if unstable?
-                           (mapv #(assoc % :unstable true) decls)
-                           decls)]
-               {:name clean
-                :unstable unstable?
-                :declarations decls}))
-           raw-sections)}))
+
+  Returns
+    {:sections [{:name \"...\" :declarations [...] :unstable bool}]
+     :warnings [{:line N :reason kw :snippet \"...\"} ...]}.
+
+  Options:
+    :strict?  when true, throw ex-info on the first non-empty warning
+              list instead of returning it. Defaults to false."
+  ([path] (parse path nil))
+  ([path {:keys [strict?]}]
+   (let [warnings (atom [])
+         result
+         (binding [*warnings* warnings]
+           (let [text (slurp path)
+                 raw-sections (split-sections text)]
+             {:sections
+              (mapv (fn [{:keys [name body start-line]}]
+                      (let [[clean unstable?] (split-unstable-tag name start-line)
+                            decls (parse-section-body clean (inc start-line) body)
+                            decls (if unstable?
+                                    (mapv #(assoc % :unstable true) decls)
+                                    decls)]
+                        {:name clean
+                         :unstable unstable?
+                         :declarations decls}))
+                    raw-sections)}))
+         ws @warnings]
+     (when (and strict? (seq ws))
+       (throw (ex-info (str "Header parser produced " (count ws)
+                            " warning(s) under :strict? true")
+                       {:warnings ws})))
+     (assoc result :warnings ws))))

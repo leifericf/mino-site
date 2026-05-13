@@ -1,0 +1,1979 @@
+[{:name "Version",
+  :unstable false,
+  :declarations
+  [{:kind :define,
+    :name "MINO_VERSION_MAJOR",
+    :value "0",
+    :inline-comment nil,
+    :signature "#define MINO_VERSION_MAJOR 0",
+    :doc
+    "Compile-time version constants, bumped by the release process. Host code\ncan check these at preprocessor time to guard against embedding against an\nunexpected runtime:\n\n#if MINO_VERSION_MAJOR == 0 && MINO_VERSION_MINOR < 48\n# error \"embedded mino is too old; need >= 0.48\"\n#endif\n\nThe linked-in version (which may differ if the header was updated without\nrebuilding the runtime) is available at runtime via mino_version_string()."}
+   {:kind :define,
+    :name "MINO_VERSION_MINOR",
+    :value "151",
+    :inline-comment nil,
+    :signature "#define MINO_VERSION_MINOR 151",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_VERSION_PATCH",
+    :value "1",
+    :inline-comment nil,
+    :signature "#define MINO_VERSION_PATCH 1",
+    :doc nil}
+   {:kind :function,
+    :name "mino_version_string",
+    :return-type "const char *",
+    :params "void",
+    :signature "const char *mino_version_string(void);",
+    :doc
+    "Human-readable version string of the *linked* runtime, e.g. \"0.48.0\".\nThe pointer is to a static string with program lifetime; callers must not\nfree it."}]}
+ {:name "Value types",
+  :unstable false,
+  :declarations
+  [{:kind :enum,
+    :name "mino_type_t",
+    :variants
+    [{:name "MINO_NIL", :comment nil}
+     {:name "MINO_BOOL", :comment nil}
+     {:name "MINO_INT", :comment nil}
+     {:name "MINO_FLOAT", :comment "64-bit IEEE 754 double."}
+     {:name "MINO_FLOAT32",
+      :comment
+      "32-bit IEEE 754 single. Distinct tag so float? matches both tiers and double? matches only MINO_FLOAT. Stored in the same `as.f` field as MINO_FLOAT (the 32-bit cast precision narrowing happens at construction); arithmetic always promotes to MINO_FLOAT, matching JVM Clojure where Float arithmetic yields Double."}
+     {:name "MINO_CHAR", :comment "Unicode scalar value (codepoint)"}
+     {:name "MINO_STRING", :comment nil}
+     {:name "MINO_SYMBOL", :comment nil}
+     {:name "MINO_KEYWORD", :comment nil}
+     {:name "MINO_EMPTY_LIST",
+      :comment
+      "singleton: the canonical empty list `()`. Distinct from nil: seq?-true, nil?-false, empty?-true. Walkers terminate on it because mino_is_cons returns false. Construct via mino_empty_list(S)."}
+     {:name "MINO_CONS", :comment nil}
+     {:name "MINO_VECTOR", :comment nil}
+     {:name "MINO_MAP", :comment nil}
+     {:name "MINO_SET",
+      :comment "persistent set: HAMT of keys with sentinel values"}
+     {:name "MINO_SORTED_MAP",
+      :comment "persistent sorted map: red-black tree"}
+     {:name "MINO_SORTED_SET",
+      :comment "persistent sorted set: red-black tree"}
+     {:name "MINO_PRIM", :comment nil}
+     {:name "MINO_FN", :comment nil}
+     {:name "MINO_MACRO",
+      :comment "user-defined macro (shares the fn struct layout)"}
+     {:name "MINO_HANDLE",
+      :comment "opaque host object: pointer + type tag string"}
+     {:name "MINO_ATOM",
+      :comment "mutable reference cell: wraps a single value"}
+     {:name "MINO_VOLATILE",
+      :comment
+      "lightweight single-slot mutable cell. No watches, no validators, no atomic publish. Intended for transducer state where the reducing fn already implies single-thread access. Constructed via mino_volatile / `volatile!`."}
+     {:name "MINO_LAZY",
+      :comment
+      "lazy sequence: thunk body + env, cached on first force"}
+     {:name "MINO_CHUNK",
+      :comment
+      "fixed-capacity buffer of values used as the leaf of a chunked seq. Constructed via `chunk-buffer` (mutable, for accumulation) and sealed via `chunk` (returns the same value with sealed=1). After sealing, chunk-append throws."}
+     {:name "MINO_CHUNKED_CONS",
+      :comment
+      "chunked-seq cell: holds one MINO_CHUNK plus an offset into it and a `more` seq for what follows the chunk. first/next/rest treat this transparently as a seq; chunk-first / chunk-rest expose the underlying chunk so combinators can pull a whole chunk at a time and emit chunked output. Constructed via `chunk-cons`."}
+     {:name "MINO_RECUR",
+      :comment "internal tail-call trampoline sentinel"}
+     {:name "MINO_TAIL_CALL",
+      :comment "proper tail call: carries {fn, args} for trampoline"}
+     {:name "MINO_REDUCED",
+      :comment "early termination wrapper for reduce"}
+     {:name "MINO_VAR",
+      :comment "first-class var: ns + name + root binding"}
+     {:name "MINO_TRANSIENT",
+      :comment
+      "mutable staging wrapper for batch mutation of a persistent vector, map, or set. Embedders call mino_transient / mino_persistent and the *_bang accessors below."}
+     {:name "MINO_BIGINT",
+      :comment
+      "arbitrary-precision signed integer. Backed by the vendored imath library (src/vendor/imath.c). The mpz_t struct is embedded in the value cell; the digit storage is owned by the cell and freed during GC sweep. See also `1N` literals and the `bigint` / `biginteger` constructors."}
+     {:name "MINO_RATIO",
+      :comment
+      "arbitrary-precision rational number, stored as a numerator/denominator pair of bigints. The representation is always reduced (gcd = 1) and the denominator is always positive (sign lives on the numerator). See also `1/2` literals and the `numerator` / `denominator` primitives."}
+     {:name "MINO_BIGDEC",
+      :comment
+      "arbitrary-precision decimal, stored as an unscaled bigint plus a non-negative integer scale: value = unscaled * 10^-scale. Constructed from `1.5M` / `1M` literals or via `(bigdec x)`."}
+     {:name "MINO_TYPE",
+      :comment
+      "first-class record type. Carries identity (ptr), defining namespace, unqualified name, and an ordered vector of declared field-name keywords. Method tables are not stored here; protocol dispatch lives in the protocol's namespace, keyed by what (type x) returns. Construct via mino_defrecord."}
+     {:name "MINO_RECORD",
+      :comment
+      "record value: pointer to its MINO_TYPE plus a malloc-owned array of field-value slots and an optional MINO_MAP for extension keys. Storage is field slots, not a backing map; map-iso behaviour (get, assoc, seq, count, ...) is a contract layered on top via primitive dispatch on this tag. Construct via mino_record."}
+     {:name "MINO_FUTURE",
+      :comment
+      "host-thread future: carries a result-or-exception cell, a state machine (PENDING, RESOLVED, FAILED, CANCELLED), a mutex+cond for cross-thread delivery, and a thread handle. Promises share this type — a promise is a future that exposes `deliver` and never has a worker thread."}
+     {:name "MINO_UUID",
+      :comment
+      "RFC 4122 UUID. 16 bytes inline. Equality is byte-wise; hash mixes the 16 bytes. The `#uuid \"...\"` reader literal and (random-uuid), (parse-uuid s) construct it."}
+     {:name "MINO_REGEX",
+      :comment
+      "Compiled-on-use regex pattern. Holds the source string only -- mino's regex engine compiles per call. Equality is identity (matches Clojure JVM's `(= #\"x\" #\"x\")` returning false); print form is `#\"source\"`. The reader's `#\"...\"` literal and `(re-pattern s)` construct it."}
+     {:name "MINO_MAP_ENTRY",
+      :comment
+      "Map entry: a (k, v) pair returned by first/seq of a map. Distinct from MINO_VECTOR -- key and val accept only MAP_ENTRY, throwing on plain 2-vectors -- but vector-shaped: vector?, coll?, sequential?, indexed?, counted?, associative?, reversible? all true; equality with a 2-vector compares element-wise. count is 2; nth 0 / 1 yield k / v; first/second/last/peek dispatch accordingly. Constructed by first/seq of a map and by `clojure.lang.MapEntry/create`."}
+     {:name "MINO_HOST_ARRAY",
+      :comment
+      "JVM-style host array: a fixed-length container with element-kind tag (:object, :int, :long, etc.) for printing and zero-fill semantics. Distinct from MINO_VECTOR: predicates like vector?, coll?, sequential?, counted?, associative? all return false (matching JVM's Java arrays which don't implement IPersistentCollection). seq returns a chunked seq over the elements. Equality is identity. Constructed via object-array, int-array, long-array, etc."}
+     {:name "MINO_TX_REF",
+      :comment
+      "Software transactional memory ref: identity cell holding a single committed value plus per-cell watches and validator. Mutations are confined to `dosync` transactions and serialized through a single-version optimistic protocol (read-set validation at commit; conflicts trigger retry). Equality is identity, matching atoms. Constructed via `(ref v)`. The MINO_REF symbol was already taken by the embedder rooting handle (mino_ref_t), so the enum tag is MINO_TX_REF; the Clojure-level type keyword is `:ref`."}
+     {:name "MINO_AGENT",
+      :comment
+      "Asynchronous mutable cell with a per-state action run-queue. send / send-off enqueue (fn args) onto the queue and return the agent immediately; a worker thread drains the queue serially, applies actions under state_lock, and signals await waiters when the agent's in-flight count reaches zero. Watches and validators follow the atom/ref shape. Equality is identity. Constructed via `(agent v)`. The worker counts against thread_limit, so send / send-off throw MTH001 if the host hasn't granted a thread budget (default thread_limit == 1 means no agents)."}],
+    :doc nil}
+   {:kind :function,
+    :name "mino_typeof",
+    :return-type "mino_type_t",
+    :params "const mino_val_t *v",
+    :signature "mino_type_t mino_typeof(const mino_val_t *v);",
+    :doc
+    "Return the effective type of a value. Works for both heap-allocated\ncells and tagged scalars (int, bool, nil, char). NULL is treated as\nMINO_NIL. Use this to dispatch on type from C without reaching into\nthe value's internal layout."}
+   {:kind :typedef-fn,
+    :name "mino_prim_fn",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *args, mino_env_t *env",
+    :signature
+    "typedef mino_val_t *(*mino_prim_fn)(mino_state_t *S, mino_val_t *args, mino_env_t *env);",
+    :doc nil}
+   {:kind :typedef-fn,
+    :name "mino_prim_fn2",
+    :return-type "mino_val_t *",
+    :params
+    "mino_state_t *S, mino_val_t **argv, int argc, mino_env_t *env",
+    :signature
+    "typedef mino_val_t *(*mino_prim_fn2)(mino_state_t *S, mino_val_t **argv, int argc, mino_env_t *env);",
+    :doc
+    "argv ABI: receives evaluated args as a flat C array instead of a\ncons spine. Skips eval_args' per-call cons allocation for prims\nregistered with mino_prim_argv. argv slots are GC-rooted by the\nconservative stack scan for the duration of the call."}
+   {:kind :typedef-fn,
+    :name "mino_finalizer_fn",
+    :return-type "void",
+    :params "void *ptr, const char *tag",
+    :signature
+    "typedef void (*mino_finalizer_fn)(void *ptr, const char *tag);",
+    :doc nil}
+   {:kind :typedef-fn,
+    :name "mino_host_fn",
+    :return-type "mino_val_t *",
+    :params
+    "mino_state_t *S, mino_val_t *target, mino_val_t *args, void *ctx",
+    :signature
+    "typedef mino_val_t *(*mino_host_fn)(mino_state_t *S, mino_val_t *target, mino_val_t *args, void *ctx);",
+    :doc
+    "Host interop callback. target is the handle (NULL for ctor/static),\nargs is a cons list of evaluated arguments."}]}
+ {:name "Constructors",
+  :unstable false,
+  :declarations
+  [{:kind :function,
+    :name "mino_nil",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S",
+    :signature "mino_val_t *mino_nil(mino_state_t *S);",
+    :doc "Return the singleton nil value."}
+   {:kind :function,
+    :name "mino_true",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S",
+    :signature "mino_val_t *mino_true(mino_state_t *S);",
+    :doc "Return the singleton true value."}
+   {:kind :function,
+    :name "mino_false",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S",
+    :signature "mino_val_t *mino_false(mino_state_t *S);",
+    :doc "Return the singleton false value."}
+   {:kind :function,
+    :name "mino_empty_list",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S",
+    :signature "mino_val_t *mino_empty_list(mino_state_t *S);",
+    :doc
+    "Return the singleton empty-list value `()`. Distinct from nil:\n`seq?` is true, `nil?` is false, `empty?` is true, and `=` against\nnil is false. Walkers using `mino_is_cons` terminate on it because\nthe type tag is MINO_EMPTY_LIST, not MINO_CONS."}
+   {:kind :function,
+    :name "mino_int",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, long long n",
+    :signature "mino_val_t *mino_int(mino_state_t *S, long long n);",
+    :doc
+    "Create an integer value from a signed long long. Total over the full\nlong long range. Values in [-2^60, 2^60 - 1] return a tag-encoded\npointer (no allocation). Values outside that band depend on the\nMINO_CAP_BIGNUM capability: with bignum installed, the result is a\nMINO_BIGINT carrying the same numeric value, so hosts that opt in\nto arbitrary-precision arithmetic see one int family that grows\npast 64 bits transparently; without bignum, the result is a boxed\nMINO_INT cell that still holds the full 64-bit signed integer.\n\nInside mino's runtime, deterministic operations such as the reader,\nbitwise primitives, and the unchecked-* family never auto-promote;\nthey keep producing MINO_INT (boxed when outside the tag range) so\nClojure-style \"long stays long\" semantics are preserved."}
+   {:kind :function,
+    :name "mino_float",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, double f",
+    :signature "mino_val_t *mino_float(mino_state_t *S, double f);",
+    :doc "Create a floating-point value."}
+   {:kind :function,
+    :name "mino_float32",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, double f",
+    :signature "mino_val_t *mino_float32(mino_state_t *S, double f);",
+    :doc
+    "Create a 32-bit single-precision floating-point value. The double\nargument is narrowed to float and stored back as a double so\nequality / print see the rounded value; the type tag distinguishes\nit from `MINO_FLOAT` so `double?` returns false on the result."}
+   {:kind :function,
+    :name "mino_bigint_from_ll",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, long long n",
+    :signature
+    "mino_val_t *mino_bigint_from_ll(mino_state_t *S, long long n);",
+    :doc "Create a bigint from a signed long long."}
+   {:kind :function,
+    :name "mino_bigint_from_string",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, const char *s",
+    :signature
+    "mino_val_t *mino_bigint_from_string(mino_state_t *S, const char *s);",
+    :doc
+    "Create a bigint by parsing a base-10 numeric string (optional leading\n'+' or '-'). Returns NULL on parse failure."}
+   {:kind :function,
+    :name "mino_ratio_from_ll",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, long long num, long long denom",
+    :signature
+    "mino_val_t *mino_ratio_from_ll(mino_state_t *S, long long num, long long denom);",
+    :doc
+    "Create a rational from numerator and denominator long longs. The result\nis reduced (gcd = 1) and normalised so the denominator is positive.\nIf denom is zero, throws division-by-zero. If the result is integer,\nreturns a MINO_INT or MINO_BIGINT instead of a MINO_RATIO."}
+   {:kind :function,
+    :name "mino_bigdec_from_string",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, const char *s",
+    :signature
+    "mino_val_t *mino_bigdec_from_string(mino_state_t *S, const char *s);",
+    :doc
+    "Create a bigdec from a base-10 numeric string. Returns NULL on parse\nfailure. Recognises optional sign, fractional part, and 'e'-prefixed\nexponent; the trailing 'M' suffix is optional in this entry point."}
+   {:kind :function,
+    :name "mino_char",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, int codepoint",
+    :signature
+    "mino_val_t *mino_char(mino_state_t *S, int codepoint);",
+    :doc
+    "Create a character value from a Unicode codepoint (0..0x10FFFF)."}
+   {:kind :function,
+    :name "mino_string",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, const char *s",
+    :signature
+    "mino_val_t *mino_string(mino_state_t *S, const char *s);",
+    :doc
+    "Create a string from a NUL-terminated C string. The data is copied."}
+   {:kind :function,
+    :name "mino_string_n",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, const char *s, size_t len",
+    :signature
+    "mino_val_t *mino_string_n(mino_state_t *S, const char *s, size_t len);",
+    :doc
+    "Create a string from a buffer of length len. The data is copied."}
+   {:kind :function,
+    :name "mino_symbol",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, const char *s",
+    :signature
+    "mino_val_t *mino_symbol(mino_state_t *S, const char *s);",
+    :doc "Intern a symbol from a NUL-terminated C string."}
+   {:kind :function,
+    :name "mino_symbol_n",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, const char *s, size_t len",
+    :signature
+    "mino_val_t *mino_symbol_n(mino_state_t *S, const char *s, size_t len);",
+    :doc "Intern a symbol from a buffer of length len."}
+   {:kind :function,
+    :name "mino_keyword",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, const char *s",
+    :signature
+    "mino_val_t *mino_keyword(mino_state_t *S, const char *s);",
+    :doc
+    "Intern a keyword from a NUL-terminated C string (without the leading :)."}
+   {:kind :function,
+    :name "mino_keyword_n",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, const char *s, size_t len",
+    :signature
+    "mino_val_t *mino_keyword_n(mino_state_t *S, const char *s, size_t len);",
+    :doc
+    "Intern a keyword from a buffer of length len (without the leading :)."}
+   {:kind :function,
+    :name "mino_cons",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *car, mino_val_t *cdr",
+    :signature
+    "mino_val_t *mino_cons(mino_state_t *S, mino_val_t *car, mino_val_t *cdr);",
+    :doc "Create a cons cell (list node) with the given car and cdr."}
+   {:kind :function,
+    :name "mino_vector",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t **items, size_t len",
+    :signature
+    "mino_val_t *mino_vector(mino_state_t *S, mino_val_t **items, size_t len);",
+    :doc "Create a persistent vector from a C array of values."}
+   {:kind :function,
+    :name "mino_map",
+    :return-type "mino_val_t *",
+    :params
+    "mino_state_t *S, mino_val_t **keys, mino_val_t **vals, size_t len",
+    :signature
+    "mino_val_t *mino_map(mino_state_t *S, mino_val_t **keys, mino_val_t **vals, size_t len);",
+    :doc
+    "Create a persistent hash map from parallel key and value arrays."}
+   {:kind :function,
+    :name "mino_set",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t **items, size_t len",
+    :signature
+    "mino_val_t *mino_set(mino_state_t *S, mino_val_t **items, size_t len);",
+    :doc "Create a persistent hash set from a C array of values."}]}
+ {:name "Collection builders",
+  :unstable false,
+  :declarations
+  [{:kind :typedef,
+    :name "mino_vec_builder_t",
+    :struct-name "mino_vec_builder",
+    :signature "typedef struct mino_vec_builder mino_vec_builder_t;",
+    :doc
+    "Builders are an embedder-friendly facade over transients. Use them\nwhen you produce elements one at a time from C: open a builder,\npush/put/add each element, finish to get the persistent value.\n\nmino_vec_builder_t *b = mino_vector_builder_new(S);\nfor (size_t i = 0; i < n; i++) {\nmino_vector_builder_push(b, mino_int(S, items[i]));\n}\nmino_val_t *v = mino_vector_builder_finish(b);\n\nThe builder roots the in-flight collection across GC; _finish hands\nback the persistent result and releases the builder."}
+   {:kind :typedef,
+    :name "mino_map_builder_t",
+    :struct-name "mino_map_builder",
+    :signature "typedef struct mino_map_builder mino_map_builder_t;",
+    :doc nil}
+   {:kind :typedef,
+    :name "mino_set_builder_t",
+    :struct-name "mino_set_builder",
+    :signature "typedef struct mino_set_builder mino_set_builder_t;",
+    :doc nil}
+   {:kind :function,
+    :name "mino_vector_builder_new",
+    :return-type "mino_vec_builder_t *",
+    :params "mino_state_t *S",
+    :signature
+    "mino_vec_builder_t *mino_vector_builder_new   (mino_state_t *S);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_vector_builder_push",
+    :return-type "void",
+    :params "mino_vec_builder_t *b, mino_val_t *v",
+    :signature
+    "void                mino_vector_builder_push  (mino_vec_builder_t *b, mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_vector_builder_finish",
+    :return-type "mino_val_t         *",
+    :params "mino_vec_builder_t *b",
+    :signature
+    "mino_val_t         *mino_vector_builder_finish(mino_vec_builder_t *b);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_map_builder_new",
+    :return-type "mino_map_builder_t *",
+    :params "mino_state_t *S",
+    :signature
+    "mino_map_builder_t *mino_map_builder_new      (mino_state_t *S);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_map_builder_put",
+    :return-type "void",
+    :params "mino_map_builder_t *b, mino_val_t *k, mino_val_t *v",
+    :signature
+    "void                mino_map_builder_put      (mino_map_builder_t *b, mino_val_t *k, mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_map_builder_finish",
+    :return-type "mino_val_t         *",
+    :params "mino_map_builder_t *b",
+    :signature
+    "mino_val_t         *mino_map_builder_finish   (mino_map_builder_t *b);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_set_builder_new",
+    :return-type "mino_set_builder_t *",
+    :params "mino_state_t *S",
+    :signature
+    "mino_set_builder_t *mino_set_builder_new      (mino_state_t *S);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_set_builder_add",
+    :return-type "void",
+    :params "mino_set_builder_t *b, mino_val_t *v",
+    :signature
+    "void                mino_set_builder_add      (mino_set_builder_t *b, mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_set_builder_finish",
+    :return-type "mino_val_t         *",
+    :params "mino_set_builder_t *b",
+    :signature
+    "mino_val_t         *mino_set_builder_finish   (mino_set_builder_t *b);",
+    :doc nil}]}
+ {:name "Collection iterator",
+  :unstable false,
+  :declarations
+  [{:kind :typedef,
+    :name "mino_iter_t",
+    :struct-name "mino_iter",
+    :signature "typedef struct mino_iter mino_iter_t;",
+    :doc
+    "One iterator type walks every sequential / associative collection\nmino exposes: vectors, maps (hashed and sorted), sets (hashed and\nsorted), cons lists, the empty-list singleton, lazy seqs, and\nchunked seqs. Dispatch happens internally on each step.\n\nThe iterator is opaque; the host allocates storage of\n`mino_iter_sizeof()` bytes (typically on the C stack via `alloca`\nor as a local struct) and passes a pointer into `mino_iter_init`.\n\nUsage:\n\nmino_iter_t *it = alloca(mino_iter_sizeof());\nmino_iter_init(S, it, coll);\nmino_val_t *k, *v;\nwhile (mino_iter_next(it, &k, &v)) {\n// for vectors / sets / lists: k is the element, v is NULL\n// for maps: k is the key, v is the value\n}\nmino_iter_done(it);\n\n`mino_iter_init` roots `coll` for the iterator's lifetime so a GC\nfired mid-walk cannot reclaim the cells the walker borrows pointers\ninto. `mino_iter_done` releases that root and must always be called\nonce, even if iteration ends early. Calling `_next` after it returns\n0 keeps returning 0; calling `_next` or `_done` on a NULL iterator\nis harmless."}
+   {:kind :function,
+    :name "mino_iter_sizeof",
+    :return-type "size_t",
+    :params "void",
+    :signature "size_t       mino_iter_sizeof(void);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_iter_init",
+    :return-type "void",
+    :params "mino_state_t *S, mino_iter_t *it, mino_val_t *coll",
+    :signature
+    "void         mino_iter_init  (mino_state_t *S, mino_iter_t *it, mino_val_t *coll);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_iter_next",
+    :return-type "int",
+    :params "mino_iter_t *it, mino_val_t **out_k, mino_val_t **out_v",
+    :signature
+    "int          mino_iter_next  (mino_iter_t *it, mino_val_t **out_k, mino_val_t **out_v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_iter_done",
+    :return-type "void",
+    :params "mino_iter_t *it",
+    :signature "void         mino_iter_done  (mino_iter_t *it);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_prim",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, const char *name, mino_prim_fn fn",
+    :signature
+    "mino_val_t *mino_prim(mino_state_t *S, const char *name, mino_prim_fn fn);",
+    :doc
+    "Create a primitive function value from a C function pointer."}
+   {:kind :function,
+    :name "mino_prim_argv",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, const char *name, mino_prim_fn2 fn",
+    :signature
+    "mino_val_t *mino_prim_argv(mino_state_t *S, const char *name, mino_prim_fn2 fn);",
+    :doc
+    "Create a primitive value backed by an argv-style C function."}
+   {:kind :function,
+    :name "mino_handle",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, void *ptr, const char *tag",
+    :signature
+    "mino_val_t *mino_handle(mino_state_t *S, void *ptr, const char *tag);",
+    :doc "Wrap a host pointer as an opaque handle with a type tag."}
+   {:kind :function,
+    :name "mino_handle_ex",
+    :return-type "mino_val_t *",
+    :params
+    "mino_state_t *S, void *ptr, const char *tag, mino_finalizer_fn finalizer",
+    :signature
+    "mino_val_t *mino_handle_ex(mino_state_t *S, void *ptr, const char *tag, mino_finalizer_fn finalizer);",
+    :doc
+    "Wrap a host pointer with a type tag and a finalizer called on GC."}
+   {:kind :function,
+    :name "mino_atom",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *val",
+    :signature
+    "mino_val_t *mino_atom(mino_state_t *S, mino_val_t *val);",
+    :doc "Create a mutable atom initialized with val."}
+   {:kind :function,
+    :name "mino_is_handle",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int         mino_is_handle(const mino_val_t *v);",
+    :doc "Return 1 if v is a handle, 0 otherwise."}
+   {:kind :function,
+    :name "mino_handle_ptr",
+    :return-type "void       *",
+    :params "const mino_val_t *v",
+    :signature "void       *mino_handle_ptr(const mino_val_t *v);",
+    :doc
+    "Return the host pointer from a handle, or NULL if v is not a handle."}
+   {:kind :function,
+    :name "mino_handle_tag",
+    :return-type "const char *",
+    :params "const mino_val_t *v",
+    :signature "const char *mino_handle_tag(const mino_val_t *v);",
+    :doc
+    "Return the type tag from a handle, or NULL if v is not a handle."}
+   {:kind :function,
+    :name "mino_is_atom",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int         mino_is_atom(const mino_val_t *v);",
+    :doc "Return 1 if v is an atom, 0 otherwise."}
+   {:kind :function,
+    :name "mino_atom_deref",
+    :return-type "mino_val_t *",
+    :params "const mino_val_t *a",
+    :signature "mino_val_t *mino_atom_deref(const mino_val_t *a);",
+    :doc "Return the current value of an atom."}
+   {:kind :function,
+    :name "mino_volatile",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *val",
+    :signature
+    "mino_val_t *mino_volatile(mino_state_t *S, mino_val_t *val);",
+    :doc "Create a volatile cell initialized with val."}
+   {:kind :function,
+    :name "mino_is_volatile",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int         mino_is_volatile(const mino_val_t *v);",
+    :doc "Return 1 if v is a volatile, 0 otherwise."}
+   {:kind :function,
+    :name "mino_volatile_deref",
+    :return-type "mino_val_t *",
+    :params "const mino_val_t *v",
+    :signature "mino_val_t *mino_volatile_deref(const mino_val_t *v);",
+    :doc
+    "Return the current value of a volatile, or NULL if v is not a volatile."}
+   {:kind :function,
+    :name "mino_atom_reset",
+    :return-type "void",
+    :params "mino_val_t *a, mino_val_t *val",
+    :signature
+    "void        mino_atom_reset(mino_val_t *a, mino_val_t *val);",
+    :doc "Set the value of an atom."}
+   {:kind :function,
+    :name "mino_map_entry",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *k, mino_val_t *v",
+    :signature
+    "mino_val_t *mino_map_entry(mino_state_t *S, mino_val_t *k, mino_val_t *v);",
+    :doc
+    "Construct a map entry holding (k, v). Used by first / seq of a map\nto publish entries with the right type identity (so key / val can\ntype-check), and by `clojure.lang.MapEntry/create`."}
+   {:kind :function,
+    :name "mino_tx_ref",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *val",
+    :signature
+    "mino_val_t *mino_tx_ref(mino_state_t *S, mino_val_t *val);",
+    :doc
+    "Construct an STM ref holding the given committed value. The watches\nmap and validator slots start NULL; install them via add-watch /\nset-validator! on the returned cell. The ref's identity (returned\nmonotonic ID) is unique within S."}
+   {:kind :function,
+    :name "mino_agent",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *initial",
+    :signature
+    "mino_val_t *mino_agent(mino_state_t *S, mino_val_t *initial);",
+    :doc
+    "Construct an asynchronous agent holding the given initial state.\nWatches, validator, and error handler all start NULL; install them\nvia add-watch / set-validator! / set-error-handler! on the returned\ncell. The agent's action queue is heap-allocated and freed via the\nGC sweep finalizer when the agent becomes unreachable."}
+   {:kind :function,
+    :name "mino_is_agent",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int         mino_is_agent(const mino_val_t *v);",
+    :doc "Return 1 if v is an agent, 0 otherwise. NULL-safe."}
+   {:kind :function,
+    :name "mino_agent_deref",
+    :return-type "mino_val_t *",
+    :params "const mino_val_t *a",
+    :signature "mino_val_t *mino_agent_deref(const mino_val_t *a);",
+    :doc
+    "Return the agent's current state value (the most-recently committed\naction result, or the initial value if no action has applied). Returns\nNULL if v is not an agent. Mirrors mino_atom_deref / mino_tx_ref_deref."}
+   {:kind :function,
+    :name "mino_send",
+    :return-type "mino_val_t *",
+    :params
+    "mino_state_t *S, mino_val_t *agent, mino_val_t *fn, mino_val_t *extra_args",
+    :signature
+    "mino_val_t *mino_send(mino_state_t *S, mino_val_t *agent, mino_val_t *fn, mino_val_t *extra_args);",
+    :doc
+    "Enqueue (fn current-value arg1 arg2 ...) onto the agent's POOLED\nrun-queue and return the agent immediately. `extra_args` is a cons\nlist (or nil) holding the extra arguments after the agent's\ncurrent value; the action fn is called as\n(fn current-value arg1 arg2 ...)\n\nThrows (and returns NULL) if:\n- agent is NULL or not an agent (MTY001),\n- agent was created in a different state (MST007),\n- agents have been shut down (MST008),\n- the agent is failed and its error mode is :fail (MST002),\n- the host has not granted enough thread budget to spawn the\npool's worker (MTH001) -- the embedder thread does not count\nagainst the limit; raise via mino_set_thread_limit (>= 1 for\none agent worker; >= 2 if both send and send-off are used\nconcurrently; more if mixing with futures / host threads).\n\nInside a transaction, the action is queued and only fires after a\nsuccessful commit, matching JVM canon."}
+   {:kind :function,
+    :name "mino_send_off",
+    :return-type "mino_val_t *",
+    :params
+    "mino_state_t *S, mino_val_t *agent, mino_val_t *fn, mino_val_t *extra_args",
+    :signature
+    "mino_val_t *mino_send_off(mino_state_t *S, mino_val_t *agent, mino_val_t *fn, mino_val_t *extra_args);",
+    :doc
+    "Like mino_send but routes the action onto the SOLO pool. Same\nerror semantics. mino's per-state eval lock means actions across\nthe two pools still serialize, but the queues are independent."}
+   {:kind :function,
+    :name "mino_await",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t **agents",
+    :signature
+    "mino_val_t *mino_await(mino_state_t *S, mino_val_t **agents);",
+    :doc
+    "Block the calling thread until each named agent's in-flight count\nreaches zero. `agents` is a NULL-terminated array of MINO_AGENT\nvalues (or NULL/empty for a no-op). Throws (and returns NULL) if\ncalled from inside an agent action (MST002, would self-deadlock)\nor if any agent is from a foreign state (MST007). Returns nil on\nsuccess."}
+   {:kind :function,
+    :name "mino_await_for",
+    :return-type "int",
+    :params
+    "mino_state_t *S, long long timeout_ms, mino_val_t **agents",
+    :signature
+    "int         mino_await_for(mino_state_t *S, long long timeout_ms, mino_val_t **agents);",
+    :doc
+    "Like mino_await with a millisecond timeout. Returns 1 if every\nnamed agent reached zero in-flight before the deadline, 0 on\ntimeout. Throws on cross-state misuse or self-await (returns 0\nafter the throw is published)."}
+   {:kind :function,
+    :name "mino_agent_error",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *agent",
+    :signature
+    "mino_val_t *mino_agent_error(mino_state_t *S, mino_val_t *agent);",
+    :doc
+    "Return the agent's most recent captured exception value, or NULL\nif the agent is in a clean state. Throws on cross-state misuse\n(returns NULL)."}
+   {:kind :function,
+    :name "mino_restart_agent",
+    :return-type "mino_val_t *",
+    :params
+    "mino_state_t *S, mino_val_t *agent, mino_val_t *new_state, int clear_actions",
+    :signature
+    "mino_val_t *mino_restart_agent(mino_state_t *S, mino_val_t *agent, mino_val_t *new_state, int clear_actions);",
+    :doc
+    "Restart a failed agent: clears its captured error and resets its\nvalue to `new_state`. With clear_actions=1, drops every queued\naction targeting this agent across both pools. Returns the new\nstate on success, or NULL after throwing if:\n- agent is not an agent (MTY001),\n- agent is from a foreign state (MST007),\n- agent is not failed (MST002),\n- the validator (if any) rejects new_state (MCT001)."}
+   {:kind :function,
+    :name "mino_is_tx_ref",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int         mino_is_tx_ref(const mino_val_t *v);",
+    :doc
+    "Return 1 if v is an STM ref (MINO_TX_REF), 0 otherwise. NULL-safe."}
+   {:kind :function,
+    :name "mino_tx_ref_deref",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *v",
+    :signature
+    "mino_val_t *mino_tx_ref_deref(mino_state_t *S, mino_val_t *v);",
+    :doc
+    "Read a ref. Outside any transaction: atomic load of the ref's\ncommitted value. Inside a transaction on the calling thread: the\nin-tx effective value (alter tentative, commute-log replay, or\ncommitted) AND records the read for read-set validation. Equivalent\nto Clojure's @ref. The caller must already be on a thread that has\neither entered an outer mino_tx_run or is executing inside a Clojure\ndosync; outside both, the committed value is returned without any\ntx bookkeeping. Returns NULL if v is not a ref."}
+   {:kind :function,
+    :name "mino_tx_ref_set",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *v, mino_val_t *val",
+    :signature
+    "mino_val_t *mino_tx_ref_set(mino_state_t *S, mino_val_t *v, mino_val_t *val);",
+    :doc
+    "Set the ref's in-transaction tentative value to val. Must be called\nfrom inside a transaction (started either by a Clojure dosync or by\nmino_tx_run); throws eval/state MST002 outside a tx. Throws MST002\n\"Can't set after commute\" if commute was called on this ref earlier\nin the same tx. Throws eval/type MTY001 if v is not a ref. Returns\nval on success. Equivalent to Clojure's `(ref-set ref val)`."}
+   {:kind :typedef-fn,
+    :name "mino_tx_xform_fn",
+    :return-type "mino_val_t *",
+    :params
+    "mino_state_t *S, mino_val_t *cur, void *user, mino_env_t *env",
+    :signature
+    "typedef mino_val_t *(*mino_tx_xform_fn)(mino_state_t *S, mino_val_t *cur, void *user, mino_env_t *env);",
+    :doc
+    "C-callable transformer used by mino_tx_alter_c / mino_tx_commute_c.\n`cur` is the in-tx effective value at call time; `user` is the\ncaller-supplied opaque pointer. Returns the new value. May call\nmino_call for nested Clojure dispatch and may throw via\nprim_throw_classified -- both unwind through the enclosing tx\nrunner. The function pointer must remain valid for the lifetime of\nthe transaction (in particular: across retries and through commit-\ntime replay for commute)."}
+   {:kind :function,
+    :name "mino_tx_alter_c",
+    :return-type "mino_val_t *",
+    :params
+    "mino_state_t *S, mino_val_t *v, mino_tx_xform_fn fn, void *user, mino_env_t *env",
+    :signature
+    "mino_val_t *mino_tx_alter_c(mino_state_t *S, mino_val_t *v, mino_tx_xform_fn fn, void *user, mino_env_t *env);",
+    :doc
+    "Apply (fn cur user) to ref's current in-tx value and store the\nresult. Records a read for read-set validation. Must be called from\ninside a transaction. Returns the new value, or NULL if the\ntransformer threw. Equivalent to (alter ref #(fn % user))."}
+   {:kind :function,
+    :name "mino_tx_commute_c",
+    :return-type "mino_val_t *",
+    :params
+    "mino_state_t *S, mino_val_t *v, mino_tx_xform_fn fn, void *user, mino_env_t *env",
+    :signature
+    "mino_val_t *mino_tx_commute_c(mino_state_t *S, mino_val_t *v, mino_tx_xform_fn fn, void *user, mino_env_t *env);",
+    :doc
+    "Like mino_tx_alter_c but does NOT record a read (commute semantics).\nThe fn is invoked once eagerly to produce the call-site value; if\nthe ref did not also have an alter / ref-set in the same tx, the fn\nis replayed at commit time against the latest committed value (the\nfn must therefore be commutative). Otherwise the call-site value is\nwhat gets committed (matching JVM, which skips commute-log replay\nfor refs in the write set). Returns the call-site value, or NULL if\nthe transformer threw."}
+   {:kind :function,
+    :name "mino_tx_ensure",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *v, mino_env_t *env",
+    :signature
+    "mino_val_t *mino_tx_ensure(mino_state_t *S, mino_val_t *v, mino_env_t *env);",
+    :doc
+    "Pin the ref against any concurrent committer until this transaction\ncommits or aborts. Returns the in-tx effective value. Must be in a\ntransaction. Equivalent to (ensure ref)."}
+   {:kind :typedef-fn,
+    :name "mino_tx_body_fn",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, void *user, mino_env_t *env",
+    :signature
+    "typedef mino_val_t *(*mino_tx_body_fn)(mino_state_t *S, void *user, mino_env_t *env);",
+    :doc
+    "C-callable transaction body, used by mino_tx_run. Returns the\nbody's last value. The body may invoke any in-tx accessor\n(mino_tx_ref_deref / mino_tx_alter_c / ...), call mino_call to\ndispatch into Clojure code, and throw via prim_throw_classified.\n\nThe body is re-invoked on commit-time conflict, up to 10000 retries\nbefore throwing eval/state MST004. Any user state mutated through\n`user` survives across retries; if clean retry semantics matter,\nsnapshot mutable state into a retry-local buffer at the top of the\nbody. mino_val_t * pointers captured in user state should not be\nrelied on across retries (the GC may relocate or finalize between\niterations); re-derive them from the ref / world on each call."}
+   {:kind :function,
+    :name "mino_tx_run",
+    :return-type "mino_val_t *",
+    :params
+    "mino_state_t *S, mino_tx_body_fn body, void *user, mino_env_t *env",
+    :signature
+    "mino_val_t *mino_tx_run(mino_state_t *S, mino_tx_body_fn body, void *user, mino_env_t *env);",
+    :doc
+    "Run body inside a transaction. Returns body's result on commit,\nor NULL if the body threw an unhandled exception or the retry cap\nwas exhausted. Nests cleanly: if a transaction is already running\non the calling thread (started by an outer dosync or mino_tx_run),\nthe inner call is absorbed into the outer's tx and runs once\nwithout its own setjmp / retry frame. Equivalent to the host-level\n(dosync (body))."}]}
+ {:name "Record types",
+  :unstable false,
+  :declarations
+  [{:kind :function,
+    :name "mino_defrecord",
+    :return-type "mino_val_t *",
+    :params
+    "mino_state_t *S, const char *ns, const char *name, const char *const *field_names, size_t n_fields",
+    :signature
+    "mino_val_t *mino_defrecord(mino_state_t *S, const char *ns, const char *name, const char *const *field_names, size_t n_fields);",
+    :doc
+    "Define a record type. Returns the MINO_TYPE value. The pointer is\nstable for the life of the state (record types are pinned), so type\nidentity is pointer equality.\n\nIdempotent: subsequent calls with the same ns/name return the\nexisting type so re-loading scripts is safe. Field shape on a\nre-call is ignored (the existing type wins) — the script-layer\n`defrecord` macro validates shape changes when it re-evaluates.\n\nThe strings are copied into the state's intern table on first use,\nso callers may pass stack-allocated names. Field names are\nconverted to keywords and stored in declared order.\n\nMirrors the Clojure `defrecord` macro name to make the C/script\nanalogy obvious to a C/C++/Rust embedder."}
+   {:kind :function,
+    :name "mino_is_record_type",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_record_type(const mino_val_t *v);",
+    :doc "Return 1 if v is a record type (MINO_TYPE), 0 otherwise."}
+   {:kind :function,
+    :name "mino_record",
+    :return-type "mino_val_t *",
+    :params
+    "mino_state_t *S, mino_val_t *type, mino_val_t **vals, size_t n_vals",
+    :signature
+    "mino_val_t *mino_record(mino_state_t *S, mino_val_t *type, mino_val_t **vals, size_t n_vals);",
+    :doc
+    "Build a record. type must be a MINO_TYPE returned by\nmino_defrecord; n_vals must equal the type's declared field count;\nvals[i] gives the value for the i-th declared field. The vals\narray is copied into a fresh malloc-owned slot vector owned by the\nreturned record. Returns NULL on type mismatch or arity mismatch\n(the caller should treat NULL as a runtime error).\n\nThe new record has no extension keys; assoc with an undeclared key\nlazily allocates the ext map."}
+   {:kind :function,
+    :name "mino_record_field",
+    :return-type "mino_val_t *",
+    :params "const mino_val_t *record, const char *name",
+    :signature
+    "mino_val_t *mino_record_field(const mino_val_t *record, const char *name);",
+    :doc
+    "Read a declared field by name. Returns the field value (borrowed)\nor NULL if name is not a declared field of record's type.\nExtension keys are not read by this entry point; embedders can\nreach them via the script-level (get r :ext-key) path."}
+   {:kind :function,
+    :name "mino_is_record",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_record(const mino_val_t *v);",
+    :doc "Return 1 if v is a record (MINO_RECORD), 0 otherwise."}]}
+ {:name "Transient (batch-mutation) API",
+  :unstable false,
+  :declarations
+  [{:kind :function,
+    :name "mino_transient",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *coll",
+    :signature
+    "mino_val_t *mino_transient(mino_state_t *S, mino_val_t *coll);",
+    :doc
+    "Wrap a persistent vector, map, or set in a new transient. Throws\non other types. The returned value is reusable until\nmino_persistent is called on it."}
+   {:kind :function,
+    :name "mino_persistent",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *t",
+    :signature
+    "mino_val_t *mino_persistent(mino_state_t *S, mino_val_t *t);",
+    :doc
+    "Extract the current persistent value and invalidate the transient.\nFurther *_bang calls on t will throw."}
+   {:kind :function,
+    :name "mino_assoc_bang",
+    :return-type "mino_val_t *",
+    :params
+    "mino_state_t *S, mino_val_t *t, mino_val_t *key, mino_val_t *val",
+    :signature
+    "mino_val_t *mino_assoc_bang(mino_state_t *S, mino_val_t *t, mino_val_t *key, mino_val_t *val);",
+    :doc
+    "Transient mutators. Each returns t on success (after updating its\ninner persistent value) and NULL on a classified error. The caller\nmust use the returned value instead of retaining its own handle to\nthe transient across the call, matching Clojure's convention."}
+   {:kind :function,
+    :name "mino_conj_bang",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *t, mino_val_t *val",
+    :signature
+    "mino_val_t *mino_conj_bang(mino_state_t *S, mino_val_t *t, mino_val_t *val);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_dissoc_bang",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *t, mino_val_t *key",
+    :signature
+    "mino_val_t *mino_dissoc_bang(mino_state_t *S, mino_val_t *t, mino_val_t *key);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_disj_bang",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *t, mino_val_t *key",
+    :signature
+    "mino_val_t *mino_disj_bang(mino_state_t *S, mino_val_t *t, mino_val_t *key);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_pop_bang",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *t",
+    :signature
+    "mino_val_t *mino_pop_bang(mino_state_t *S, mino_val_t *t);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_transient",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int         mino_is_transient(const mino_val_t *v);",
+    :doc "Transient predicates and accessors."}
+   {:kind :function,
+    :name "mino_transient_count",
+    :return-type "size_t",
+    :params "const mino_val_t *t",
+    :signature
+    "size_t      mino_transient_count(const mino_val_t *t);",
+    :doc nil}]}
+ {:name "Predicates and accessors",
+  :unstable false,
+  :declarations
+  [{:kind :function,
+    :name "mino_is_nil",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_nil       (const mino_val_t *v);",
+    :doc
+    "Type-predicate grid. Each returns 1 iff v has the given effective\ntype, 0 otherwise. NULL is treated as MINO_NIL. The predicates\nare tag-aware: they work identically for inline scalars (int, bool,\nchar, nil) and boxed cells. mino_is_float matches both MINO_FLOAT\n(double) and MINO_FLOAT32; mino_is_map / mino_is_set match the\nsorted and unsorted variants."}
+   {:kind :function,
+    :name "mino_is_truthy",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_truthy    (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_bool",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_bool      (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_int",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_int       (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_float",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_float     (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_char",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_char      (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_string",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_string    (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_symbol",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_symbol    (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_keyword",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_keyword   (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_cons",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_cons      (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_empty_list",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_empty_list(const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_vector",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_vector    (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_map",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_map       (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_set",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_set       (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_fn",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_fn        (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_macro",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_macro     (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_prim",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_prim      (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_lazy",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_lazy      (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_var",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_var       (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_bigint",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_bigint    (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_ratio",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_ratio     (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_bigdec",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_bigdec    (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_uuid",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_uuid      (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_is_regex",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_is_regex     (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_eq",
+    :return-type "int",
+    :params "const mino_val_t *a, const mino_val_t *b",
+    :signature
+    "int mino_eq(const mino_val_t *a, const mino_val_t *b);",
+    :doc
+    "Structural equality. Returns 1 if a and b are equal, 0 otherwise."}
+   {:kind :function,
+    :name "mino_car",
+    :return-type "mino_val_t *",
+    :params "const mino_val_t *v",
+    :signature "mino_val_t *mino_car(const mino_val_t *v);",
+    :doc "Return the first element of a cons cell, or NULL."}
+   {:kind :function,
+    :name "mino_cdr",
+    :return-type "mino_val_t *",
+    :params "const mino_val_t *v",
+    :signature "mino_val_t *mino_cdr(const mino_val_t *v);",
+    :doc "Return the rest of a cons cell, or NULL."}
+   {:kind :function,
+    :name "mino_length",
+    :return-type "size_t",
+    :params "const mino_val_t *list",
+    :signature "size_t mino_length(const mino_val_t *list);",
+    :doc "Return the number of cons cells in a list."}
+   {:kind :function,
+    :name "mino_to_int",
+    :return-type "int",
+    :params "const mino_val_t *v, long long *out",
+    :signature
+    "int mino_to_int    (const mino_val_t *v, long long *out);",
+    :doc
+    "Type-safe C extraction. Each returns 1 on success, 0 on type mismatch.\nmino_to_bool uses truthiness (only nil and false are falsey). String,\nkeyword, and symbol extractors write the interned byte pointer through\n`out` (NUL-terminated, mino-owned) and the byte length through `len`."}
+   {:kind :function,
+    :name "mino_to_float",
+    :return-type "int",
+    :params "const mino_val_t *v, double *out",
+    :signature
+    "int mino_to_float  (const mino_val_t *v, double *out);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_to_bool",
+    :return-type "int",
+    :params "const mino_val_t *v",
+    :signature "int mino_to_bool   (const mino_val_t *v);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_to_char",
+    :return-type "int",
+    :params "const mino_val_t *v, int *cp",
+    :signature "int mino_to_char   (const mino_val_t *v, int *cp);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_to_string",
+    :return-type "int",
+    :params "const mino_val_t *v, const char **out, size_t *len",
+    :signature
+    "int mino_to_string (const mino_val_t *v, const char **out, size_t *len);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_to_keyword",
+    :return-type "int",
+    :params "const mino_val_t *v, const char **out, size_t *len",
+    :signature
+    "int mino_to_keyword(const mino_val_t *v, const char **out, size_t *len);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_to_symbol",
+    :return-type "int",
+    :params "const mino_val_t *v, const char **out, size_t *len",
+    :signature
+    "int mino_to_symbol (const mino_val_t *v, const char **out, size_t *len);",
+    :doc nil}]}
+ {:name "Printer",
+  :unstable false,
+  :declarations
+  [{:kind :function,
+    :name "mino_print",
+    :return-type "void",
+    :params "mino_state_t *S, const mino_val_t *v",
+    :signature
+    "void mino_print(mino_state_t *S, const mino_val_t *v);",
+    :doc "Print a value to stdout in readable form."}
+   {:kind :function,
+    :name "mino_println",
+    :return-type "void",
+    :params "mino_state_t *S, const mino_val_t *v",
+    :signature
+    "void mino_println(mino_state_t *S, const mino_val_t *v);",
+    :doc "Print a value to stdout followed by a newline."}
+   {:kind :function,
+    :name "mino_print_to",
+    :return-type "void",
+    :params "mino_state_t *S, FILE *out, const mino_val_t *v",
+    :signature
+    "void mino_print_to(mino_state_t *S, FILE *out, const mino_val_t *v);",
+    :doc "Print a value to the given FILE stream."}
+   {:kind :function,
+    :name "mino_print_to_buf",
+    :return-type "int",
+    :params
+    "mino_state_t *S, const mino_val_t *v, char *buf, size_t n",
+    :signature
+    "int  mino_print_to_buf(mino_state_t *S, const mino_val_t *v, char *buf, size_t n);",
+    :doc
+    "Print a value's readable form into a sized buffer (NUL-terminated).\nReturns the number of bytes written excluding the trailing NUL, or\n-1 on error (NULL buf, zero capacity, or I/O failure). When the\nprinted form is longer than n - 1 bytes, the output is truncated to\nfit and the function still returns the truncated byte count. Use\nthis when the embedder routes output elsewhere than a FILE *\n(server response buffer, plugin host, IDE panel)."}]}
+ {:name "Reader",
+  :unstable false,
+  :declarations
+  [{:kind :function,
+    :name "mino_read",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, const char *src, const char **end",
+    :signature
+    "mino_val_t *mino_read(mino_state_t *S, const char *src, const char **end);",
+    :doc
+    "Read one form from `src`. On success returns a value and writes a pointer\njust past the consumed input to `*end` (when `end` is non-NULL). On EOF\n(only whitespace / comments remaining) returns NULL with `*end` advanced\npast the trailing whitespace. On parse error returns NULL and writes a\nhuman-readable message via `mino_last_error()`."}
+   {:kind :function,
+    :name "mino_last_error",
+    :return-type "const char *",
+    :params "mino_state_t *S",
+    :signature "const char *mino_last_error(mino_state_t *S);",
+    :doc
+    "Return the last error message, or NULL if no error occurred."}
+   {:kind :typedef,
+    :name "mino_diag_t",
+    :struct-name "mino_diag",
+    :signature "typedef struct mino_diag mino_diag_t;",
+    :doc
+    "Opaque structured diagnostic type. Use mino_last_diag() to retrieve."}
+   {:kind :function,
+    :name "mino_last_diag",
+    :return-type "const mino_diag_t *",
+    :params "mino_state_t *S",
+    :signature "const mino_diag_t *mino_last_diag(mino_state_t *S);",
+    :doc
+    "Return the last structured diagnostic, or NULL if no error occurred.\nThe returned pointer is valid until the next error or clear_error."}
+   {:kind :function,
+    :name "mino_last_error_map",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S",
+    :signature "mino_val_t *mino_last_error_map(mino_state_t *S);",
+    :doc
+    "Return the last error as a mino map with :mino/kind, :mino/code, etc.\nReturns nil if no error occurred. The value is GC-owned and cached."}
+   {:kind :function,
+    :name "mino_error_kind",
+    :return-type "const char *",
+    :params "mino_state_t *S",
+    :signature "const char *mino_error_kind(mino_state_t *S);",
+    :doc
+    "Return the last error's classified kind (e.g. \"eval/type\", \"eval/arity\",\n\"name\", \"reader\") or NULL when no error is current. The returned\npointer is valid until the next error or mino_clear_error call."}
+   {:kind :function,
+    :name "mino_error_code",
+    :return-type "const char *",
+    :params "mino_state_t *S",
+    :signature "const char *mino_error_code(mino_state_t *S);",
+    :doc
+    "Return the last error's stable code (e.g. \"MTY001\", \"MNS002\") or NULL\nwhen no error is current. Lifetimes match mino_error_kind."}
+   {:kind :function,
+    :name "mino_clear_error",
+    :return-type "void",
+    :params "mino_state_t *S",
+    :signature "void mino_clear_error(mino_state_t *S);",
+    :doc
+    "Clear the last error and diagnostic. After this call mino_last_error,\nmino_error_kind, and mino_error_code all return NULL."}
+   {:kind :define,
+    :name "MINO_DIAG_RENDER_COMPACT",
+    :value "0",
+    :inline-comment nil,
+    :signature "#define MINO_DIAG_RENDER_COMPACT 0",
+    :doc "Diagnostic rendering modes."}
+   {:kind :define,
+    :name "MINO_DIAG_RENDER_PRETTY",
+    :value "1",
+    :inline-comment nil,
+    :signature "#define MINO_DIAG_RENDER_PRETTY  1",
+    :doc nil}
+   {:kind :function,
+    :name "mino_render_diag",
+    :return-type "int",
+    :params
+    "mino_state_t *S, const mino_diag_t *d, int mode, char *buf, size_t n",
+    :signature
+    "int mino_render_diag(mino_state_t *S, const mino_diag_t *d, int mode, char *buf, size_t n);",
+    :doc
+    "Render a diagnostic into buf. Returns bytes written (excl NUL).\nmode is one of MINO_DIAG_RENDER_COMPACT or _PRETTY."}]}
+ {:name "Runtime state",
+  :unstable false,
+  :declarations
+  [{:kind :function,
+    :name "mino_state_new",
+    :return-type "mino_state_t *",
+    :params "void",
+    :signature "mino_state_t *mino_state_new(void);",
+    :doc
+    "Create a new isolated runtime state. Each state owns its own GC, intern\ntables, module cache, and singletons. Multiple states may coexist in the\nsame process; they share no mutable data.\n\nFatal: aborts on allocation failure (no state exists to report through)."}
+   {:kind :function,
+    :name "mino_state_free",
+    :return-type "void",
+    :params "mino_state_t *S",
+    :signature "void mino_state_free(mino_state_t *S);",
+    :doc
+    "Free a runtime state and all resources owned by it. All GC-managed objects,\nintern tables, module caches, and metadata are released. Environments\ncreated within this state become invalid."}]}
+ {:name "Environment and evaluator",
+  :unstable false,
+  :declarations
+  [{:kind :function,
+    :name "mino_env_new",
+    :return-type "mino_env_t *",
+    :params "mino_state_t *S",
+    :signature "mino_env_t *mino_env_new(mino_state_t *S);",
+    :doc
+    "Allocate a fresh root environment and register it with the collector so\nevery value reachable through it survives collection. The runtime holds\nthe returned env weakly: mino_env_free unregisters it and lets the next\nsweep reclaim the frame and any closures that were reachable only from\nwithin it. The host does not free any mino-owned pointers directly.\n\nReturns NULL on allocation failure (check mino_last_error)."}
+   {:kind :function,
+    :name "mino_env_free",
+    :return-type "void",
+    :params "mino_state_t *S, mino_env_t *env",
+    :signature
+    "void        mino_env_free(mino_state_t *S, mino_env_t *env);",
+    :doc "Free an environment and unregister it from the collector."}
+   {:kind :function,
+    :name "mino_env_clone",
+    :return-type "mino_env_t *",
+    :params "mino_state_t *S, mino_env_t *env",
+    :signature
+    "mino_env_t *mino_env_clone(mino_state_t *S, mino_env_t *env);",
+    :doc
+    "Clone an environment: allocate a new root environment and copy all\nbindings from the source. Values are shared (not deep-copied), so\nthe clone is only meaningful within the same state. Useful for\nsnapshotting a session before independent evaluation in each copy."}
+   {:kind :function,
+    :name "mino_env_new_default",
+    :return-type "mino_env_t *",
+    :params "mino_state_t *S",
+    :signature "mino_env_t *mino_env_new_default(mino_state_t *S);",
+    :doc
+    "Convenience: allocate a new env and install the sandbox preset.\nEquivalent to:\n\nmino_env_t *env = mino_env_new(S);\nmino_install_sandbox(S, env);\n\nUse this when getting a runnable env in one line matters and the\nsandbox surface is the right contract. For a custom tier, build the\nenv explicitly and pass a MINO_CAP_* bitmask to mino_install."}
+   {:kind :function,
+    :name "mino_env_set",
+    :return-type "void",
+    :params
+    "mino_state_t *S, mino_env_t *env, const char *name, mino_val_t *val",
+    :signature
+    "void        mino_env_set(mino_state_t *S, mino_env_t *env, const char *name, mino_val_t *val);",
+    :doc "Define or replace a binding in `env`."}
+   {:kind :function,
+    :name "mino_env_get",
+    :return-type "mino_val_t *",
+    :params "mino_env_t *env, const char *name",
+    :signature
+    "mino_val_t *mino_env_get(mino_env_t *env, const char *name);",
+    :doc "Look up `name`. Returns NULL if unbound."}
+   {:kind :function,
+    :name "mino_eval",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *form, mino_env_t *env",
+    :signature
+    "mino_val_t *mino_eval(mino_state_t *S, mino_val_t *form, mino_env_t *env);",
+    :doc
+    "Evaluate one form. Returns NULL on error and writes a message via\nmino_last_error(). Returns mino_nil() for an explicit nil result.\n\nA top-level try frame catches out-of-memory conditions and unhandled\nexceptions during evaluation, surfacing them as NULL + error message\nrather than aborting the process. The state remains usable after an\nOOM return."}
+   {:kind :function,
+    :name "mino_eval_string",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, const char *src, mino_env_t *env",
+    :signature
+    "mino_val_t *mino_eval_string(mino_state_t *S, const char *src, mino_env_t *env);",
+    :doc
+    "Read and evaluate all forms in `src`. Returns the value of the last\nform, or NULL on error. An empty string returns mino_nil().\n\nInstalls its own try frame: OOM during read or eval returns NULL\nwith an error message rather than aborting."}
+   {:kind :function,
+    :name "mino_load_file",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, const char *path, mino_env_t *env",
+    :signature
+    "mino_val_t *mino_load_file(mino_state_t *S, const char *path, mino_env_t *env);",
+    :doc
+    "Read a file at `path` and evaluate all forms. Returns the value of the\nlast form, or NULL on error (file I/O failures and parse/eval errors)."}
+   {:kind :function,
+    :name "mino_eval_ex",
+    :return-type "int",
+    :params
+    "mino_state_t *S, mino_val_t *form, mino_env_t *env, mino_val_t **out, mino_val_t **out_ex",
+    :signature
+    "int mino_eval_ex       (mino_state_t *S, mino_val_t *form, mino_env_t *env, mino_val_t **out, mino_val_t **out_ex);",
+    :doc
+    "Protected variants of mino_eval / mino_eval_string / mino_load_file.\nReturn 0 on success (writing the result to *out) or -1 on error.\n\nUnlike the unsuffixed variants, the _ex form disambiguates \"real nil\nresult\" from \"error\": a 0 return with *out == mino_nil() is genuine\nnil; a -1 return means a throw / OOM / parse failure was caught. If\nout_ex is non-NULL, on error *out_ex is set to the raw thrown payload\n(matching mino_pcall's contract). *out_ex is NULL on success or when\nout_ex is NULL.\n\nThe _ex variants do NOT publish to mino_last_error on a caught throw;\nembedders that want a diagnostic must inspect *out_ex or call\nmino_last_error explicitly."}
+   {:kind :function,
+    :name "mino_eval_string_ex",
+    :return-type "int",
+    :params
+    "mino_state_t *S, const char *src, mino_env_t *env, mino_val_t **out, mino_val_t **out_ex",
+    :signature
+    "int mino_eval_string_ex(mino_state_t *S, const char *src, mino_env_t *env, mino_val_t **out, mino_val_t **out_ex);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_load_file_ex",
+    :return-type "int",
+    :params
+    "mino_state_t *S, const char *path, mino_env_t *env, mino_val_t **out, mino_val_t **out_ex",
+    :signature
+    "int mino_load_file_ex  (mino_state_t *S, const char *path, mino_env_t *env, mino_val_t **out, mino_val_t **out_ex);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_register_fn",
+    :return-type "void",
+    :params
+    "mino_state_t *S, mino_env_t *env, const char *name, mino_prim_fn fn",
+    :signature
+    "void mino_register_fn(mino_state_t *S, mino_env_t *env, const char *name, mino_prim_fn fn);",
+    :doc
+    "Shorthand: bind a C function as a primitive in `env`.\nEquivalent to mino_env_set(S, env, name, mino_prim(S, name, fn))."}
+   {:kind :function,
+    :name "mino_call",
+    :return-type "mino_val_t *",
+    :params
+    "mino_state_t *S, mino_val_t *fn, mino_val_t *args, mino_env_t *env",
+    :signature
+    "mino_val_t *mino_call(mino_state_t *S, mino_val_t *fn, mino_val_t *args, mino_env_t *env);",
+    :doc
+    "Call a callable value (fn, macro, prim) with an argument list.\nReturns the result, or NULL on error (via mino_last_error)."}
+   {:kind :function,
+    :name "mino_pcall",
+    :return-type "int",
+    :params
+    "mino_state_t *S, mino_val_t *fn, mino_val_t *args, mino_env_t *env, mino_val_t **out, mino_val_t **out_ex",
+    :signature
+    "int mino_pcall(mino_state_t *S, mino_val_t *fn, mino_val_t *args, mino_env_t *env, mino_val_t **out, mino_val_t **out_ex);",
+    :doc
+    "Protected call: same as mino_call but returns 0 on success (writing\nthe result to *out) or -1 on error. The error message is available\nvia mino_last_error(). *out is set to NULL on error.\n\nIf out_ex is non-NULL, on error *out_ex is set to the raw thrown\nexception value (the cell passed to (throw ...) by the inner code).\nThis is the original payload, not a diagnostic map -- useful for\ncaptures-and-stores callers like agent dispatch and STM validator\nhandling that want to surface the user's ex-info / map / etc.\nunchanged. *out_ex is set to NULL on success or if out_ex is NULL."}]}
+ {:name "Exceptions",
+  :unstable false,
+  :declarations
+  [{:kind :function,
+    :name "mino_throw",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *S, mino_val_t *ex",
+    :signature
+    "mino_val_t *mino_throw(mino_state_t *S, mino_val_t *ex);",
+    :doc
+    "Raise a mino exception carrying `ex` as the payload. When called from a\nC primitive that is executing inside a mino (try ... (catch ...)) frame,\nthe payload is delivered to the matching catch binding. When called\noutside any try frame, the exception surfaces as a classified error\nthrough mino_last_error (kind \"user\", code \"MUS001\") and the function\nreturns NULL.\n\nInside a try frame this call does NOT return; control transfers to the\ntry handler via longjmp. Callers should treat it as \"returns NULL\" for\ntyping purposes and not rely on any code after the call:\n\nreturn mino_throw(S, mino_keyword(S, \"bad-arg\"));\n\nThe payload can be any mino value: a keyword, a string, or an\ninformation-carrying map built via mino_map(). This is the C-side\nanalogue of the (throw ex) mino primitive."}]}
+ {:name "Argument parsing",
+  :unstable false,
+  :declarations
+  [{:kind :function,
+    :name "mino_args_parse",
+    :return-type "int",
+    :params
+    "mino_state_t *S, const char *name, mino_val_t *args, const char *fmt, ...",
+    :signature
+    "int mino_args_parse(mino_state_t *S, const char *name, mino_val_t *args, const char *fmt, ...);",
+    :doc
+    "Type-check and destructure a primitive's argument list into C variables.\nThe format string lists one character per expected positional argument;\neach variadic pointer receives the corresponding extracted value:\n\n\"i\"  long long *        -- MINO_INT\n\"f\"  double *           -- MINO_FLOAT or MINO_INT (promoted)\n\"s\"  const char **      -- MINO_STRING; pointer into mino-owned data\n\"S\"  const char **,     -- MINO_STRING; pointer plus byte length\nsize_t *              (write both in order: \"S\" consumes two ptrs)\n\"k\"  const char **      -- MINO_KEYWORD name (without the leading :)\n\"y\"  const char **      -- MINO_SYMBOL name\n\"b\"  int *              -- MINO_BOOL (0 or 1)\n\"c\"  int *              -- MINO_CHAR codepoint (0..0x10FFFF)\n\"v\"  mino_val_t **      -- any value (no type check)\n\"V\"  mino_val_t **      -- MINO_VECTOR\n\"M\"  mino_val_t **      -- MINO_MAP\n\"L\"  mino_val_t **      -- MINO_CONS or MINO_NIL (a list)\n\"H\"  mino_val_t **      -- MINO_HANDLE\n\"A\"  mino_val_t **      -- MINO_ATOM\n\nReturns 0 on success, -1 on arity or type error. On failure the current\nerror is set via mino_last_error with kind \"eval/arity\" or \"eval/type\"\nso the caller can just `return NULL;` after a non-zero return. The name\nargument is used in error messages (\"foo: expected int, got string\").\n\nExtra arguments beyond the format string cause an arity error; missing\narguments do the same."}]}
+ {:name "Host interop",
+  :unstable false,
+  :declarations
+  [{:kind :function,
+    :name "mino_host_enable",
+    :return-type "void",
+    :params "mino_state_t *S",
+    :signature "void mino_host_enable(mino_state_t *S);",
+    :doc
+    "Enable interop dispatch. By default all host primitives return\n\"interop disabled\". Call this after registration to activate them."}
+   {:kind :function,
+    :name "mino_host_register_ctor",
+    :return-type "void",
+    :params
+    "mino_state_t *S, const char *type_key, int arity, mino_host_fn fn, void *ctx",
+    :signature
+    "void mino_host_register_ctor(mino_state_t *S, const char *type_key, int arity, mino_host_fn fn, void *ctx);",
+    :doc
+    "Register host capabilities. String arguments must outlive the state.\nCall before eval -- the registry is intended to be immutable after init.\n\narity: expected argument count, or -1 for variadic."}
+   {:kind :function,
+    :name "mino_host_register_method",
+    :return-type "void",
+    :params
+    "mino_state_t *S, const char *type_key, const char *method_key, int arity, mino_host_fn fn, void *ctx",
+    :signature
+    "void mino_host_register_method(mino_state_t *S, const char *type_key, const char *method_key, int arity, mino_host_fn fn, void *ctx);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_host_register_static",
+    :return-type "void",
+    :params
+    "mino_state_t *S, const char *type_key, const char *method_key, int arity, mino_host_fn fn, void *ctx",
+    :signature
+    "void mino_host_register_static(mino_state_t *S, const char *type_key, const char *method_key, int arity, mino_host_fn fn, void *ctx);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_host_register_getter",
+    :return-type "void",
+    :params
+    "mino_state_t *S, const char *type_key, const char *field_key, mino_host_fn fn, void *ctx",
+    :signature
+    "void mino_host_register_getter(mino_state_t *S, const char *type_key, const char *field_key, mino_host_fn fn, void *ctx);",
+    :doc nil}]}
+ {:name "Modules",
+  :unstable false,
+  :declarations
+  [{:kind :typedef-fn,
+    :name "mino_resolve_fn",
+    :return-type "const char *",
+    :params "const char *name, void *ctx",
+    :signature
+    "typedef const char *(*mino_resolve_fn)(const char *name, void *ctx);",
+    :doc
+    "Module resolver callback. Given a module name (the argument to `require`),\nreturn a file path to load, or NULL on failure. `ctx` is the opaque\npointer passed to mino_set_resolver."}
+   {:kind :function,
+    :name "mino_set_resolver",
+    :return-type "void",
+    :params "mino_state_t *S, mino_resolve_fn fn, void *ctx",
+    :signature
+    "void mino_set_resolver(mino_state_t *S, mino_resolve_fn fn, void *ctx);",
+    :doc
+    "Register a module resolver. When mino code calls (require \"name\"), the\nresolver is invoked to map the name to a file path. The file is loaded\nonce; subsequent requires of the same name return the cached value.\nPass NULL to remove the resolver."}
+   {:kind :function,
+    :name "mino_register_bundled_lib",
+    :return-type "void",
+    :params "mino_state_t *S, const char *name, const char *source",
+    :signature
+    "void mino_register_bundled_lib(mino_state_t *S, const char *name, const char *source);",
+    :doc
+    "Register a bundled-stdlib source under `name`. Subsequent calls to\n(require '<name>) load this in-memory source instead of going to the\ndisk resolver, so embeds and brew/scoop installs without a lib/\ndirectory still resolve their bundled namespaces.\n\nThe source pointer must outlive the state -- typically a static\nC-string literal in a generated header (e.g. lib_clojure_string.h).\nThe name is copied and freed at state teardown. Re-registering the\nsame name silently replaces the previous source.\n\nUse mino_install_clojure_<name> wrappers (declared below) when an\ninstall hook fits the embedder's group; this raw API is exposed for\nembedders that bundle their own non-clojure namespaces (mirroring\nmino_set_resolver for the disk path)."}]}
+ {:name "Capability-gated install API",
+  :unstable false,
+  :declarations
+  [{:kind :define,
+    :name "MINO_CAP_FLOOR",
+    :value "(1u <<  0)",
+    :inline-comment nil,
+    :signature "#define MINO_CAP_FLOOR         (1u <<  0)",
+    :doc
+    "Capabilities are addressable as bits. Pass a bitmask to mino_install to\ninstall exactly the subset the host wants:\n\nmino_install(S, env, MINO_CAP_IO | MINO_CAP_FS | MINO_CAP_REGEX);\n\nOr pick one of the named presets:\n\nmino_install_minimal(S, env)  -> floor only, no core.clj\nmino_install_sandbox(S, env)  -> floor + canonical Clojure-core + safe libs;\nno I/O, FS, PROC, STM, AGENT, HOST, ASYNC\nmino_install_all(S, env)      -> every capability and every bundled lib\n\nThe floor (MINO_CAP_FLOOR) is always installed by any mino_install* call\n— numeric, collections, sequences, printing, foundational macros, plus\nthe *ns* / *out* / *in* dynamic vars. Passing caps = 0 to mino_install\nis equivalent to mino_install_minimal.\n\nCapabilities are independent; mino_install does not chain implicit\ndependencies. Embedders who want canonical bundles use MINO_CAP_DEFAULT\nor MINO_CAP_ALL. mino_install is idempotent: re-installing a capability\nis a no-op.\n\nCalling mino_install with any non-floor capability also evaluates\ncore.clj on the floor env so the capability-gated sections fire."}
+   {:kind :define,
+    :name "MINO_CAP_REGEX",
+    :value "(1u <<  1)",
+    :inline-comment nil,
+    :signature "#define MINO_CAP_REGEX         (1u <<  1)",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_BIGNUM",
+    :value "(1u <<  2)",
+    :inline-comment nil,
+    :signature "#define MINO_CAP_BIGNUM        (1u <<  2)",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_MULTIMETHODS",
+    :value "(1u <<  3)",
+    :inline-comment nil,
+    :signature "#define MINO_CAP_MULTIMETHODS  (1u <<  3)",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_PROTOCOLS",
+    :value "(1u <<  4)",
+    :inline-comment nil,
+    :signature "#define MINO_CAP_PROTOCOLS     (1u <<  4)",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_TRANSDUCERS",
+    :value "(1u <<  5)",
+    :inline-comment nil,
+    :signature "#define MINO_CAP_TRANSDUCERS   (1u <<  5)",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_IO",
+    :value "(1u <<  6)",
+    :inline-comment nil,
+    :signature "#define MINO_CAP_IO            (1u <<  6)",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_FS",
+    :value "(1u <<  7)",
+    :inline-comment nil,
+    :signature "#define MINO_CAP_FS            (1u <<  7)",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_PROC",
+    :value "(1u <<  8)",
+    :inline-comment nil,
+    :signature "#define MINO_CAP_PROC          (1u <<  8)",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_STM",
+    :value "(1u <<  9)",
+    :inline-comment nil,
+    :signature "#define MINO_CAP_STM           (1u <<  9)",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_AGENT",
+    :value "(1u << 10)",
+    :inline-comment nil,
+    :signature "#define MINO_CAP_AGENT         (1u << 10)",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_HOST",
+    :value "(1u << 11)",
+    :inline-comment nil,
+    :signature "#define MINO_CAP_HOST          (1u << 11)",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_ASYNC",
+    :value "(1u << 12)",
+    :inline-comment nil,
+    :signature "#define MINO_CAP_ASYNC         (1u << 12)",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_STRING_LIB",
+    :value "(1u << 13)",
+    :inline-comment "clojure.string",
+    :signature
+    "#define MINO_CAP_STRING_LIB    (1u << 13)  /* clojure.string */",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_SET_LIB",
+    :value "(1u << 14)",
+    :inline-comment "clojure.set",
+    :signature
+    "#define MINO_CAP_SET_LIB       (1u << 14)  /* clojure.set */",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_WALK",
+    :value "(1u << 15)",
+    :inline-comment "clojure.walk",
+    :signature
+    "#define MINO_CAP_WALK          (1u << 15)  /* clojure.walk */",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_EDN",
+    :value "(1u << 16)",
+    :inline-comment "clojure.edn",
+    :signature
+    "#define MINO_CAP_EDN           (1u << 16)  /* clojure.edn */",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_PPRINT",
+    :value "(1u << 17)",
+    :inline-comment "clojure.pprint",
+    :signature
+    "#define MINO_CAP_PPRINT        (1u << 17)  /* clojure.pprint */",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_ZIP",
+    :value "(1u << 18)",
+    :inline-comment "clojure.zip",
+    :signature
+    "#define MINO_CAP_ZIP           (1u << 18)  /* clojure.zip */",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_DATA",
+    :value "(1u << 19)",
+    :inline-comment "clojure.data",
+    :signature
+    "#define MINO_CAP_DATA          (1u << 19)  /* clojure.data */",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_TEST",
+    :value "(1u << 20)",
+    :inline-comment "clojure.test (+ clojure.test.check)",
+    :signature
+    "#define MINO_CAP_TEST          (1u << 20)  /* clojure.test (+ clojure.test.check) */",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_REPL_LIB",
+    :value "(1u << 21)",
+    :inline-comment "clojure.repl",
+    :signature
+    "#define MINO_CAP_REPL_LIB      (1u << 21)  /* clojure.repl */",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_DATAFY",
+    :value "(1u << 22)",
+    :inline-comment "clojure.datafy + core.protocols",
+    :signature
+    "#define MINO_CAP_DATAFY        (1u << 22)  /* clojure.datafy + core.protocols */",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_INSTANT",
+    :value "(1u << 23)",
+    :inline-comment "clojure.instant",
+    :signature
+    "#define MINO_CAP_INSTANT       (1u << 23)  /* clojure.instant */",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_SPEC",
+    :value "(1u << 24)",
+    :inline-comment "clojure.spec.alpha",
+    :signature
+    "#define MINO_CAP_SPEC          (1u << 24)  /* clojure.spec.alpha */",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_TOOLING",
+    :value "(1u << 25)",
+    :inline-comment "mino.deps + mino.tasks",
+    :signature
+    "#define MINO_CAP_TOOLING       (1u << 25)  /* mino.deps + mino.tasks */",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_CAP_DEFAULT",
+    :value "(MINO_CAP_FLOOR | MINO_CAP_REGEX | MINO_CAP_BIGNUM | \\",
+    :inline-comment nil,
+    :signature
+    "#define MINO_CAP_DEFAULT (MINO_CAP_FLOOR | MINO_CAP_REGEX | MINO_CAP_BIGNUM | \\",
+    :doc
+    "The sandbox preset: floor + Clojure-core (multimethods, protocols,\ntransducers, regex, bignum) + the bundled libraries that have no I/O\nsurface (string, set, walk, edn, data, test, datafy). Excludes IO, FS,\nPROC, HOST, STM, AGENT, ASYNC."}
+   {:kind :define,
+    :name "MINO_CAP_ALL",
+    :value "0xFFFFFFFFu",
+    :inline-comment nil,
+    :signature "#define MINO_CAP_ALL     0xFFFFFFFFu",
+    :doc "Every defined capability bit."}
+   {:kind :function,
+    :name "mino_install",
+    :return-type "void",
+    :params "mino_state_t *S, mino_env_t *env, unsigned int caps",
+    :signature
+    "void mino_install(mino_state_t *S, mino_env_t *env, unsigned int caps);",
+    :doc
+    "Install the given set of capabilities into env. FLOOR is always\ninstalled implicitly. Passing 0 installs just the floor (no core.clj),\nmatching mino_install_minimal. Idempotent: bits already installed are\nskipped silently."}
+   {:kind :function,
+    :name "mino_install_minimal",
+    :return-type "void",
+    :params "mino_state_t *S, mino_env_t *env",
+    :signature
+    "void mino_install_minimal(mino_state_t *S, mino_env_t *env);",
+    :doc
+    "Floor-only convenience. Installs the foundational C primitives plus\nthe unconditional sections of core.clj's prelude (defn / when / cond /\nand / or / threading / lazy seqs / basic collections / printing). Does\nNOT evaluate core.clj. Use when targeting Lua-class cold start in\nembedded mode."}
+   {:kind :function,
+    :name "mino_install_sandbox",
+    :return-type "void",
+    :params "mino_state_t *S, mino_env_t *env",
+    :signature
+    "void mino_install_sandbox(mino_state_t *S, mino_env_t *env);",
+    :doc
+    "Sandbox preset: equivalent to mino_install(S, env, MINO_CAP_DEFAULT).\nNames the recipe for \"safe untrusted-script env\" so embedders don't\nreinvent the threat model."}
+   {:kind :function,
+    :name "mino_install_all",
+    :return-type "void",
+    :params "mino_state_t *S, mino_env_t *env",
+    :signature
+    "void mino_install_all(mino_state_t *S, mino_env_t *env);",
+    :doc
+    "Install every capability and every bundled stdlib namespace the\nstandalone binary ships with. Equivalent to\nmino_install(S, env, MINO_CAP_ALL)."}
+   {:kind :function,
+    :name "mino_capabilities",
+    :return-type "unsigned int",
+    :params "const mino_state_t *S",
+    :signature
+    "unsigned int mino_capabilities(const mino_state_t *S);",
+    :doc "Inspect installed capabilities. Bit set per MINO_CAP_*."}
+   {:kind :function,
+    :name "mino_capability_installed",
+    :return-type "int",
+    :params "const mino_state_t *S, unsigned int cap",
+    :signature
+    "int          mino_capability_installed(const mino_state_t *S, unsigned int cap);",
+    :doc nil}
+   {:kind :struct,
+    :name "mino_capability_info_t",
+    :fields
+    [{:type "const char *",
+      :name "name",
+      :comment "canonical label (\"io\", \"regex\", ...)"}
+     {:type "unsigned int", :name "bit", :comment "MINO_CAP_*"}
+     {:type "const char *",
+      :name "summary",
+      :comment "one-line UX description"}],
+    :doc
+    "Enumerate the full capability registry. The returned array is static,\nNULL-terminated, and ordered by install tier. Each entry names the\ncapability, its bit, and a one-line UX summary. Use this to render a\n\"supported capabilities\" list to the host's user."}
+   {:kind :function,
+    :name "mino_capability_list",
+    :return-type "const mino_capability_info_t *",
+    :params "void",
+    :signature
+    "const mino_capability_info_t *mino_capability_list(void);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_capability_for_symbol",
+    :return-type "const mino_capability_info_t *",
+    :params "const char *name",
+    :signature
+    "const mino_capability_info_t *mino_capability_for_symbol(const char *name);",
+    :doc
+    "Look up the capability that owns a given symbol name, if any. Returns\nthe capability info pointer or NULL when the name is not a known\ngateable primitive or canonical core.clj definition. Used by the\neval_symbol MNS002 diagnostic to enrich \"unbound symbol\" errors."}]}
+ {:name "Execution limits",
+  :unstable false,
+  :declarations
+  [{:kind :define,
+    :name "MINO_LIMIT_STEPS",
+    :value "1",
+    :inline-comment "max eval steps per mino_eval/mino_eval_string",
+    :signature
+    "#define MINO_LIMIT_STEPS  1   /* max eval steps per mino_eval/mino_eval_string */",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_LIMIT_HEAP",
+    :value "2",
+    :inline-comment "max bytes under GC management",
+    :signature
+    "#define MINO_LIMIT_HEAP   2   /* max bytes under GC management                */",
+    :doc nil}
+   {:kind :function,
+    :name "mino_set_limit",
+    :return-type "void",
+    :params "mino_state_t *S, int kind, size_t value",
+    :signature
+    "void mino_set_limit(mino_state_t *S, int kind, size_t value);",
+    :doc
+    "Set a global execution limit. Pass 0 to disable a limit. Step limits\nare reset at the start of each mino_eval or mino_eval_string call.\nWhen a limit is exceeded, the current eval returns NULL and\nmino_last_error() reports the cause."}
+   {:kind :function,
+    :name "mino_interrupt",
+    :return-type "void",
+    :params "mino_state_t *S",
+    :signature "void mino_interrupt(mino_state_t *S);",
+    :doc
+    "Request interruption of a running eval. Sets a flag that the eval loop\nchecks on each step. Safe to call from a different thread than the one\nrunning eval. The flag is cleared at the start of the next eval call."}]}
+ {:name "Host thread grant",
+  :unstable false,
+  :declarations
+  [{:kind :function,
+    :name "mino_set_thread_limit",
+    :return-type "void",
+    :params "mino_state_t *S, int n",
+    :signature "void mino_set_thread_limit(mino_state_t *S, int n);",
+    :doc
+    "Set the per-state thread limit. n=0 or n=1 disables host threads;\nn>1 grants the runtime permission to spawn that many concurrent\nworker threads. Calling with the same value twice is a no-op.\n\nCalling with n>1 BEFORE any `(future ...)` is in flight is the\nsupported sequence; lowering the limit while threads are running\ndoes not interrupt them, but new spawns will respect the new ceiling."}
+   {:kind :function,
+    :name "mino_get_thread_limit",
+    :return-type "int",
+    :params "mino_state_t *S",
+    :signature "int  mino_get_thread_limit(mino_state_t *S);",
+    :doc
+    "Read the current thread limit. Returns 1 by default (single-threaded)."}
+   {:kind :function,
+    :name "mino_thread_count",
+    :return-type "int",
+    :params "mino_state_t *S",
+    :signature "int  mino_thread_count(mino_state_t *S);",
+    :doc
+    "Return the count of host threads currently spawned by this state.\nDecremented as threads complete and join. Returns 0 in single-\nthreaded mode."}
+   {:kind :function,
+    :name "mino_quiesce_threads",
+    :return-type "void",
+    :params "mino_state_t *S",
+    :signature "void mino_quiesce_threads(mino_state_t *S);",
+    :doc
+    "Wait for all in-flight host threads to finish. Intended to be called\nby the embedder before `mino_state_free`; calling it from a worker\nthread that this state spawned is undefined behaviour. Safe to call\nwhen no threads are in flight (returns immediately)."}]}
+ {:name "Host thread pool, factory, stack-size knobs",
+  :unstable true,
+  :declarations
+  [{:kind :struct,
+    :name "mino_thread_pool_t",
+    :fields [{:type "void *", :name "user_data", :comment nil}],
+    :struct-tag "mino_thread_pool",
+    :doc
+    "Function-pointer interface a host thread pool implements. Mino\ncalls submit_fn for each `(future ...)` while a pool is registered;\nthe pool MUST eventually call (*work)(ctx) on a worker thread. The\npool MUST NOT call work synchronously on the calling thread —\nthat defeats the parallelism mino is asking for.",
+    :unstable true}
+   {:kind :function,
+    :name "mino_set_thread_pool",
+    :return-type "void",
+    :params "mino_state_t *S, mino_thread_pool_t *pool",
+    :signature
+    "void mino_set_thread_pool(mino_state_t *S, mino_thread_pool_t *pool);",
+    :doc
+    "Register a host thread pool for this state. Pass NULL to revert\nto spawn-per-future. The pool's `submit_fn` is consulted for each\n`(future ...)`. The pool may be shared across multiple states; mino\ndoes not enforce single-state ownership. The thread_limit still\napplies — submission is rejected when the per-state count is full.",
+    :unstable true}
+   {:kind :typedef-fn,
+    :name "mino_thread_lifecycle_fn",
+    :return-type "void",
+    :params "mino_state_t *S, void *ctx",
+    :signature
+    "typedef void (*mino_thread_lifecycle_fn)(mino_state_t *S, void *ctx);",
+    :doc
+    "Per-thread factory hooks for the spawn-per-future path. start_fn\nruns on the worker thread before the body executes; end_fn runs\nafter the body returns (whether normally or via uncaught throw).\nctx is opaque to mino. Pass NULL fns to clear. Ignored entirely\nwhen a pool is registered (the pool owns thread lifecycle).",
+    :unstable true}
+   {:kind :function,
+    :name "mino_set_thread_factory",
+    :return-type "void",
+    :params
+    "mino_state_t *S, mino_thread_lifecycle_fn start_fn, mino_thread_lifecycle_fn end_fn, void *ctx",
+    :signature
+    "void mino_set_thread_factory(mino_state_t *S, mino_thread_lifecycle_fn start_fn, mino_thread_lifecycle_fn end_fn, void *ctx);",
+    :doc nil,
+    :unstable true}
+   {:kind :function,
+    :name "mino_set_thread_stack_size",
+    :return-type "void",
+    :params "mino_state_t *S, size_t n",
+    :signature
+    "void mino_set_thread_stack_size(mino_state_t *S, size_t n);",
+    :doc
+    "Per-worker stack size for the spawn-per-future path. n=0 means\nplatform default. Ignored when a pool is registered.",
+    :unstable true}]}
+ {:name "Garbage collector control",
+  :unstable true,
+  :declarations
+  [{:kind :enum,
+    :name "mino_gc_kind_t",
+    :variants
+    [{:name "MINO_GC_MINOR", :comment nil}
+     {:name "MINO_GC_MAJOR", :comment nil}
+     {:name "MINO_GC_FULL", :comment nil}],
+    :doc
+    "UNSTABLE: GC tuning, kind enum, phase constants, and the stats\nstruct are provisional. The collector is still evolving\n(generational + incremental layout, threshold heuristics) and this\nsection will track those changes. Pin behavior through explicit\nmino_gc_collect calls at quiescent points; do not rely on tuning\nparameter ranges or the stats struct layout across releases.\n\nKinds of collection the host can request. Use at quiescent points such\nas between REPL turns, after bulk import, or before long-idle periods.\n\nMINO_GC_MINOR -- nursery collection only; cheapest, bounded by young set\nsize. Safe at any time including mid-major.\nMINO_GC_MAJOR -- drain any in-flight incremental major cycle and sweep,\nthen start a fresh STW major if no cycle is active.\nReclaims old-gen dead; leaves young-gen alone.\nMINO_GC_FULL  -- minor, then finish or run a fresh STW major.\nStrongest reclamation; highest pause.",
+    :unstable true}
+   {:kind :function,
+    :name "mino_gc_collect",
+    :return-type "void",
+    :params "mino_state_t *S, mino_gc_kind_t kind",
+    :signature
+    "void mino_gc_collect(mino_state_t *S, mino_gc_kind_t kind);",
+    :doc nil,
+    :unstable true}
+   {:kind :enum,
+    :name "mino_gc_param_t",
+    :variants
+    [{:name "MINO_GC_NURSERY_BYTES", :comment nil}
+     {:name "MINO_GC_MAJOR_GROWTH_TENTHS", :comment nil}
+     {:name "MINO_GC_PROMOTION_AGE", :comment nil}
+     {:name "MINO_GC_INCREMENTAL_BUDGET", :comment nil}
+     {:name "MINO_GC_STEP_ALLOC_BYTES", :comment nil}],
+    :doc
+    "Tunable parameters. Values out of range are rejected; mino_gc_set_param\nreturns 0 on success and -1 on a bad parameter or out-of-range value.\n\nNURSERY_BYTES       young-gen trigger; minor fires when young exceeds.\nDefault 1 MiB. Range 64 KiB .. 256 MiB.\nMAJOR_GROWTH_TENTHS old-gen growth multiplier in tenths (15 = 1.5x).\nDefault 15. Range 11 .. 40.\nPROMOTION_AGE       minor-survival count before YOUNG->OLD promotion.\nDefault 1. Range 1 .. 8.\nINCREMENTAL_BUDGET  headers popped per incremental major slice.\nDefault 4096. Range 64 .. 65536.\nSTEP_ALLOC_BYTES    bytes allocated between automatic slices.\nDefault 16 KiB. Range 1 KiB .. 16 MiB.",
+    :unstable true}
+   {:kind :function,
+    :name "mino_gc_set_param",
+    :return-type "int",
+    :params "mino_state_t *S, mino_gc_param_t p, size_t value",
+    :signature
+    "int mino_gc_set_param(mino_state_t *S, mino_gc_param_t p, size_t value);",
+    :doc nil,
+    :unstable true}
+   {:kind :define,
+    :name "MINO_GC_PHASE_IDLE",
+    :value "0",
+    :inline-comment nil,
+    :signature "#define MINO_GC_PHASE_IDLE        0",
+    :doc "Phase tag returned in mino_gc_stats_t.phase.",
+    :unstable true}
+   {:kind :define,
+    :name "MINO_GC_PHASE_MINOR",
+    :value "1",
+    :inline-comment nil,
+    :signature "#define MINO_GC_PHASE_MINOR       1",
+    :doc nil,
+    :unstable true}
+   {:kind :define,
+    :name "MINO_GC_PHASE_MAJOR_MARK",
+    :value "2",
+    :inline-comment nil,
+    :signature "#define MINO_GC_PHASE_MAJOR_MARK  2",
+    :doc nil,
+    :unstable true}
+   {:kind :define,
+    :name "MINO_GC_PHASE_MAJOR_SWEEP",
+    :value "3",
+    :inline-comment nil,
+    :signature "#define MINO_GC_PHASE_MAJOR_SWEEP 3",
+    :doc nil,
+    :unstable true}
+   {:kind :struct,
+    :name "mino_gc_stats_t",
+    :fields
+    [{:type "size_t", :name "collections_minor", :comment nil}
+     {:type "size_t", :name "collections_major", :comment nil}
+     {:type "size_t", :name "bytes_live", :comment "young + old"}
+     {:type "size_t", :name "bytes_young", :comment nil}
+     {:type "size_t", :name "bytes_old", :comment nil}
+     {:type "size_t",
+      :name "bytes_alloc",
+      :comment "current; reset by major, decremented by minor"}
+     {:type "size_t",
+      :name "bytes_freed",
+      :comment "monotonic: total ever swept"}
+     {:type "size_t", :name "total_gc_ns", :comment nil}
+     {:type "size_t", :name "max_gc_ns", :comment nil}
+     {:type "size_t",
+      :name "remset_entries",
+      :comment "current remembered-set size"}
+     {:type "size_t",
+      :name "remset_cap",
+      :comment "remembered-set capacity"}
+     {:type "size_t",
+      :name "remset_high_water",
+      :comment "peak remset size this state"}
+     {:type "size_t",
+      :name "mark_stack_cap",
+      :comment "mark-stack capacity"}
+     {:type "size_t",
+      :name "mark_stack_high_water",
+      :comment "peak mark-stack depth this state"}
+     {:type "int", :name "phase", :comment "MINO_GC_PHASE_*"}],
+    :doc
+    "Collector statistics. Populated by mino_gc_stats. No allocation is\nperformed; the host owns the out struct. Counters are cumulative\nsince state creation except where noted.\n\nNote: bytes_alloc is NOT a monotonic total. It tracks bytes live in\nthe bump path; minor GC decrements it by the bytes it sweeps and\nmajor GC resets it to bytes_live. To recover a true allocation\ntotal over a window, sum (delta bytes_alloc + delta bytes_freed);\nbytes_freed IS monotonic. This is the formula the perf-gate\nallocation tracker uses.",
+    :unstable true}
+   {:kind :function,
+    :name "mino_gc_stats",
+    :return-type "void",
+    :params "mino_state_t *S, mino_gc_stats_t *out",
+    :signature
+    "void mino_gc_stats(mino_state_t *S, mino_gc_stats_t *out);",
+    :doc nil,
+    :unstable true}]}
+ {:name "Allocation profiler",
+  :unstable true,
+  :declarations
+  [{:kind :function,
+    :name "mino_alloc_profile_enabled",
+    :return-type "int",
+    :params "void",
+    :signature "int  mino_alloc_profile_enabled(void);",
+    :doc
+    "UNSTABLE: the allocation profiler is opt-in (compile-time gated on\n-DMINO_ALLOC_PROFILE=1) and its output format is in flux. The\nfunctions below are part of the public surface for parity with\ntooling that needs profile data, but their shape may change in\nsubsequent releases.\n\nReports 1 when the binary was built with -DMINO_ALLOC_PROFILE=1, else 0.\nThe recording paths and dump output are only meaningful in profile builds.",
+    :unstable true}
+   {:kind :function,
+    :name "mino_alloc_profile_reset",
+    :return-type "void",
+    :params "mino_state_t *S",
+    :signature "void mino_alloc_profile_reset(mino_state_t *S);",
+    :doc
+    "Reset the profile counters to zero. No-op in non-profile builds.",
+    :unstable true}
+   {:kind :function,
+    :name "mino_alloc_profile_dump_top",
+    :return-type "void",
+    :params "mino_state_t *S, FILE *out, int top_n",
+    :signature
+    "void mino_alloc_profile_dump_top(mino_state_t *S, FILE *out, int top_n);",
+    :doc
+    "Dump the top `top_n` call sites by allocation count to `out` (stderr\nif NULL). Pass top_n <= 0 to dump every recorded site. Format is a\nfixed-width table: rank, count, bytes, tag, file:line. In non-profile\nbuilds emits a single \"rebuild with MINO_ALLOC_PROFILE=1\" line.",
+    :unstable true}]}
+ {:name "In-process REPL handle",
+  :unstable false,
+  :declarations
+  [{:kind :define,
+    :name "MINO_REPL_OK",
+    :value "0",
+    :inline-comment "form evaluated; result written to *out",
+    :signature
+    "#define MINO_REPL_OK     0   /* form evaluated; result written to *out      */",
+    :doc "Return codes for mino_repl_feed."}
+   {:kind :define,
+    :name "MINO_REPL_MORE",
+    :value "1",
+    :inline-comment "line accepted; more input needed",
+    :signature
+    "#define MINO_REPL_MORE   1   /* line accepted; more input needed            */",
+    :doc nil}
+   {:kind :define,
+    :name "MINO_REPL_ERROR",
+    :value "2",
+    :inline-comment "parse or eval error; see mino_last_error()",
+    :signature
+    "#define MINO_REPL_ERROR  2   /* parse or eval error; see mino_last_error()  */",
+    :doc nil}
+   {:kind :typedef,
+    :name "mino_repl_t",
+    :struct-name "mino_repl",
+    :signature "typedef struct mino_repl mino_repl_t;",
+    :doc nil}
+   {:kind :function,
+    :name "mino_repl_new",
+    :return-type "mino_repl_t *",
+    :params "mino_state_t *S, mino_env_t *env",
+    :signature
+    "mino_repl_t *mino_repl_new(mino_state_t *S, mino_env_t *env);",
+    :doc
+    "Create a REPL handle that evaluates forms in `env`. The handle owns\nan internal line buffer; the host drives it by feeding one line at a\ntime via mino_repl_feed. No thread is required: the host controls\nthe call cadence entirely.\n\n`env` must outlive the REPL handle."}
+   {:kind :function,
+    :name "mino_repl_feed",
+    :return-type "int",
+    :params "mino_repl_t *repl, const char *line, mino_val_t **out",
+    :signature
+    "int mino_repl_feed(mino_repl_t *repl, const char *line, mino_val_t **out);",
+    :doc
+    "Feed one line of input to the REPL. Returns:\nMINO_REPL_OK    - a complete form was read and evaluated. The result\nis written to *out (when out is non-NULL).\nMINO_REPL_MORE  - the line was accumulated; more input is needed to\ncomplete the current form.\nMINO_REPL_ERROR - a parse or eval error occurred. The error message\nis available via mino_last_error(). The buffer is\nreset so the next feed starts a fresh form.\n\nMultiple complete forms on one line: only the first is evaluated per\ncall. Feed an empty line (or call again with \"\") to drain remaining\nbuffered forms."}
+   {:kind :function,
+    :name "mino_repl_free",
+    :return-type "void",
+    :params "mino_repl_t *repl",
+    :signature "void mino_repl_free(mino_repl_t *repl);",
+    :doc
+    "Free the REPL handle and its internal buffer. Does not free `env`."}]}
+ {:name "Value retention (refs)",
+  :unstable false,
+  :declarations
+  [{:kind :function,
+    :name "mino_ref",
+    :return-type "mino_ref_t *",
+    :params "mino_state_t *S, mino_val_t *val",
+    :signature
+    "mino_ref_t *mino_ref(mino_state_t *S, mino_val_t *val);",
+    :doc
+    "Values returned by constructors and eval are borrowed: they survive until\nthe next GC cycle but are not pinned. A ref roots a value so it survives\ncollection indefinitely. The host must call mino_unref when the value is\nno longer needed.\n\nmino_ref_t *r = mino_ref(S, val);   // root val\nmino_val_t *v = mino_deref(r);      // get the value\nmino_unref(S, r);                   // release the root\n\nRefs are owned by the state that created them and freed when the state\nis freed, but the host should unref explicitly to avoid holding objects\nlonger than necessary."}
+   {:kind :function,
+    :name "mino_deref",
+    :return-type "mino_val_t *",
+    :params "const mino_ref_t *ref",
+    :signature "mino_val_t *mino_deref(const mino_ref_t *ref);",
+    :doc nil}
+   {:kind :function,
+    :name "mino_unref",
+    :return-type "void",
+    :params "mino_state_t *S, mino_ref_t *ref",
+    :signature
+    "void        mino_unref(mino_state_t *S, mino_ref_t *ref);",
+    :doc nil}]}
+ {:name "Value cloning (cross-state transfer)",
+  :unstable false,
+  :declarations
+  [{:kind :function,
+    :name "mino_clone",
+    :return-type "mino_val_t *",
+    :params "mino_state_t *dst, mino_state_t *src, mino_val_t *val",
+    :signature
+    "mino_val_t *mino_clone(mino_state_t *dst, mino_state_t *src, mino_val_t *val);",
+    :doc
+    "Deep-copy a value from one state into another. Transferable types:\nnil, bool, int, float, string, symbol, keyword, cons, vector, map, set.\n\nReturns NULL (and sets an error on dst) if the value contains a\nnon-transferable type (fn, macro, prim, handle, atom, lazy-seq).\nNested collections are cloned recursively; a non-transferable element\nanywhere in the tree causes the entire clone to fail."}]}]
