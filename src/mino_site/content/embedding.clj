@@ -141,7 +141,7 @@ if (result == NULL) {
     fprintf(stderr, \"error: %s\\n\", mino_last_error(S));
 }"]]
 
-      [:h3 "Protected calls"]
+      [:h3 "Protected eval variants"]
       [:p "When calling a function that might throw, use "
        [:code "mino_pcall"] " to catch the error without unwinding "
        "your C stack:"]
@@ -155,15 +155,30 @@ if (mino_pcall(S, fn, args, env, &out, &ex) != 0) {
        "the eval-family entry points so embedders can distinguish "
        "\"real nil result\" from \"caught throw\" without consulting "
        [:code "mino_last_error"] ":"]
-      [:pre [:code {:data-lang "c"}
-"int mino_eval_ex       (S, form, env, &out, &ex);
-int mino_eval_string_ex(S, src,  env, &out, &ex);
-int mino_load_file_ex  (S, path, env, &out, &ex);"]]
-      [:p "Each returns 0 on success (writing the result through "
-       [:code "out"] ") or -1 on a caught throw / OOM / parse failure. "
-       "When " [:code "out_ex"] " is non-NULL on error, it receives the "
-       "raw payload — useful for handlers that want to surface the "
-       "user's " [:code "ex-info"] " unchanged."]
+      [:table
+       [:thead
+        [:tr [:th "Function"] [:th "Same shape as"]
+             [:th "Use when"]]]
+       [:tbody
+        [:tr [:td [:code "mino_eval_ex"]]
+             [:td [:code "mino_eval"]]
+             [:td "evaluating a parsed form"]]
+        [:tr [:td [:code "mino_eval_string_ex"]]
+             [:td [:code "mino_eval_string"]]
+             [:td "evaluating source text"]]
+        [:tr [:td [:code "mino_load_file_ex"]]
+             [:td [:code "mino_load_file"]]
+             [:td "evaluating a file"]]
+        [:tr [:td [:code "mino_pcall"]]
+             [:td "(none; original entry)"]
+             [:td "calling a known function value with prepared args"]]]]
+      [:p "Each " [:code "_ex"] " call returns 0 on success (writing "
+       "the result through " [:code "out"] ") or -1 on a caught throw "
+       "/ OOM / parse failure. When " [:code "out_ex"] " is non-NULL "
+       "on error, it receives the raw payload — useful for handlers "
+       "that want to surface the user's " [:code "ex-info"]
+       " unchanged. See " [:code "cookbook/error_handling.c"] " for "
+       "the canonical real-nil-vs-caught-throw pattern."]
 
       [:h3 "Structured error access"]
       [:p "After a call returns NULL, inspect the classified "
@@ -174,6 +189,12 @@ const char *code = mino_error_code(S);   /* e.g. \"MTY001\"   */
 const char *msg  = mino_last_error(S);
 /* ... handle ... */
 mino_clear_error(S);                     /* reset for next call */"]]
+      [:p "Kind strings group similar failures (" [:code "eval/type"]
+       ", " [:code "eval/arity"] ", " [:code "eval/bounds"] ", "
+       [:code "eval/contract"] ", " [:code "name"] ", "
+       [:code "syntax"] ", " [:code "io"] "). Codes are stable across "
+       "releases so handlers can switch on them without parsing the "
+       "message text."]
 
       [:h2 "Value ownership"]
       [:p "This is the most important concept for correct embedding. "
@@ -212,6 +233,75 @@ mino_unref(S, r);                    /* release the root       */"]]
       [:pre [:code {:data-lang "c"}
 "mino_env_set(S, env, \"my-val\", mino_int(S, 42));
 /* The integer 42 is now rooted through env -- no ref needed */"]]
+
+      [:h2 "Building collections from C"]
+      [:p "When the host produces a value element-by-element — parsing "
+       "incremental input, copying a C array, gathering rows out of a "
+       "database row iterator — use a builder. Each builder wraps a "
+       "transient and exposes an "
+       [:code "_add"] " step plus a "
+       [:code "_persistent!"] " finaliser. The persistent result is a "
+       "mino value the embedder can return; the builder itself must "
+       "not be reused after " [:code "_persistent!"] " runs."]
+      [:pre [:code {:data-lang "c"}
+"/* Vector: positional accumulation. */
+mino_vector_builder_t *vb = mino_vector_builder_new(S);
+for (size_t i = 0; i < n; i++) {
+    mino_vector_builder_push(vb, mino_int(S, items[i]));
+}
+mino_val_t *v = mino_vector_builder_persistent(vb);
+
+/* Map: insertion-ordered key-value pairs. */
+mino_map_builder_t *mb = mino_map_builder_new(S);
+mino_map_builder_put(mb, mino_keyword(S, \"a\"), mino_int(S, 1));
+mino_map_builder_put(mb, mino_keyword(S, \"b\"), mino_int(S, 2));
+mino_val_t *m = mino_map_builder_persistent(mb);
+
+/* Set: deduplicated values. */
+mino_set_builder_t *sb = mino_set_builder_new(S);
+mino_set_builder_add(sb, mino_int(S, 1));
+mino_set_builder_add(sb, mino_int(S, 1));   /* dropped, already present */
+mino_val_t *s = mino_set_builder_persistent(sb);"]]
+      [:p "When every element is already sitting in a C array, the "
+       "fixed-arity constructors are simpler and shorter: "
+       [:code "mino_vector(S, elems, n)"] ", "
+       [:code "mino_map(S, keys, vals, n)"] ", "
+       [:code "mino_set(S, elems, n)"] ". Builders pay off when the "
+       "host is doing the accumulation loop itself, or when it does "
+       "not know the length up front."]
+      [:p "Builders root their staged values for the GC, so an "
+       "allocation inside the loop will not reclaim the partial "
+       "result. See " [:code "cookbook/build_collections.c"] " for a "
+       "complete worked example."]
+
+      [:h2 "Iterating collections from C"]
+      [:p "One iterator type walks every sequential and associative "
+       "collection mino exposes: vectors, maps (hashed and sorted), "
+       "sets, lists, the empty-list singleton, lazy seqs, and chunked "
+       "seqs. The host owns the iterator storage; allocate "
+       [:code "mino_iter_sizeof()"] " bytes (typically on the C stack "
+       "via " [:code "alloca"] ") and drive it with the lifecycle:"]
+      [:pre [:code {:data-lang "c"}
+"mino_iter_t *it = alloca(mino_iter_sizeof());
+mino_iter_init(S, it, coll);
+mino_val_t *k, *v;
+while (mino_iter_next(it, &k, &v)) {
+    /* vectors / sets / lists: k is the element, v is NULL.
+     * maps: k is the key, v is the value. */
+}
+mino_iter_done(it);"]]
+      [:p [:code "mino_iter_init"] " pins the collection so a GC fired "
+       "mid-walk cannot reclaim the cells the iterator borrows pointers "
+       "into. " [:code "mino_iter_done"] " releases that root and must "
+       "always be called once, even if the walk exits early. Calling "
+       [:code "mino_iter_next"] " after it returned 0 keeps returning "
+       "0, and " [:code "mino_iter_done"] " on a NULL iterator is "
+       "harmless."]
+      [:p "Map iteration follows insertion order for hashed maps and "
+       "key order for sorted maps. See "
+       [:code "cookbook/iterate.c"] " for a worked example that "
+       "covers vectors, maps, lazy seqs, and cons lists through the "
+       "same surface."]
 
       [:h2 "Host functions"]
       [:p "Register C functions as mino primitives with "
