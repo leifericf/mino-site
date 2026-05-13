@@ -405,52 +405,85 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        "worth doing. Until then, budget is better spent on widening "
        "compiler coverage and tightening soundness."]
 
-      [:h2 "Open optimization frontiers"]
-      [:p "Hypotheses worth picking up. Each line is a one-liner; the "
-       "shape of the work and rough payoff are obvious from the sketch."]
+      [:h2 "Recently picked up"]
+      [:p "Three frontiers from earlier drafts of this page have "
+       "shipped and folded into the steady-state VM. The benchmark "
+       "deltas below are from the cycle's first-pass landings (all "
+       "min-of-five, with the empty-thunk harness floor subtracted)."]
       [:ul
-       [:li [:strong "IC for collection ops."]
-        " Extend the global-IC discipline to "
-        [:code "assoc"] " / " [:code "dissoc"]
-        " / keyword destructuring."]
        [:li [:strong "Write-path fast lanes."]
-        " " [:code "OP_ASSOC_VEC"] " / " [:code "OP_ASSOC_MAP"] " / "
-        [:code "OP_CONJ_VEC"]
-        " mirroring the existing NTH_VEC / GET_KW_MAP reads."]
+        " " [:code "OP_CONJ_VEC"] " for arity-2 "
+        [:code "(conj v x)"] " and " [:code "OP_ASSOC"]
+        " for the arity-3 " [:code "(assoc coll k v)"]
+        " shape land in v0.152.0. The runtime dispatches by "
+        "collection type (vector or map) and falls back to the "
+        "canonical prim on any miss. "
+        [:em "conj-vec -34%, assoc-vec -56%, assoc-small -32%."]]
+       [:li [:strong "Inlining of small pure prims."]
+        " " [:code "OP_FIRST_VEC"] " / " [:code "OP_COUNT_VEC"]
+        " / " [:code "OP_EMPTY_VEC"]
+        " in v0.153.0 turn the hot single-arg seq prims on a "
+        "vector into a direct field read; misses fall through to "
+        "the canonical prim. "
+        [:em "count-vec -94%, first-vec -93%, empty?-vec ~0 ns."]]
+       [:li [:strong "Record fast paths and keyword-as-fn inlining."]
+        " v0.154.0 extends " [:code "OP_GET_KW_MAP"]
+        " with a record branch (fixed-slot fetch after a declared-"
+        "field lookup), and rewrites the " [:code "(:kw coll)"]
+        " keyword-as-fn shape to the same fast lane the "
+        [:code "(get coll :kw)"] " form already used. "
+        [:em "get-kw-record -93%, kw-fn-record -84%, kw-fn-map -77%."]]]
+
+      [:h2 "Still open"]
+      [:p "Hypotheses worth picking up. Each line is a one-liner; "
+       "the shape of the work and rough payoff are obvious from the "
+       "sketch."]
+      [:ul
        [:li [:strong "Call-site monomorphisation."]
         " Observe a stable callee shape and rewrite "
         [:code "OP_CALL"] " to the " [:code "_CACHED"]
-        " variant already reserved in the enum."]
-       [:li [:strong "Inlining of small pure prims."]
-        " " [:code "first"] " / " [:code "rest"] " / "
-        [:code "count"] " / " [:code "empty?"]
-        " inlined at the call site when the operand is a known "
-        "collection shape."]
-       [:li [:strong "Full TCO across more tail positions."]
-        " Propagate the tail flag through every tail-shaped form so "
-        "cross-fn tail calls stay constant-stack regardless of which "
-        "side is compiled."]
+        " variant already reserved in the enum. A first attempt at "
+        "the cleaner GET-and-CALL collapse landed and was reverted "
+        "(see v0.154.0 changelog) when an interaction with the "
+        "tree-walker apply path surfaced on the async-conformance "
+        "tests; the next attempt should route apply-bound prims "
+        "through their cons-spine ABI directly, not via the argv "
+        "fast path."]
        [:li [:strong "Computed-goto dispatch."]
-        " Labels-as-values + dispatch table on gcc/clang; falls back "
-        "to switch on msvc."]
+        " Labels-as-values + dispatch table on gcc/clang; falls "
+        "back to switch on msvc. A prototype showed that Apple "
+        "clang at -O2 tail-merges every per-handler "
+        [:code "goto *target"]
+        " into a single dispatch site, so the threaded interpreter "
+        "collapses back to switch shape. " [:code "asm goto"]
+        " with an explicit label list is the canonical workaround "
+        "but Apple clang miscompiles register-held label addresses "
+        "in that construct. Worth retrying on Linux gcc, or with a "
+        "per-handler tail-call shape that survives the merge."]
        [:li [:strong "Profile-guided opcode rewriting."]
         " Hot sites swap generic opcodes for specialised variants "
         "after a stable shape is observed — adaptive specialisation "
-        "without a JIT."]
-       [:li [:strong "Shape-stable record fast paths."]
-        " Record-typed destructure or keyword get compiles to a "
-        "fixed-slot fetch rather than a HAMT lookup."]
+        "without a JIT. Type-feedback fast lanes for arith on "
+        "observed int+int sites would extend the literal-arg "
+        "fast lanes already shipped."]
        [:li [:strong "Lazy-seq force fusion."]
         " " [:code "(reduce f init (take n (filter p (map g s))))"]
-        " compiled into a single per-element step that fuses the four "
-        "operations without realising intermediates."]
+        " compiled into a single per-element step that fuses the "
+        "four operations without realising intermediates. "
+        "Transducer-shape pattern recognition at compile time, "
+        "with " [:code "->>"] " expansion handled in the same "
+        "pass."]
        [:li [:strong "Fused BigInt arithmetic."]
-        " Multi-step BigInt op stays in BigInt form across the chain, "
-        "avoiding the re-tag roundtrip per step."]
+        " Multi-step BigInt op stays in BigInt form across the "
+        "chain, avoiding the re-tag roundtrip per step."]
        [:li [:strong "Parallel reduce on persistent vectors."]
         " Fork/join trie walk via " [:code "fold"]
         " / " [:code "cat"]
-        ", combined with a runtime-per-shard model."]]
+        ", combined with a runtime-per-shard model."]
+       [:li [:strong "Full TCO across more tail positions."]
+        " Propagate the tail flag through every tail-shaped form "
+        "so cross-fn tail calls stay constant-stack regardless of "
+        "which side is compiled."]]
 
       [:h2 "Beyond opcodes: a formal Clojure spec"]
       [:p "The soundness discipline keeps coming back to one "

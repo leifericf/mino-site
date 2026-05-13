@@ -24,8 +24,11 @@
        "Numbers below were measured against mino v0.148.0 on x86_64 "
        "Linux (WSL2, kernel 6.6) under normal desktop load. Treat them "
        "as directional; different hardware will shift absolute numbers "
-       "but the ratios between rows hold. The full bench suite lives "
-       "in "
+       "but the ratios between rows hold. The bc-frontiers cycle "
+       "(v0.152.0 – v0.154.0) landed targeted fast lanes that moved "
+       "the write-side, small-prim, and record-access rows by "
+       "30–95%; those rows are not yet re-tabled here. The full "
+       "bench suite lives in "
        [:a {:href "https://github.com/leifericf/mino-bench/tree/main/benchmarks"}
         "mino-bench/benchmarks/"]
        " and the in-process / cold-start / footprint harnesses live in "
