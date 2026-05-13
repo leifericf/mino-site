@@ -4,6 +4,13 @@ All notable changes to mino-site are documented here.
 
 ## Unreleased
 
+- Submodule pointer bumped to mino v0.149.1. Covers five minor
+  cycles since v0.144.5 plus the v0.149.1 bug-fix roll-up: hash
+  contract for sequential and sorted collections, sorted-collection
+  dissoc count, `ex-info` 3-arity cause, catch metadata
+  preservation, `fmt_ensure` / `(sh ...)` OOM cleanup, and the
+  `pclose` `-1` sentinel.
+
 - Submodule pointer bumped to mino v0.144.5 (closes the
   bytecode-VM cycle on remote; covers four release-pipeline
   follow-ups: a GC fix for tracing the compiled-bytecode record
