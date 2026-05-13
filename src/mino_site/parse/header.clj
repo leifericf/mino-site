@@ -358,14 +358,31 @@
 
 ;; --- Public API ---
 
+(defn- split-unstable-tag
+  "Detect a trailing `[MINO_UNSTABLE_*]` marker on a section name.
+  Returns [clean-name unstable?] where clean-name is the user-visible
+  label with the marker stripped, and unstable? is truthy when the
+  section is provisional."
+  [name]
+  (let [m (re-find #"^(.*?)\s*\[MINO_UNSTABLE_[A-Z_]+\]\s*$" name)]
+    (if m
+      [(str/trim (nth m 1)) true]
+      [name false])))
+
 (defn parse
   "Parse a mino.h file and return structured API data.
-  Returns {:sections [{:name \"...\" :declarations [...]}]}."
+  Returns {:sections [{:name \"...\" :declarations [...] :unstable bool}]}."
   [path]
   (let [text (slurp path)
         raw-sections (split-sections text)]
     {:sections
      (mapv (fn [{:keys [name body]}]
-             {:name name
-              :declarations (parse-section-body body)})
+             (let [[clean unstable?] (split-unstable-tag name)
+                   decls (parse-section-body body)
+                   decls (if unstable?
+                           (mapv #(assoc % :unstable true) decls)
+                           decls)]
+               {:name clean
+                :unstable unstable?
+                :declarations decls}))
            raw-sections)}))

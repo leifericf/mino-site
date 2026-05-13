@@ -32,45 +32,56 @@
       (for [p paragraphs]
         [:p.decl-doc (hu/raw-string (fmt/inline p))]))))
 
+(defn- unstable-badge
+  "Yellow `subject to change` badge for declarations in MINO_UNSTABLE_*
+  sections. Emit only when the parser marked the section unstable."
+  [unstable?]
+  (when unstable?
+    [:span.decl-badge.unstable "subject to change"]))
+
 ;; --- Declaration renderers by kind ---
 
 (defmulti render-declaration :kind)
 
 (defmethod render-declaration :function
-  [{:keys [name signature doc]}]
+  [{:keys [name signature doc unstable]}]
   [:div.decl {:id name :data-name name}
-   [:h3.decl-name [:code name]]
+   [:h3.decl-name [:code name] (unstable-badge unstable)]
    (render-doc doc)
    (render-signature signature)])
 
 (defmethod render-declaration :typedef-fn
-  [{:keys [name signature doc]}]
+  [{:keys [name signature doc unstable]}]
   [:div.decl {:id name :data-name name}
-   [:h3.decl-name [:code name] [:span.decl-badge "typedef"]]
+   [:h3.decl-name [:code name] [:span.decl-badge "typedef"]
+    (unstable-badge unstable)]
    (render-signature signature)
    (render-doc doc)])
 
 (defmethod render-declaration :typedef
-  [{:keys [name struct-name signature doc]}]
+  [{:keys [name struct-name signature doc unstable]}]
   [:div.decl {:id name :data-name name}
    [:h3.decl-name [:code name]
     [:span.decl-badge "typedef"]
+    (unstable-badge unstable)
     (when struct-name
       [:span.decl-meta " \u2192 " [:code (str "struct " struct-name)]])]
    (render-signature signature)
    (render-doc doc)])
 
 (defmethod render-declaration :define
-  [{:keys [name value inline-comment signature doc]}]
+  [{:keys [name inline-comment signature doc unstable]}]
   [:div.decl {:id name :data-name name}
-   [:h3.decl-name [:code name] [:span.decl-badge "macro"]]
+   [:h3.decl-name [:code name] [:span.decl-badge "macro"]
+    (unstable-badge unstable)]
    (render-signature signature)
    (render-doc (or doc inline-comment))])
 
 (defmethod render-declaration :enum
-  [{:keys [name variants doc]}]
+  [{:keys [name variants doc unstable]}]
   [:div.decl {:id name :data-name name}
-   [:h3.decl-name [:code name] [:span.decl-badge "enum"]]
+   [:h3.decl-name [:code name] [:span.decl-badge "enum"]
+    (unstable-badge unstable)]
    (render-doc doc)
    [:table.enum-table
     [:thead [:tr [:th "Variant"] [:th "Description"]]]
@@ -81,9 +92,10 @@
         [:td (if comment (hu/raw-string (fmt/inline comment)) "")]])]]])
 
 (defmethod render-declaration :struct
-  [{:keys [name fields doc]}]
+  [{:keys [name fields doc unstable]}]
   [:div.decl {:id name :data-name name}
-   [:h3.decl-name [:code (str "struct " name)] [:span.decl-badge "struct"]]
+   [:h3.decl-name [:code (str "struct " name)] [:span.decl-badge "struct"]
+    (unstable-badge unstable)]
    (render-doc doc)
    [:table.struct-table
     [:thead [:tr [:th "Type"] [:th "Field"] [:th "Description"]]]
@@ -95,10 +107,10 @@
         [:td (if comment (hu/raw-string (fmt/inline comment)) "")]])]]])
 
 (defmethod render-declaration :default
-  [{:keys [name signature doc]}]
+  [{:keys [name signature doc unstable]}]
   (when name
     [:div.decl {:id name :data-name name}
-     [:h3.decl-name [:code name]]
+     [:h3.decl-name [:code name] (unstable-badge unstable)]
      (when signature (render-signature signature))
      (render-doc doc)]))
 
@@ -106,10 +118,16 @@
 
 (defn- render-section
   "Render a single API section with heading and declarations."
-  [{:keys [name declarations]}]
+  [{:keys [name declarations unstable]}]
   (let [id (section-id name)]
     [:section.api-section {:id id}
-     [:h2 name]
+     [:h2 name (when unstable
+                 [:span.section-badge.unstable " subject to change"])]
+     (when unstable
+       [:p.section-preamble
+        "This section is provisional for the v1.0.0-alpha series. "
+        "Symbols below may change in patch releases. Pin your usage "
+        "and re-test on alpha bumps."])
      (for [decl declarations]
        (render-declaration decl))]))
 

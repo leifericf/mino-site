@@ -30,68 +30,84 @@
 
       [:h3 "Environments"]
       [:p "An environment holds name-to-value bindings. The quickest "
-       "start installs everything (core + I/O) in one call:"]
+       "start installs the sandbox preset in one call:"]
       [:pre [:code {:data-lang "c"}
-"mino_env_t *env = mino_new(S);       /* core + I/O included    */"]]
-      [:p "Or start with an empty environment for a sandboxed context:"]
+"mino_env_t *env = mino_env_new_default(S);   /* sandbox preset */"]]
+      [:p "Or build the env explicitly and pick the capabilities you "
+       "want with a bitmask:"]
       [:pre [:code {:data-lang "c"}
-"mino_env_t *env = mino_env_new(S);   /* empty: no bindings     */
-mino_install_core(S, env);            /* pure functions only     */"]]
+"mino_env_t *env = mino_env_new(S);
+mino_install(S, env, MINO_CAP_DEFAULT | MINO_CAP_IO);"]]
       [:p "Tear down in reverse order when done:"]
       [:pre [:code {:data-lang "c"}
 "mino_env_free(S, env);
 mino_state_free(S);"]]
 
       [:h3 "Capability-gated install"]
-      [:p "Three install tiers let a host pay only for the surface it "
-       "needs. Each tier sets capability bits the runtime consults at "
+      [:p "Capabilities are addressable as bits. Hand "
+       [:code "mino_install"] " a bitmask and it installs exactly the "
+       "subset you asked for. The runtime consults the bits at "
        "symbol-resolution time; a name from a disabled capability "
        "raises an MNS002 capability-disabled diagnostic instead of a "
        "bare unbound-symbol error."]
+      [:p "Three named presets cover the common shapes one call away:"]
       [:table
        [:thead
-        [:tr [:th "Tier"] [:th "Call"] [:th "What you get"]]]
+        [:tr [:th "Preset"] [:th "Call"] [:th "What you get"]]]
        [:tbody
-        [:tr [:td "Floor"]
+        [:tr [:td "Minimal"]
              [:td [:code "mino_install_minimal(S, env)"]]
-             [:td "Reader, evaluator, GC, persistent collections, "
-                  "numeric ops, foundational macros. No "
-                  [:code "core.clj"] " evaluation. ~0.22 ms init, "
-                  "~590 KB stripped."]]
-        [:tr [:td "Standard"]
-             [:td [:code "mino_install_core(S, env)"]]
-             [:td "Floor plus regex, bignum, multimethods, protocols, "
-                  "transducers — the canonical Clojure surface. "
-                  "Evaluates " [:code "core.clj"] ". ~5.2 ms init, "
-                  "~706 KB stripped. Back-compat preserved: existing "
-                  "embedders see no behaviour change."]]
-        [:tr [:td "Standalone"]
+             [:td "Floor only — reader, evaluator, GC, persistent "
+                  "collections, numeric ops, foundational macros. No "
+                  [:code "core.clj"] " evaluation. Smallest cold "
+                  "start."]]
+        [:tr [:td "Sandbox"]
+             [:td [:code "mino_install_sandbox(S, env)"]]
+             [:td "Floor + multimethods, protocols, transducers, "
+                  "regex, bignum + the bundled "
+                  [:code "clojure.*"] " libs that carry no I/O surface. "
+                  "Evaluates " [:code "core.clj"] ". Excludes IO, FS, "
+                  "PROC, STM, AGENT, HOST, ASYNC. Equivalent to "
+                  [:code "mino_install(S, env, MINO_CAP_DEFAULT)"] "."]]
+        [:tr [:td "Everything"]
              [:td [:code "mino_install_all(S, env)"]]
-             [:td "Standard plus I/O, FS, processes, STM, agents, "
-                  "async, host-interop, bundled " [:code "clojure.*"]
-                  ". The Homebrew binary surface. ~5.7 ms init, "
-                  "~895 KB stripped."]]]]
-      [:p "Between Floor and Standard sit per-capability install "
-       "hooks the host can call individually: "
-       [:code "mino_install_regex"] ", "
-       [:code "mino_install_bignum"] ", "
-       [:code "mino_install_multimethods"] ", "
-       [:code "mino_install_protocols"] ", "
-       [:code "mino_install_transducers"] ". "
-       "Between Standard and Standalone: "
-       [:code "mino_install_io"] ", "
-       [:code "mino_install_fs"] ", "
-       [:code "mino_install_proc"] ", "
-       [:code "mino_install_stm"] ", "
-       [:code "mino_install_agent"] ", "
-       [:code "mino_install_async"] ", "
-       [:code "mino_install_host"]
-       ". Capability bits must be set "
-       [:strong "before"] " "
-       [:code "mino_install_clojure_core"] " so " [:code "core.clj"]
-       "'s capability-gated sections (regex, multimethods, protocols, "
-       "transducers, bignum-aware "
-       [:code "integer?"] ") evaluate."]
+             [:td "Every capability and every bundled stdlib namespace "
+                  "the standalone binary ships with. Equivalent to "
+                  [:code "mino_install(S, env, MINO_CAP_ALL)"] "."]]]]
+      [:p "Pick exactly the bits you want for a custom tier:"]
+      [:pre [:code {:data-lang "c"}
+"mino_install(S, env, MINO_CAP_DEFAULT | MINO_CAP_IO | MINO_CAP_REGEX);"]]
+      [:p "Available bits: "
+       [:code "MINO_CAP_FLOOR"] ", "
+       [:code "MINO_CAP_REGEX"] ", "
+       [:code "MINO_CAP_BIGNUM"] ", "
+       [:code "MINO_CAP_MULTIMETHODS"] ", "
+       [:code "MINO_CAP_PROTOCOLS"] ", "
+       [:code "MINO_CAP_TRANSDUCERS"] ", "
+       [:code "MINO_CAP_IO"] ", "
+       [:code "MINO_CAP_FS"] ", "
+       [:code "MINO_CAP_PROC"] ", "
+       [:code "MINO_CAP_STM"] ", "
+       [:code "MINO_CAP_AGENT"] ", "
+       [:code "MINO_CAP_HOST"] ", "
+       [:code "MINO_CAP_ASYNC"] ", "
+       [:code "MINO_CAP_STRING_LIB"] ", "
+       [:code "MINO_CAP_SET_LIB"] ", "
+       [:code "MINO_CAP_WALK"] ", "
+       [:code "MINO_CAP_EDN"] ", "
+       [:code "MINO_CAP_PPRINT"] ", "
+       [:code "MINO_CAP_ZIP"] ", "
+       [:code "MINO_CAP_DATA"] ", "
+       [:code "MINO_CAP_TEST"] ", "
+       [:code "MINO_CAP_REPL_LIB"] ", "
+       [:code "MINO_CAP_DATAFY"] ", "
+       [:code "MINO_CAP_INSTANT"] ", "
+       [:code "MINO_CAP_SPEC"] ", "
+       [:code "MINO_CAP_TOOLING"]
+       ". " [:code "MINO_CAP_FLOOR"] " is always installed implicitly. "
+       [:code "mino_install"] " is idempotent: calling it again with "
+       "additional bits adds the missing capabilities and does not "
+       "re-evaluate " [:code "core.clj"] "."]
       [:p "Query what is installed at any time:"]
       [:pre [:code {:data-lang "c"}
 "unsigned int caps = mino_capabilities(S);
@@ -130,10 +146,34 @@ if (result == NULL) {
        [:code "mino_pcall"] " to catch the error without unwinding "
        "your C stack:"]
       [:pre [:code {:data-lang "c"}
-"mino_val_t *out;
-if (mino_pcall(S, fn, args, env, &out) != 0) {
-    fprintf(stderr, \"caught: %s\\n\", mino_last_error(S));
+"mino_val_t *out = NULL;
+mino_val_t *ex  = NULL;
+if (mino_pcall(S, fn, args, env, &out, &ex) != 0) {
+    /* ex carries the raw value the user passed to (throw ...) */
 }"]]
+      [:p "Three " [:code "_ex"] " variants extend the same shape to "
+       "the eval-family entry points so embedders can distinguish "
+       "\"real nil result\" from \"caught throw\" without consulting "
+       [:code "mino_last_error"] ":"]
+      [:pre [:code {:data-lang "c"}
+"int mino_eval_ex       (S, form, env, &out, &ex);
+int mino_eval_string_ex(S, src,  env, &out, &ex);
+int mino_load_file_ex  (S, path, env, &out, &ex);"]]
+      [:p "Each returns 0 on success (writing the result through "
+       [:code "out"] ") or -1 on a caught throw / OOM / parse failure. "
+       "When " [:code "out_ex"] " is non-NULL on error, it receives the "
+       "raw payload — useful for handlers that want to surface the "
+       "user's " [:code "ex-info"] " unchanged."]
+
+      [:h3 "Structured error access"]
+      [:p "After a call returns NULL, inspect the classified "
+       "diagnostic without parsing the human-readable message:"]
+      [:pre [:code {:data-lang "c"}
+"const char *kind = mino_error_kind(S);   /* e.g. \"eval/type\" */
+const char *code = mino_error_code(S);   /* e.g. \"MTY001\"   */
+const char *msg  = mino_last_error(S);
+/* ... handle ... */
+mino_clear_error(S);                     /* reset for next call */"]]
 
       [:h2 "Value ownership"]
       [:p "This is the most important concept for correct embedding. "
@@ -184,7 +224,7 @@ mino_unref(S, r);                    /* release the root       */"]]
     size_t len;
     (void)env;
     if (!mino_is_cons(args) ||
-        !mino_to_string(args->as.cons.car, &name, &len))
+        !mino_to_string(mino_car(args), &name, &len))
         return mino_nil(S);
     char buf[256];
     snprintf(buf, sizeof(buf), \"hello, %s!\", name);
@@ -244,13 +284,17 @@ mino_val_t *h = mino_handle_ex(S, fp, \"file\", close_file);"]]
 
       [:h2 "Sandboxing"]
       [:p "A fresh environment created with " [:code "mino_env_new"]
-       " has no bindings at all. " [:code "mino_install_core"]
-       " adds pure functions (arithmetic, collections, strings) but "
-       "no I/O. The host controls exactly what untrusted code can do:"]
+       " has no bindings at all. " [:code "mino_install_sandbox"]
+       " adds the canonical Clojure-core surface (map, filter, "
+       "reduce, regex, bignum, the safe " [:code "clojure.*"]
+       " libs) without granting I/O, processes, host interop, or "
+       "shared-state primitives. The host controls exactly what "
+       "untrusted code can do:"]
       [:pre [:code {:data-lang "c"}
 "mino_env_t *sandbox = mino_env_new(S);
-mino_install_core(S, sandbox);
-/* sandbox has map, filter, reduce, etc. but no println, slurp, or exit */
+mino_install_sandbox(S, sandbox);
+/* sandbox has map, filter, reduce, etc. but no slurp, spit, sh,
+   refs, agents, or host-interop. */
 
 /* Grant specific capabilities */
 mino_register_fn(S, sandbox, \"query\", my_safe_query_fn);"]]
@@ -281,7 +325,7 @@ mino_set_resolver(S, my_resolver, NULL);"]]
       [:p "Multiple independent evaluation contexts can share a single "
        "state by cloning an environment:"]
       [:pre [:code {:data-lang "c"}
-"mino_env_t *base = mino_new(S);         /* core + I/O included    */
+"mino_env_t *base = mino_env_new_default(S);       /* sandbox preset */
 
 mino_env_t *session1 = mino_env_clone(S, base);
 mino_env_t *session2 = mino_env_clone(S, base);"]]
@@ -340,7 +384,7 @@ mino_repl_free(repl);"]]
 "/* One pthread per state. */
 void *worker(void *arg) {
     mino_state_t *S   = mino_state_new();
-    mino_env_t   *env = mino_new(S);
+    mino_env_t   *env = mino_env_new_default(S);
     mino_load_file(S, \"bot.clj\", env);
     mino_state_free(S);
     return NULL;

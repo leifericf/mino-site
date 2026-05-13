@@ -458,6 +458,27 @@
                   :border-radius "3px"
                   :text-transform "uppercase"
                   :letter-spacing "0.03em"}]
+   [".decl-badge.unstable" {:color      "#7a4f00"
+                            :background "#fff3c4"
+                            :border     "1px solid #e9b007"}]
+   [:.section-badge {:font-size     "0.65rem"
+                     :font-weight   "500"
+                     :margin-left   "0.5rem"
+                     :padding       "0.15rem 0.5rem"
+                     :border-radius "3px"
+                     :text-transform "uppercase"
+                     :letter-spacing "0.03em"
+                     :vertical-align "middle"}]
+   [".section-badge.unstable" {:color      "#7a4f00"
+                               :background "#fff3c4"
+                               :border     "1px solid #e9b007"}]
+   [:.section-preamble {:font-size     "0.85rem"
+                        :color         (:text-muted colors)
+                        :background    "#fffbe6"
+                        :border-left   "3px solid #e9b007"
+                        :padding       "0.5rem 0.75rem"
+                        :margin-bottom "1rem"
+                        :font-style    "italic"}]
    [:.decl-meta {:font-size "0.8rem"
                  :color     (:text-muted colors)}]
    [:.decl-doc {:color       (:text colors)
