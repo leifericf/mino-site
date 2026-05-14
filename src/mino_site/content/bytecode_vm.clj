@@ -550,7 +550,63 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "GC_T_BC_FN walker arms is centralised in one "
         [:code "gc_mark_bc_ic_slots"]
         " function. No behavior change; the substantiation pays off "
-        "when a fourth IC consumer lands."]]
+        "when a fourth IC consumer lands."]
+       [:li [:strong "Unboxed int-acc reducer fast lane."]
+        " v0.164.0 routes "
+        [:code "(reduce <op> [init] coll)"]
+        " through a shared " [:code "reduce_ctx_t"]
+        " that keeps the accumulator as an unboxed "
+        [:code "long long"]
+        " while the reducer is one of the canonical numeric prims ("
+        [:code "+"] ", " [:code "*"] ", " [:code "-"] ", "
+        [:code "bit-and"] ", " [:code "bit-or"] ", "
+        [:code "bit-xor"]
+        ") and every element so far has been tagged-int with no "
+        "overflow. The first miss boxes the accumulator and falls "
+        "through to the generic "
+        [:code "reduce_step"]
+        " path so the numeric tower stays Clojure-correct. Shared "
+        "across the vec, set, list, and pipeline reducer entry "
+        "points. "
+        [:em "(reduce + vec-100k) -48%; (reduce + set-100k) -49%; "
+             "(reduce + list-100k) -24%; range reduce stays at the "
+             "existing floor."]]
+       [:li [:strong "In-place transient vector mutation."]
+        " v0.165.0 puts each "
+        [:code "(transient ...)"]
+        " on a monotonic 32-bit owner ID, and adds an owner field "
+        "to every vec trie / tail node. "
+        [:code "conj!"] " / " [:code "assoc!"] " / " [:code "pop!"]
+        " on a vector mutate the owner-tagged nodes in place — the "
+        "first edit through a fresh transient clones the touched "
+        "node (and stamps it with the owner); every later edit on "
+        "that node is a single slot write + count bump with no "
+        "allocation. Slot writes route through "
+        [:code "gc_write_barrier"]
+        " so an OLD owner-tagged node that aged across a minor "
+        "during a long batch keeps its remset entry consistent. "
+        [:code "mino_vec_node"]
+        " stayed at 264 bytes; the persistent path's clone size is "
+        "unchanged. "
+        [:em "into-vec-pipeline -74% (589 µs → 152 µs); "
+             "mapv-pipeline -69%; persistent conj/assoc/pop flat."]]
+       [:li [:strong "Builder-pattern compile-time rewrite."]
+        " v0.166.0 recognises the canonical "
+        [:code "(loop [... acc []] (if <t> (recur ... (conj acc x)) "
+                  "acc))"]
+        " shape (and the "
+        [:code "assoc"] " sister form over " [:code "{}"]
+        ", then/else either way) at compile time, and rewrites it "
+        "to "
+        [:code "(persistent! (loop [... acc (transient [])] ...))"]
+        " with " [:code "conj!"] " / " [:code "assoc!"]
+        " in the recur step. The substrate from the previous release "
+        "makes the rewrite pay off — on the wrapper transients it "
+        "was 2.5× slower than the persistent baseline; with owner-"
+        "tagged in-place mutation it's a 3.4× win. "
+        [:em "(loop ... (conj acc i)) N=100k: 92 ms → 27 ms (-71%); "
+             "matches a hand-written transient builder within run-"
+             "to-run noise."]]]
 
       [:h2 "Still open"]
       [:p "Hypotheses worth picking up. Each line is a one-liner; "
@@ -597,25 +653,24 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "to grow new hot ops without taxing the existing case "
         "ladder. Concrete next step: a profile-driven type-feedback "
         "op-rewrite pass."]
-       [:li [:strong "Builder-pattern recur fusion (with real "
-                     "transients)."]
-        " A " [:code "(loop [i 0 acc <coll>] "
-                       "(if <test> (recur ... (conj/assoc acc ...)) "
-                       "acc))"]
-        " shape covers ~40% of surveyed loops. A v0.160.0 "
-        "investigation showed the obvious rewrite — wrap "
-        [:code "acc"] " in a transient at entry, "
-        [:code "persistent!"]
-        " at exit — runs 2.5× slower today because "
-        [:code "mino_conj_bang"]
-        " in the current transient implementation calls "
-        [:code "prim_conj"]
-        " on the inner persistent and stores the new vector back "
-        "into the transient wrapper. The compile-time recognizer is "
-        "ready to ship once "
-        [:code "src/collections/transient.c"]
-        " is rewritten with true in-place tail-buffer mutation and "
-        "owner-tagged trie nodes."]
+       [:li [:strong "Recur-shape fusion expansion."]
+        " " [:code "OP_LOOP_INT_DEC"] " / "
+        [:code "OP_LOOP_INT_DEC_INC"]
+        " covers a single binding shape today. Real-workload "
+        "profiling shows roughly zero loops in the bench matrix or "
+        "test suite hit the fused opcode — the long tail of "
+        "two- and three-binding loops with "
+        [:code "pos?"] " / " [:code "<"] " / " [:code "≤"]
+        " tests is the next coverage frontier."]
+       [:li [:strong "OP_GET_KW_MAP static folding."]
+        " Inside a "
+        [:code "defrecord"]
+        " method body the record type is statically known; the field-"
+        "index lookup that "
+        [:code "OP_GET_KW_MAP"]
+        " resolves at runtime could fold to a constant. The opcode is "
+        "12% of " [:code "protocol_bench"]
+        " dispatch — small but concentrated."]
        [:li [:strong "Fused BigInt arithmetic."]
         " Multi-step BigInt op stays in BigInt form across the "
         "chain, avoiding the re-tag roundtrip per step."]

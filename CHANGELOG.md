@@ -4,6 +4,23 @@ All notable changes to mino-site are documented here.
 
 ## Unreleased
 
+- The Bytecode VM page picks up three new "Recently picked up"
+  entries for the pre-JIT perf sweep (mino v0.164.0 – v0.166.0):
+  the unboxed long-long accumulator that `reduce` over the
+  canonical numeric prims now uses across vec / set / list /
+  pipeline source shapes (reduce-vec-100k -48%, reduce-set-100k
+  -49%), real owner-tagged in-place transient vector mutation
+  (into-vec-pipeline 589 µs → 152 µs, -74%), and the compile-time
+  rewrite that lifts the canonical `(loop ... (conj acc x))`
+  builder into the in-place transient form ((loop ... conj) at
+  N=100k -71%). The Still open section drops the builder-pattern
+  recur-fusion item (shipped) and reframes the dispatch-shape /
+  type-feedback IC items per M3 and M5 findings; recur-shape
+  fusion expansion (the legacy `OP_LOOP_INT_DEC*` covers exactly
+  zero benches today) and `OP_GET_KW_MAP` static folding move up
+  as the next highest-value frontiers. The Performance page
+  banner picks up the cycle's headline deltas alongside the
+  Clojure-aware cycle's.
 - The Bytecode VM page's Recently picked up section now lists the
   six landings from the Clojure-aware perf cycle: a protocol-method
   inline cache (`OP_PROTOCOL_CALL_CACHED` + tail variant), the
