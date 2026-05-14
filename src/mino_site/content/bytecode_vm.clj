@@ -477,18 +477,45 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "after a stable shape is observed — adaptive specialisation "
         "without a JIT. Type-feedback fast lanes for arith on "
         "observed int+int sites would extend the literal-arg "
-        "fast lanes already shipped. A " [:code "OP_TAILCALL_CACHED"]
-        " prototype showed that adding cases to the switch bloats "
-        "the dispatch loop in ways that erase the win; runtime "
-        "rewriting needs the per-handler dispatch shape above "
-        "before the bytecode-level rewrite path can earn its keep."]
-       [:li [:strong "Lazy-seq force fusion."]
+        "fast lanes already shipped, and a runtime "
+        [:code "OP_CALL"] " -> " [:code "OP_CALL_CACHED"]
+        " rewrite would cover closure-bound heads the compiler "
+        "can't statically prove. A first probe in this direction "
+        "added an " [:code "OP_TAILCALL_CACHED"]
+        " variant to test the substantiation; the new opcode itself "
+        "worked but the added switch case bloated the dispatch loop "
+        "in a way that regressed fib-30 by ~7%, even though fib's "
+        "recursive calls are non-tail. The switch dispatcher has "
+        "reached its case-count ceiling: every new opcode hurts the "
+        "compiler's branch placement on the existing hot cases. "
+        "Runtime rewriting needs the dispatch-shape rework above "
+        "first, so the cached family can grow without taxing the "
+        "central switch."]
+       [:li [:strong "Transducer / lazy-seq force fusion."]
         " " [:code "(reduce f init (take n (filter p (map g s))))"]
         " compiled into a single per-element step that fuses the "
-        "four operations without realising intermediates. "
-        "Transducer-shape pattern recognition at compile time, "
-        "with " [:code "->>"] " expansion handled in the same "
-        "pass."]
+        "four operations without realising intermediates. Today "
+        "the pipeline microbench "
+        [:code "(->> (range 1000) (map inc) (filter odd?) "
+                    "(take 100) (reduce + 0))"]
+        " runs at ~85 µs/iter; a fused walker should drop it to "
+        "~10–20 µs (one allocation per chain instead of N). The "
+        "shape of the work: post-macroexpansion "
+        [:code "->>"]
+        " recognition in the compiler, transducer-shape matching "
+        "across the named heads (each with its own 1-arg "
+        "transducer-returning vs 2+-arg sequence-returning "
+        "arity), a fused per-element opcode preserving the "
+        [:code "reduced"]
+        " short-circuit contract, and exception-safe cleanup of "
+        "partially-walked chains. Multi-day; the most natural "
+        "design fuses "
+        [:code "->>"]
+        " to the same C path "
+        [:code "transduce"]
+        " already takes, so user-side "
+        [:code "transduce"]
+        " calls benefit too."]
        [:li [:strong "Fused BigInt arithmetic."]
         " Multi-step BigInt op stays in BigInt form across the "
         "chain, avoiding the re-tag roundtrip per step."]
