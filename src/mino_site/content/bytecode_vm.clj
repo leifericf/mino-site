@@ -406,7 +406,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        "compiler coverage and tightening soundness."]
 
       [:h2 "Recently picked up"]
-      [:p "Three frontiers from earlier drafts of this page have "
+      [:p "Five frontiers from earlier drafts of this page have "
        "shipped and folded into the steady-state VM. The benchmark "
        "deltas below are from the cycle's first-pass landings (all "
        "min-of-five, with the empty-thunk harness floor subtracted)."]
@@ -432,23 +432,29 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "field lookup), and rewrites the " [:code "(:kw coll)"]
         " keyword-as-fn shape to the same fast lane the "
         [:code "(get coll :kw)"] " form already used. "
-        [:em "get-kw-record -93%, kw-fn-record -84%, kw-fn-map -77%."]]]
+        [:em "get-kw-record -93%, kw-fn-record -84%, kw-fn-map -77%."]]
+       [:li [:strong "Inline-cached call sites."]
+        " v0.155.0 fuses the global-symbol head resolution and the "
+        "dispatch into one " [:code "OP_CALL_CACHED"] " opcode that "
+        "re-uses the " [:code "OP_GETGLOBAL_CACHED"]
+        " ic-slot discipline. Dynamic bindings and closure captures "
+        "still shadow even on a hot site; the cached path drops a "
+        "register window slot and one inline-cache lookup per call. "
+        [:em "fib-30 -13%, loop-recur-1M -9%."]]
+       [:li [:strong "Generic get and dissoc fast lanes."]
+        " v0.156.0 opens " [:code "OP_GET_KW_MAP"]
+        " to any hashable key on a map (the keyword guard now only "
+        "fences the record branch), and adds " [:code "OP_DISSOC"]
+        " for the arity-2 " [:code "(dissoc m k)"] " shape. Records, "
+        "sorted-maps, transients, and variadic dissoc keep the "
+        "canonical-prim path. "
+        [:em "get-str-map -81%, dissoc-map -21%."]]]
 
       [:h2 "Still open"]
       [:p "Hypotheses worth picking up. Each line is a one-liner; "
        "the shape of the work and rough payoff are obvious from the "
        "sketch."]
       [:ul
-       [:li [:strong "Call-site monomorphisation."]
-        " Observe a stable callee shape and rewrite "
-        [:code "OP_CALL"] " to the " [:code "_CACHED"]
-        " variant already reserved in the enum. A first attempt at "
-        "the cleaner GET-and-CALL collapse landed and was reverted "
-        "(see v0.154.0 changelog) when an interaction with the "
-        "tree-walker apply path surfaced on the async-conformance "
-        "tests; the next attempt should route apply-bound prims "
-        "through their cons-spine ABI directly, not via the argv "
-        "fast path."]
        [:li [:strong "Computed-goto dispatch."]
         " Labels-as-values + dispatch table on gcc/clang; falls "
         "back to switch on msvc. A prototype showed that Apple "
@@ -458,14 +464,22 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "collapses back to switch shape. " [:code "asm goto"]
         " with an explicit label list is the canonical workaround "
         "but Apple clang miscompiles register-held label addresses "
-        "in that construct. Worth retrying on Linux gcc, or with a "
-        "per-handler tail-call shape that survives the merge."]
+        "in that construct. The right architecture is a per-handler "
+        "tail-call dispatch shape using " [:code "[[clang::musttail]]"]
+        ", where each handler becomes its own function so the "
+        "optimizer cannot merge dispatch sites across functions. "
+        "That refactor is multi-day work and deserves its own "
+        "cycle."]
        [:li [:strong "Profile-guided opcode rewriting."]
         " Hot sites swap generic opcodes for specialised variants "
         "after a stable shape is observed — adaptive specialisation "
         "without a JIT. Type-feedback fast lanes for arith on "
         "observed int+int sites would extend the literal-arg "
-        "fast lanes already shipped."]
+        "fast lanes already shipped. A " [:code "OP_TAILCALL_CACHED"]
+        " prototype showed that adding cases to the switch bloats "
+        "the dispatch loop in ways that erase the win; runtime "
+        "rewriting needs the per-handler dispatch shape above "
+        "before the bytecode-level rewrite path can earn its keep."]
        [:li [:strong "Lazy-seq force fusion."]
         " " [:code "(reduce f init (take n (filter p (map g s))))"]
         " compiled into a single per-element step that fuses the "
