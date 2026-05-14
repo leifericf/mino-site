@@ -455,21 +455,23 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        "the shape of the work and rough payoff are obvious from the "
        "sketch."]
       [:ul
-       [:li [:strong "Computed-goto dispatch."]
-        " Labels-as-values + dispatch table on gcc/clang; falls "
-        "back to switch on msvc. A prototype showed that Apple "
-        "clang at -O2 tail-merges every per-handler "
+       [:li [:strong "Dispatch shape rework."]
+        " Both standard alternatives to the current switch have "
+        "been tried and regressed. Apple clang at -O2 tail-merges "
+        "every per-handler "
         [:code "goto *target"]
-        " into a single dispatch site, so the threaded interpreter "
-        "collapses back to switch shape. " [:code "asm goto"]
+        " into a single dispatch site, collapsing the threaded "
+        "interpreter back to switch shape; "
+        [:code "asm goto"]
         " with an explicit label list is the canonical workaround "
-        "but Apple clang miscompiles register-held label addresses "
-        "in that construct. The right architecture is a per-handler "
-        "tail-call dispatch shape using " [:code "[[clang::musttail]]"]
-        ", where each handler becomes its own function so the "
-        "optimizer cannot merge dispatch sites across functions. "
-        "That refactor is multi-day work and deserves its own "
-        "cycle."]
+        "but Apple clang miscompiles register-held label addresses. "
+        [:code "[[clang::musttail]]"]
+        " per-handler dispatch was tried in the v0.117.0 era and "
+        "regressed too: per-handler prolog/epilog plus locals reload "
+        "beat the stack-growth savings on short bodies. A real fix "
+        "needs either a new compiler optimization or a different "
+        "architecture (e.g., shared-locals threaded dispatch via "
+        "explicit register pinning)."]
        [:li [:strong "Profile-guided opcode rewriting."]
         " Hot sites swap generic opcodes for specialised variants "
         "after a stable shape is observed — adaptive specialisation "
