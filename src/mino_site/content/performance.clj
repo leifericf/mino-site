@@ -25,9 +25,17 @@
        "Linux (WSL2, kernel 6.6) under normal desktop load. Treat them "
        "as directional; different hardware will shift absolute numbers "
        "but the ratios between rows hold. The bc-frontiers cycle "
-       "(v0.152.0 – v0.156.0) landed targeted fast lanes that moved "
-       "the write-side, small-prim, record-access, generic-get, and "
-       "call-site rows by 9–93%; those rows are not yet re-tabled "
+       "(v0.152.0 – v0.157.0) landed targeted fast lanes that moved "
+       "the write-side, small-prim, record-access, generic-get, "
+       "call-site, and transducer-fusion rows by 9–93%; the follow-on "
+       "Clojure-aware cycle (v0.158.0 – v0.163.0) added a protocol-"
+       "method inline cache (proto-mono-area -57%), generalised the "
+       "seq fusion to "
+       [:code "into"] " / " [:code "mapv"] " / " [:code "filterv"]
+       " / " [:code "dorun"]
+       " (-65 to -95%), and inlined canonical-prim stages over a "
+       "chunked-source walk (reduce-pipeline rows -9 to -19% on top "
+       "of the v0.157.0 fusion). Those rows are not yet re-tabled "
        "here. The full bench suite lives in "
        [:a {:href "https://github.com/leifericf/mino-bench/tree/main/benchmarks"}
         "mino-bench/benchmarks/"]

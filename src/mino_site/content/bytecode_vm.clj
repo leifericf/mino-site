@@ -467,7 +467,90 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         [:code "(filter odd? ...)"]
         " stage stays cons-free. "
         [:em "pipeline-sum -77% (93.5 µs → 21.3 µs); pipeline alloc "
-             "count -86%."]]]
+             "count -86%."]]
+       [:li [:strong "Protocol-method inline cache."]
+        " v0.158.0 adds " [:code "OP_PROTOCOL_CALL_CACHED"]
+        " (and a tail-position twin) for monomorphic and small-PIC "
+        "protocol dispatch. The slot pins the dispatch atom at "
+        "compile, the hot path derefs it once, pointer-compares the "
+        "deref'd map and the first-arg type discriminator against "
+        "the cached pair, and on a hit invokes the cached impl "
+        "directly via " [:code "apply_callable_argv"]
+        " — no protocol-dispatch trampoline, no map_get on the hot "
+        "path. The miss path performs one "
+        [:code "map_get_val"] " with a "
+        [:code ":default"] " fallback and refills the IC under "
+        "write barriers. "
+        [:em "proto-mono-area -57% (5.03 µs → 2.14 µs); "
+             "proto-bi-area -50%."]]
+       [:li [:strong "Seq-fusion generalisation."]
+        " v0.159.0 extracts the v0.157.0 walker from "
+        [:code "prim_reduce"]
+        " into a shared " [:code "pipeline_walk"]
+        " and wires it into " [:code "into"] " (vector target), "
+        [:code "mapv"] ", " [:code "filterv"] ", and "
+        [:code "dorun"] ". The same head-shape recognition kicks in "
+        "for every consumer; the lazy cells from "
+        [:code "map"] " / " [:code "filter"] " / " [:code "take"]
+        " stop being allocated regardless of which terminal consumer "
+        "drains the pipeline. "
+        [:em "into-vec-pipeline -70%, mapv-pipeline -65%, "
+             "filterv-pipeline -95%, dorun-pipeline -94%."]]
+       [:li [:strong "Chunked-source walk + canonical-prim stages."]
+        " v0.161.0 adds two combined optimisations to the fused "
+        "walker. When the unwound source is (or forces to) a "
+        [:code "MINO_CHUNKED_CONS"]
+        " the walk iterates the chunk's value array directly "
+        "instead of going through "
+        [:code "seq_iter_val"] " / " [:code "seq_iter_next"]
+        " per element. And when a stage's callable resolves at walk-"
+        "entry to one of the canonical numeric prims ("
+        [:code "inc"] ", " [:code "dec"] ", " [:code "odd?"] ", "
+        [:code "even?"] ", " [:code "pos?"] ", " [:code "neg?"] ", "
+        [:code "zero?"]
+        "), the operation is applied inline on tagged-int elements "
+        "with no " [:code "apply_callable_argv"] " call. "
+        [:em "reduce + map inc (range 1m) -19%; reduce + filter "
+             "odd? (range 1m) -9%."]]
+       [:li [:strong "Hot/cold handler partition."]
+        " v0.162.0 splits the dispatch switch in "
+        [:code "src/eval/bc/vm.c"]
+        " along the op-count profile. The 18 hot ops (the move / "
+        "load-k / cached-get / cached-call / int fast lanes / "
+        "tail-call / return / loop-fused / read-side small-prim / "
+        "assoc family) stay inlined; the long tail (NOP, the "
+        "uncached " [:code "OP_GETGLOBAL"] " / " [:code "OP_CALL"]
+        ", closure build, env push/pop/bind, "
+        [:code "OP_THROW"]
+        " and the dyn / try frames, "
+        [:code "OP_NTH_VEC"] " / "
+        [:code "OP_EMPTY_VEC"] " / " [:code "OP_CONJ_VEC"] " / "
+        [:code "OP_DISSOC"]
+        ") moves to a static " [:code "bc_cold_op"]
+        " helper called from the default arm. The partition leaves "
+        "room to add future hot opcodes without bumping the case "
+        "count back over clang's tipping point that bit "
+        [:code "OP_TAILCALL_CACHED"] " last cycle. "
+        [:em "matrix neutral as a gate; small speedups (5–8%) on "
+             "shapes where the hot ops fit in fewer cache lines "
+             "after the ladder shrinks."]]
+       [:li [:strong "IC consumer consolidation."]
+        " v0.163.0 funnels the three IC-cache consumers ("
+        [:code "OP_GETGLOBAL_CACHED"] ", "
+        [:code "OP_CALL_CACHED"] ", "
+        [:code "OP_PROTOCOL_CALL_CACHED"]
+        ") behind two shared helpers — "
+        [:code "ic_resolve_global"]
+        " carries the dyn / env / cached / resolve cascade and the "
+        "miss-path write-barrier refill; "
+        [:code "ic_resolve_protocol"]
+        " carries the atom-deref / type-disc / cache-check / "
+        "map_get miss-fallback / refill sequence. The IC-slot GC "
+        "walk that used to duplicate across the MINO_FN and "
+        "GC_T_BC_FN walker arms is centralised in one "
+        [:code "gc_mark_bc_ic_slots"]
+        " function. No behavior change; the substantiation pays off "
+        "when a fourth IC consumer lands."]]
 
       [:h2 "Still open"]
       [:p "Hypotheses worth picking up. Each line is a one-liner; "
@@ -487,13 +570,12 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         [:code "[[clang::musttail]]"]
         " per-handler dispatch was tried in the v0.117.0 era and "
         "regressed too: per-handler prolog/epilog plus locals reload "
-        "beat the stack-growth savings on short bodies. A 2026-05 "
-        "half-day spike tested compile-flag and attribute "
-        "workarounds against the current switch dispatcher; the "
-        "switch already lowered to a single jump table with 2 "
-        "indirect-branch sites, so the flags targeting tail-merging "
-        "of separate computed-gotos had no shape to act on. A real "
-        "fix needs either a Linux GCC build (its tail-merging is "
+        "beat the stack-growth savings on short bodies. v0.162.0's "
+        "hot/cold partition mitigated the case-count ceiling that "
+        "had blocked adding new hot ops, so the urgency is lower "
+        "now; the remaining 1–5% real-world win on modern CPUs "
+        "(per a 2026 CPython measurement on M1 and Raptor Lake) "
+        "would need either a Linux GCC build (its tail-merging is "
         "less aggressive) or a different architecture entirely "
         "(shared-locals threaded dispatch via explicit register "
         "pinning, two-tier dispatch, direct-threaded code)."]
@@ -505,17 +587,35 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "fast lanes already shipped, and a runtime "
         [:code "OP_CALL"] " -> " [:code "OP_CALL_CACHED"]
         " rewrite would cover closure-bound heads the compiler "
-        "can't statically prove. A first probe in this direction "
-        "added an " [:code "OP_TAILCALL_CACHED"]
-        " variant to test the substantiation; the new opcode itself "
-        "worked but the added switch case bloated the dispatch loop "
-        "in a way that regressed fib-30 by ~7%, even though fib's "
-        "recursive calls are non-tail. The switch dispatcher has "
-        "reached its case-count ceiling: every new opcode hurts the "
-        "compiler's branch placement on the existing hot cases. "
-        "Runtime rewriting needs the dispatch-shape rework above "
-        "first, so the cached family can grow without taxing the "
-        "central switch."]
+        "can't statically prove. v0.163.0 consolidated the three "
+        "existing IC consumers behind shared resolve helpers and a "
+        "unified GC-scan; the framework is now ready for a fourth "
+        "consumer to plug in. The earlier "
+        [:code "OP_TAILCALL_CACHED"]
+        " probe that regressed fib-30 motivated the v0.162.0 "
+        "hot/cold partition, which gives the dispatch switch room "
+        "to grow new hot ops without taxing the existing case "
+        "ladder. Concrete next step: a profile-driven type-feedback "
+        "op-rewrite pass."]
+       [:li [:strong "Builder-pattern recur fusion (with real "
+                     "transients)."]
+        " A " [:code "(loop [i 0 acc <coll>] "
+                       "(if <test> (recur ... (conj/assoc acc ...)) "
+                       "acc))"]
+        " shape covers ~40% of surveyed loops. A v0.160.0 "
+        "investigation showed the obvious rewrite — wrap "
+        [:code "acc"] " in a transient at entry, "
+        [:code "persistent!"]
+        " at exit — runs 2.5× slower today because "
+        [:code "mino_conj_bang"]
+        " in the current transient implementation calls "
+        [:code "prim_conj"]
+        " on the inner persistent and stores the new vector back "
+        "into the transient wrapper. The compile-time recognizer is "
+        "ready to ship once "
+        [:code "src/collections/transient.c"]
+        " is rewritten with true in-place tail-buffer mutation and "
+        "owner-tagged trie nodes."]
        [:li [:strong "Fused BigInt arithmetic."]
         " Multi-step BigInt op stays in BigInt form across the "
         "chain, avoiding the re-tag roundtrip per step."]

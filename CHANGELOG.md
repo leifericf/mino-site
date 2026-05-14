@@ -4,6 +4,23 @@ All notable changes to mino-site are documented here.
 
 ## Unreleased
 
+- The Bytecode VM page's Recently picked up section now lists the
+  six landings from the Clojure-aware perf cycle: a protocol-method
+  inline cache (`OP_PROTOCOL_CALL_CACHED` + tail variant), the
+  v0.157.0 reduce-pipeline fusion generalised to `into` / `mapv` /
+  `filterv` / `dorun`, a chunked-source fast walk with canonical-
+  prim stage recognition, the hot/cold dispatch-switch partition,
+  and the IC-consumer consolidation. The Still open section now
+  carries an explicit builder-pattern recur-fusion item with the
+  v0.160.0 investigation's finding linked, softens the dispatch-
+  shape rework item now that v0.162.0 mitigated the case-count
+  ceiling, and reframes profile-guided opcode rewriting as the
+  natural next step on top of the IC framework that v0.163.0
+  substantiated. The Performance page banner picks up the cycle's
+  headline deltas: proto-mono-area -57%, filterv-pipeline -95%,
+  dorun-pipeline -94%, mapv-pipeline -65%, into-vec-pipeline -70%,
+  reduce-pipeline rows -9 to -19%.
+
 - Submodule pointer bumped to mino v0.157.1. Picks up the
   bc-frontiers cycle (v0.152.0 through v0.157.1, six minor
   releases plus a patch): write-side fast-lane opcodes
