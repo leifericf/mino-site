@@ -4,6 +4,28 @@ All notable changes to mino-site are documented here.
 
 ## Unreleased
 
+- Submodule pointer bumped to mino v0.157.1. Picks up the
+  bc-frontiers cycle (v0.152.0 through v0.157.1, six minor
+  releases plus a patch): write-side fast-lane opcodes
+  (`OP_CONJ_VEC`, `OP_ASSOC`), small-prim inlining for vector
+  operands (`OP_FIRST_VEC` / `OP_COUNT_VEC` / `OP_EMPTY_VEC`),
+  record fast path plus `(:kw coll)` keyword-as-fn inlining inside
+  `OP_GET_KW_MAP`, inline-cached call sites (`OP_CALL_CACHED`
+  fuses global-symbol head resolution and dispatch), generic get
+  + arity-2 dissoc fast lanes, transducer fusion in `prim_reduce`
+  via thunk-pointer inspection on `map` / `filter` / `take`
+  chains, and the `MINO_BC_OP_COUNTS=1` build flag for VM perf
+  work. Headline benchmark deltas: pipeline-sum 93 µs → 21 µs
+  (-77%), get-str-map -81%, dissoc-map -21%, get-kw-record -93%,
+  fib-30 -13%, conj-vec -34%, count-vec -94%.
+
+- Bytecode VM page's "Recently picked up" section now lists all
+  six shipped frontiers with their benchmark deltas; "Still open"
+  sharpened on the dispatch-shape rework with the 2026-05
+  trivial-fix spike outcome (compile-flag and attribute
+  workarounds tested, none fired on the current switch
+  dispatcher).
+
 - Submodule pointer bumped to mino v0.151.1. Picks up the v0.150.0
   and v0.151.0 embedding-API revamp (opaque `struct mino_val`,
   single `mino_install(S, env, caps)` bitmask entry point, full
