@@ -406,10 +406,10 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        "compiler coverage and tightening soundness."]
 
       [:h2 "Recently picked up"]
-      [:p "Five frontiers from earlier drafts of this page have "
+      [:p "Six frontiers from earlier drafts of this page have "
        "shipped and folded into the steady-state VM. The benchmark "
        "deltas below are from the cycle's first-pass landings (all "
-       "min-of-five, with the empty-thunk harness floor subtracted)."]
+       "median-of-five, with the empty-thunk harness floor subtracted)."]
       [:ul
        [:li [:strong "Write-path fast lanes."]
         " " [:code "OP_CONJ_VEC"] " for arity-2 "
@@ -448,7 +448,26 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         " for the arity-2 " [:code "(dissoc m k)"] " shape. Records, "
         "sorted-maps, transients, and variadic dissoc keep the "
         "canonical-prim path. "
-        [:em "get-str-map -81%, dissoc-map -21%."]]]
+        [:em "get-str-map -81%, dissoc-map -21%."]]
+       [:li [:strong "Transducer fusion for reduce pipelines."]
+        " v0.157.0 recognises a "
+        [:code "(reduce f init (->> src (map ...) (filter ...) "
+                                   "(take ...)))"]
+        " chain at the moment "
+        [:code "prim_reduce"]
+        " runs: the outer LAZY cell's "
+        [:code "c_thunk"]
+        " pointer identifies the stage kind, the chain unwinds by "
+        "walking the thunk pointers, and the bottom source walks "
+        "once through a fused element-by-element loop with the "
+        "stages applied inline. Lazy-seq cells from "
+        [:code "map"] " / " [:code "filter"] " / " [:code "take"]
+        " stop being allocated. The five common numeric predicates "
+        "got argv-ABI siblings in the same commit so a "
+        [:code "(filter odd? ...)"]
+        " stage stays cons-free. "
+        [:em "pipeline-sum -77% (93.5 µs → 21.3 µs); pipeline alloc "
+             "count -86%."]]]
 
       [:h2 "Still open"]
       [:p "Hypotheses worth picking up. Each line is a one-liner; "
@@ -468,10 +487,16 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         [:code "[[clang::musttail]]"]
         " per-handler dispatch was tried in the v0.117.0 era and "
         "regressed too: per-handler prolog/epilog plus locals reload "
-        "beat the stack-growth savings on short bodies. A real fix "
-        "needs either a new compiler optimization or a different "
-        "architecture (e.g., shared-locals threaded dispatch via "
-        "explicit register pinning)."]
+        "beat the stack-growth savings on short bodies. A 2026-05 "
+        "half-day spike tested compile-flag and attribute "
+        "workarounds against the current switch dispatcher; the "
+        "switch already lowered to a single jump table with 2 "
+        "indirect-branch sites, so the flags targeting tail-merging "
+        "of separate computed-gotos had no shape to act on. A real "
+        "fix needs either a Linux GCC build (its tail-merging is "
+        "less aggressive) or a different architecture entirely "
+        "(shared-locals threaded dispatch via explicit register "
+        "pinning, two-tier dispatch, direct-threaded code)."]
        [:li [:strong "Profile-guided opcode rewriting."]
         " Hot sites swap generic opcodes for specialised variants "
         "after a stable shape is observed — adaptive specialisation "
@@ -491,31 +516,6 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "Runtime rewriting needs the dispatch-shape rework above "
         "first, so the cached family can grow without taxing the "
         "central switch."]
-       [:li [:strong "Transducer / lazy-seq force fusion."]
-        " " [:code "(reduce f init (take n (filter p (map g s))))"]
-        " compiled into a single per-element step that fuses the "
-        "four operations without realising intermediates. Today "
-        "the pipeline microbench "
-        [:code "(->> (range 1000) (map inc) (filter odd?) "
-                    "(take 100) (reduce + 0))"]
-        " runs at ~85 µs/iter; a fused walker should drop it to "
-        "~10–20 µs (one allocation per chain instead of N). The "
-        "shape of the work: post-macroexpansion "
-        [:code "->>"]
-        " recognition in the compiler, transducer-shape matching "
-        "across the named heads (each with its own 1-arg "
-        "transducer-returning vs 2+-arg sequence-returning "
-        "arity), a fused per-element opcode preserving the "
-        [:code "reduced"]
-        " short-circuit contract, and exception-safe cleanup of "
-        "partially-walked chains. Multi-day; the most natural "
-        "design fuses "
-        [:code "->>"]
-        " to the same C path "
-        [:code "transduce"]
-        " already takes, so user-side "
-        [:code "transduce"]
-        " calls benefit too."]
        [:li [:strong "Fused BigInt arithmetic."]
         " Multi-step BigInt op stays in BigInt form across the "
         "chain, avoiding the re-tag roundtrip per step."]
