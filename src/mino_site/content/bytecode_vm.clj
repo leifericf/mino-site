@@ -322,15 +322,19 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "NaN-boxing (better for arbitrary-precision ints), by treating "
         "persistent vectors / HAMTs / lists / sets as distinct heap "
         "shapes rather than collapsing them into Lua's tables, and "
-        "by having no JIT."]
+        "by layering a copy-and-patch JIT on top of the interpreter "
+        "rather than committing to a single execution mode (see CPJIT "
+        "below)."]
        [:li [:strong "Janet."]
-        " Small, embeddable, register-based, no JIT, ship the "
-        "bytecode interpreter and call it done — matches mino's "
-        "ethos closely. mino differs by being a Clojure dialect: "
+        " Small, embeddable, register-based, ship the bytecode "
+        "interpreter and call it done — matches mino's ethos for the "
+        "core path. mino differs by being a Clojure dialect: "
         "persistent immutable values are the default, lazy sequences "
         "are first-class, STM and agents are in the core surface, "
         "and a per-state recursive mutex serialises script execution "
-        "rather than Janet's fiber-cooperative model."]
+        "rather than Janet's fiber-cooperative model. mino also has "
+        "an optional copy-and-patch JIT on top of the bytecode VM; "
+        "Janet does not."]
        [:li [:strong "BEAM (Erlang / Elixir)."]
         " Per-process isolation, message-passing-only communication, "
         "and a preemptive scheduler are a fundamentally different "
@@ -379,31 +383,75 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "dispatch against the snapshot; on a redefinition the bc "
         "invalidates and recompiles."]]
 
-      [:h2 "Why no JIT yet"]
-      [:p "A JIT is plausible — LuaJIT-style tracing or BEAM-style "
-       "native compilation are both well-understood directions — but "
-       "mino does not have one. The cost matters:"]
-      [:ul
-       [:li "A code-gen backend (DynASM, LLVM, or a bespoke "
-        "assembler) plus the platform matrix that goes with it. mino "
-        "currently builds as one self-contained C99 compile with no "
-        "runtime page-protection ceremony, no signal-handler hooks, "
-        "and no per-platform EH wiring. A JIT changes all three."]
-       [:li "Every fast lane the bc compiler emits would need a "
-        "JIT-time mirror with the same canonical-prim and "
-        [:code "ic_gen"]
-        " checks. The soundness surface grows against exactly the "
-        "uncertainty the section above is already wrestling with."]
-       [:li "Target workloads — config evaluation, rules engines, "
-        "scripting consoles, plugins, embedded automation — do not "
-        "need it. Hot inner loops already run at near-native speed "
-        "through fused-loop opcodes; the bottlenecks left are "
-        "allocation and dispatch a JIT would also handle "
-        "conservatively."]]
-      [:p "If a real production workload eventually demands hot-loop "
-       "throughput beyond what fused bytecode delivers, JIT becomes "
-       "worth doing. Until then, budget is better spent on widening "
-       "compiler coverage and tightening soundness."]
+      [:h2 "The CPJIT layer"]
+      [:p "The CPJIT cycle (v0.178.0 – v0.240.0) added a copy-and-patch "
+       "JIT on top of the bytecode VM. The design avoids every cost "
+       "that previously kept JIT off the table: there is no code-gen "
+       "backend, no runtime assembler, no signal-handler hooks, and "
+       "no per-platform EH wiring."]
+      [:p "Copy-and-patch works by pre-compiling each bytecode "
+       "instruction's body as a short C function (a "
+       [:em "stencil"] "), then asking the host C compiler to emit "
+       "an object file per stencil. A small extractor "
+       "(" [:code "tools/stencil-extract"] ", roughly 1,500 lines "
+       "of C99 spread across per-format modules for Mach-O / ELF / "
+       "PE-COFF) walks the object file, lifts the function body "
+       "bytes out of the "
+       [:code ".text"] " / " [:code "__text"] " section, and "
+       "records every relocation that has to be patched at runtime "
+       "(register operand slots, immediate constants, calls to "
+       "extern helpers). The output is a byte table the runtime "
+       "consumes."]
+      [:p "At compile time the JIT walks the bytecode, copies each "
+       "stencil's bytes into a writable / executable region, patches "
+       "the operand slots with the current instruction's actual "
+       "register and constant indices, and links neighbouring "
+       "stencils into a "
+       [:code "musttail"] " chain so the host compiler's tail-call "
+       "guarantee turns the chain into a single threaded loop. "
+       "There is no inline cache or specialiser inside the JIT — "
+       "the IC machinery lives in the bytecode body and the JIT "
+       "preserves it verbatim."]
+      [:p "Five host arches ship full byte tables today: ARM64 "
+       "Darwin, ARM64 Linux, x86_64 Linux, x86_64 Darwin, "
+       "and x86_64 Windows (PE-COFF + "
+       [:code "VirtualAlloc"] " for the writable / executable "
+       "region). The runtime auto-detects the host and enables "
+       "the JIT; per-state runtime control lives behind "
+       [:code "mino_state_set_jit_mode"]
+       " (AUTO / OFF / ON) and "
+       [:code "mino_state_set_jit_hot_threshold"]
+       " (call count before a function compiles); the CLI exposes "
+       "both as " [:code "--jit=auto|off|on"] " and "
+       [:code "--jit-threshold=N"] "."]
+      [:p "An embedder that prefers a smaller binary over peak "
+       "throughput can link "
+       [:code "mino-lean"] " instead — the same source compiled "
+       "with the JIT pipeline gated out by "
+       [:code "-DMINO_CPJIT=0"] ". CI builds both binaries every "
+       "push and asserts byte-identical stdout across "
+       [:code "./mino --jit=auto"] ", "
+       [:code "--jit=on"] ", "
+       [:code "--jit=off"] ", and "
+       [:code "./mino-lean"] " (4-way parity)."]
+      [:p [:strong "What the JIT covers today."]
+       " Move, load-constant, fused load-then-return, return-arg / "
+       "return-immediate, the canonical integer arithmetic and "
+       "comparison ops (add / sub / mul / lt / le / gt / ge / eq, "
+       "both register and constant operand variants), inc / dec, "
+       "zero-test, the loop-with-int-bound hot lane. Functions "
+       "that mix unsupported bytecodes fall back to the interpreter "
+       "transparently. As the bytecode VM grows, the stencil set "
+       "follows."]
+      [:p [:strong "What the JIT does not do."]
+       " Type-feedback specialisation; SSA-style optimisation; "
+       "register allocation across stencils; deoptimisation. The "
+       "stencil is bytecode-identical to what the interpreter "
+       "runs — just stitched together with the dispatch loop "
+       "elided. The soundness model is therefore the same as the "
+       "interpreter's: if " [:code "--jit=on"] " and "
+       [:code "--jit=off"] " observably diverge, the JIT is the "
+       "bug, not the program."]
 
       [:h2 "Recently picked up"]
       [:p "Six frontiers from earlier drafts of this page have "

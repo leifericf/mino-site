@@ -42,8 +42,18 @@
        "transient vector mutation (into-vec-pipeline -74%, mapv-"
        "pipeline -69%), and rewrites the persistent-builder loop "
        "shape at compile time to use the new in-place transients "
-       "((loop ... (conj acc i)) at N=100k -71%). Those rows are not "
-       "yet re-tabled here. The full bench suite lives in "
+       "((loop ... (conj acc i)) at N=100k -71%); the CPJIT cycle "
+       "(v0.178.0 – v0.240.0) added a copy-and-patch runtime JIT, "
+       "the dual-binary "
+       [:code "mino"] " / " [:code "mino-lean"] " split, runtime "
+       "JIT modes ("
+       [:code "--jit=auto|on|off"] "), and end-to-end portability "
+       "across five host arches (ARM64 Darwin / Linux, x86_64 "
+       "Linux / Darwin / Windows); the GC nursery bump in v0.250.0 "
+       "(1 MiB → 4 MiB default) cut total GC wall-time by 35–60% "
+       "across realistic_bench rows (1.14–1.42x speedup) without "
+       "raising worst-case minor-GC pause. Those later rows are "
+       "not yet re-tabled here. The full bench suite lives in "
        [:a {:href "https://github.com/leifericf/mino-bench/tree/main/benchmarks"}
         "mino-bench/benchmarks/"]
        " and the in-process / cold-start / footprint harnesses live in "
@@ -429,6 +439,31 @@
        "interactive latency on a general workload; embedders with "
        "throughput-dominated batches or tighter pause budgets can "
        "shift the tradeoff without rebuilding."]
+      [:p "The default nursery size rose from 1 MiB to 4 MiB in "
+       "v0.250.0 after a measured pass over "
+       [:a {:href "https://github.com/leifericf/mino-bench/blob/main/benchmarks/realistic_bench.clj"}
+        "realistic_bench"]
+       ". Allocation-heavy workloads (bump-int-map, nested-vec, "
+       "lazy-range realization) gained 1.14–1.42x with no measurable "
+       "regression in worst-case minor-GC pause — the larger nursery "
+       "collects more bytes per cycle so total GC wall time falls "
+       "even though each minor pass sweeps more. Each VM state holds "
+       "3 extra MiB of young-gen residency before the first major "
+       "GC; embedders running many concurrent VM states under tight "
+       "memory budgets override via "
+       [:code "MINO_GC_NURSERY_BYTES"] " or "
+       [:code "mino_gc_set_param(S, MINO_GC_NURSERY_BYTES, n)"] "."]
+      [:p [:strong "realistic_bench (v0.249 vs v0.250):"]]
+      [:table
+       [:thead
+        [:tr [:th "Row"] [:th "1 MiB (v0.249)"] [:th "4 MiB (v0.250)"] [:th "Speedup"]]]
+       [:tbody
+        [:tr [:td "build 5k int-map and sum"]   [:td "12.72 ms"] [:td "11.18 ms"] [:td "1.14x"]]
+        [:tr [:td "bump 5k int-map values"]     [:td "22.92 ms"] [:td "16.12 ms"] [:td "1.42x"]]
+        [:tr [:td "map/filter/map/reduce 50k"]  [:td " 0.77 ms"] [:td " 0.68 ms"] [:td "1.13x"]]
+        [:tr [:td "nested vectors 500×100"]     [:td "23.00 ms"] [:td "16.92 ms"] [:td "1.36x"]]
+        [:tr [:td "realize 10k lazy range"]     [:td " 7.82 ms"] [:td " 5.79 ms"] [:td "1.35x"]]
+        [:tr [:td "fibonacci(25)"]              [:td " 7.83 ms"] [:td " 6.43 ms"] [:td "1.22x"]]]]
 
       [:h2 "Where the time goes"]
       [:p "The cost centers in order of impact:"]

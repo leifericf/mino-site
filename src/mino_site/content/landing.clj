@@ -139,8 +139,13 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
          [:strong "Drop into any host with C FFI"]
          [:p "C, C++, Rust, Go, Java, .NET, Swift, Zig, and beyond. "
           "Link the library, create a runtime, evaluate scripts. "
-          "No external runtime, no JIT, no daemon. The host owns the "
-          "process and calls in when it wants the script to run."]]
+          "No external runtime, no daemon. An in-process "
+          "copy-and-patch JIT speeds hot functions on every "
+          "supported host arch and can be switched off per state; "
+          "the parallel " [:code "mino-lean"] " build ships the "
+          "interpreter only when a smaller binary is the priority. "
+          "The host owns the process and calls in when it wants "
+          "the script to run."]]
         [:div.use-case
          [:strong "Isolated runtimes with explicit message-passing"]
          [:p "Each runtime is a failure domain with its own heap and "

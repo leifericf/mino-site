@@ -17,18 +17,32 @@
        "testing happens."]
 
       [:h2 "Continuously tested"]
-      [:p "Every commit runs the full test suite on three "
-       "GitHub-hosted runners:"]
+      [:p "Every push runs build + test suite + release-gate (where "
+       "applicable) on four pinned GitHub-hosted runners covering "
+       "every supported host architecture:"]
       [:table
        [:thead
-        [:tr [:th "Platform"] [:th "Runner image"] [:th "Compiler"]]]
+        [:tr [:th "Platform"] [:th "Runner image"] [:th "Compiler"] [:th "Release gate"]]]
        [:tbody
-        [:tr [:td "Linux"]   [:td [:code "ubuntu-latest"]]  [:td "system " [:code "cc"] " (GCC)"]]
-        [:tr [:td "macOS"]   [:td [:code "macos-latest"]]   [:td "system " [:code "cc"] " (Apple Clang)"]]
-        [:tr [:td "Windows"] [:td [:code "windows-latest"]] [:td "MinGW-w64 " [:code "gcc"]]]]]
-      [:p "GitHub refreshes the " [:code "*-latest"] " images as new "
-       "OS versions stabilize. At the time of writing these resolve "
-       "to Ubuntu 24.04, macOS 14, and Windows Server 2022."]
+        [:tr [:td "x86_64 Linux"] [:td [:code "ubuntu-24.04"]]    [:td "system " [:code "cc"] " (GCC)"]    [:td "yes"]]
+        [:tr [:td "ARM64 Linux"]  [:td [:code "ubuntu-24.04-arm"]] [:td "system " [:code "cc"] " (GCC)"]    [:td "yes"]]
+        [:tr [:td "ARM64 Darwin"] [:td [:code "macos-14"]]         [:td "system " [:code "cc"] " (Apple Clang)"] [:td "yes"]]
+        [:tr [:td "x86_64 Windows"] [:td [:code "windows-2022"]]   [:td "MinGW-w64 " [:code "gcc"]]         [:td "smoke only"]]]]
+      [:p "Windows skips the composite release-gate because the "
+       "ASan step relies on a libsanitizer that MinGW does not "
+       "ship; the smoke build + test suite still gate every push "
+       "on that runner. A separate "
+       [:code "cross-compile"] " job runs on macos-14 every push "
+       "and verifies that the committed CPJIT stencil byte tables "
+       "for every supported target (ARM64 Linux, x86_64 Linux, "
+       "x86_64 Darwin, x86_64 Windows) regenerate identically — "
+       "this is the verification floor for x86_64 Darwin since "
+       "GitHub has been retiring Intel Mac runners."]
+      [:p "A nightly workflow (04:00 UTC daily) re-runs the "
+       "release-gate plus extended suites (GC stress, fault "
+       "injection, embedding stress) on the three non-Windows "
+       "runners. Toolchain drift surfaces from the cron tick "
+       "instead of waiting for the next PR to trip on it."]
 
       [:h2 "Language and library floors"]
       [:ul
@@ -73,6 +87,36 @@
        "for mino. If you build with MSVC, pass " [:code "/std:c11"]
        " (or later) and report build or runtime issues against the "
        "current release."]
+
+      [:h2 "JIT support per host"]
+      [:p "The copy-and-patch JIT (CPJIT) ships byte tables for "
+       "every supported host arch. The full "
+       [:code "mino"] " binary auto-detects the host and enables "
+       "the JIT; the parallel "
+       [:code "mino-lean"] " binary is the same build with the JIT "
+       "pipeline compiled out — useful when a host has no executable "
+       "memory primitives, or when a smaller binary is more valuable "
+       "than peak throughput."]
+      [:table
+       [:thead
+        [:tr [:th "Host"] [:th "Format"] [:th "CPJIT byte tables"]]]
+       [:tbody
+        [:tr [:td "ARM64 Darwin"]  [:td "Mach-O 64"] [:td "yes (dev host; release-gate every push)"]]
+        [:tr [:td "ARM64 Linux"]   [:td "ELF64"]    [:td "yes (release-gate every push)"]]
+        [:tr [:td "x86_64 Linux"]  [:td "ELF64"]    [:td "yes (release-gate every push)"]]
+        [:tr [:td "x86_64 Darwin"] [:td "Mach-O 64"] [:td "yes (cross-compile parity every push)"]]
+        [:tr [:td "x86_64 Windows"][:td "PE/COFF"]  [:td "yes (smoke build every push)"]]]]
+      [:p "Per-state runtime control lives behind "
+       [:code "mino_state_set_jit_mode"]
+       " (AUTO / OFF / ON) and "
+       [:code "mino_state_set_jit_hot_threshold"]
+       " (call-count before the JIT compiles a function); the CLI "
+       "exposes both as "
+       [:code "--jit=auto|off|on"] " and "
+       [:code "--jit-threshold=N"] ". Capability discovery returns a "
+       [:code "mino_jit_capability_t"] " struct documenting "
+       "{available, mode, threshold, host_arch, host_os} so an "
+       "embedder can size the host's tuning at startup."]
 
       [:h2 "Out of scope"]
       [:ul
