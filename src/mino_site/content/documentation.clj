@@ -130,6 +130,14 @@
          "extract / generate / build / smoke / parity green, and an "
          "on/off A/B against realistic_bench."]]
 
+       [:a.card {:href "/documentation/jit-status/"}
+        [:div.card-title "JIT status"]
+        [:div.card-desc
+         "Feature-complete declaration for the CPJIT layer: stencil "
+         "registry, dual-binary build, four-way parity, embed API "
+         "surface, and the perf thresholds for the runtime track "
+         "that follows."]]
+
        [:a.card {:href "/documentation/garbage-collection/"}
         [:div.card-title "Garbage Collection"]
         [:div.card-desc

@@ -29,6 +29,7 @@
     [mino-site.content.performance :as performance]
     [mino-site.content.bytecode-vm :as bytecode-vm]
     [mino-site.content.jit-matrix :as jit-matrix]
+    [mino-site.content.jit-status :as jit-status]
     [mino-site.content.from-clojure :as from-clojure]
     [mino-site.content.compatibility-matrix :as compatibility-matrix]
     [mino-site.content.intentional-divergences :as intentional-divergences]
@@ -186,6 +187,13 @@
                           :description "Per-host CPJIT verification matrix for mino: extract, generate, build, smoke, parity. The verification posture for each cell plus runtime-control APIs and an on/off A/B against realistic_bench."
                           :active-page :documentation}
          (jit-matrix/jit-matrix-page)))
+
+     "/documentation/jit-status/index.html"
+     (fn [ctx]
+       (render/html-page {:title "JIT status"
+                          :description "Feature-complete declaration for the mino CPJIT layer: 39 stencils, five host arches, dual-binary build, four-way parity, embed API stability, and the perf thresholds for the runtime-perf track that follows."
+                          :active-page :documentation}
+         (jit-status/jit-status-page)))
 
      "/documentation/platforms/index.html"
      (fn [ctx]
