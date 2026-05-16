@@ -123,6 +123,13 @@
          "loops, the soundness discipline, and how mino's VM "
          "compares to Lua, Janet, and BEAM."]]
 
+       [:a.card {:href "/documentation/jit-matrix/"}
+        [:div.card-title "JIT support matrix"]
+        [:div.card-desc
+         "Per-host CPJIT verification posture: which targets have "
+         "extract / generate / build / smoke / parity green, and an "
+         "on/off A/B against realistic_bench."]]
+
        [:a.card {:href "/documentation/garbage-collection/"}
         [:div.card-title "Garbage Collection"]
         [:div.card-desc

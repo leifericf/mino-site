@@ -28,6 +28,7 @@
     [mino-site.content.platforms :as platforms]
     [mino-site.content.performance :as performance]
     [mino-site.content.bytecode-vm :as bytecode-vm]
+    [mino-site.content.jit-matrix :as jit-matrix]
     [mino-site.content.from-clojure :as from-clojure]
     [mino-site.content.compatibility-matrix :as compatibility-matrix]
     [mino-site.content.intentional-divergences :as intentional-divergences]
@@ -178,6 +179,13 @@
                           :description "How mino's register-based bytecode VM compiles function bodies, what its opcodes do, the soundness discipline behind compile-time folds, and where it sits relative to Lua, Janet, and BEAM."
                           :active-page :documentation}
          (bytecode-vm/bytecode-vm-page)))
+
+     "/documentation/jit-matrix/index.html"
+     (fn [ctx]
+       (render/html-page {:title "JIT support matrix"
+                          :description "Per-host CPJIT verification matrix for mino: extract, generate, build, smoke, parity. The verification posture for each cell plus runtime-control APIs and an on/off A/B against realistic_bench."
+                          :active-page :documentation}
+         (jit-matrix/jit-matrix-page)))
 
      "/documentation/platforms/index.html"
      (fn [ctx]
