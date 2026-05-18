@@ -285,7 +285,45 @@ mino_jit_capability_t mino_state_jit_capability(const mino_state_t *S);"]]
        [:code "ok-with-deopt"] " counts so the reader can tell "
        "which blockers side-exit picked up."]
 
-      [:h2 "JIT on/off A/B against realistic_bench"]
+      [:h2 "Where the JIT shines: tight compute"]
+      [:p "Loop kernels and recursive compute where the JIT's "
+       "stencils cover the inner cycle end-to-end. These are the "
+       "workloads the copy-and-patch substrate was designed for: "
+       "no allocation per iteration, no transducer machinery, just "
+       "fused tagged-int arithmetic and inline-cached call "
+       "dispatch. Median of three runs each on Apple Silicon "
+       "(arm64-darwin) against mino v0.323.0."]
+      [:table
+       [:thead
+        [:tr [:th "Workload"]
+             [:th "JIT off"]
+             [:th "JIT on"]
+             [:th "Speedup"]]]
+       [:tbody
+        [:tr [:td [:code "(dec-only 10M)"]
+                  " — counted-down loop"]
+             [:td "30.46 ms"] [:td "15.20 ms"] [:td "2.00x"]]
+        [:tr [:td [:code "(lt-only 10M)"]
+                  " — counted-up loop"]
+             [:td "30.84 ms"] [:td "17.15 ms"] [:td "1.80x"]]
+        [:tr [:td [:code "(sum-to 1M)"]
+                  " — counter + accumulator"]
+             [:td "19.41 ms"] [:td "3.01 ms"] [:td "6.46x"]]
+        [:tr [:td [:code "(fib 30)"]
+                  " — recursive compute"]
+             [:td "107.15 ms"] [:td "53.34 ms"] [:td "2.01x"]]]]
+      [:p "The " [:code "sum-to"]
+       " row is the strongest case in current shapes: the JIT "
+       "covers both " [:code "(< i n)"] " and " [:code "(+ acc i)"]
+       " inline (fused " [:code "OP_LOOP_INT_LT_INC"]
+       " stencil), eliminating the tagged-int dispatch overhead "
+       "on both the counter and the accumulator. The other rows "
+       "halve roughly because the JIT covers either the loop "
+       "step or the recursion path, but the function-call layer "
+       "still goes through the interpreter dispatcher for the "
+       "recursive branch."]
+
+      [:h2 "Where the JIT does not shine: alloc / GC pressure"]
       [:p "Median of three runs per cell, captured on Apple Silicon "
        "(arm64-darwin) against mino v0.323.0. All numbers in ms/op "
        "except the sub-ms row in µs/op."]

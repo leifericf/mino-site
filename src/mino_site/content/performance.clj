@@ -75,44 +75,59 @@
        (src-link "tests/min_embed.c")
        (src-link "tests/min_embed_floor.c")]
       [:p "Three binary footprints worth knowing about — the Floor "
-       "tier that an embedder commits to, the Standard tier with the "
+       "tier that an embedder commits to, the Sandbox tier with the "
        "canonical Clojure surface, and the Standalone ceiling that "
        "ships from Homebrew. All linked with "
        [:code "-ffunction-sections -Wl,--gc-sections"]
-       " so unreferenced subsystems drop out at link time, and "
+       " (Mach-O: " [:code "-Wl,-dead_strip"]
+       ") so unreferenced subsystems drop out at link time, and "
        "stripped with " [:code "strip --strip-all"] "."]
+      [:p "Each tier ships in two flavours: the JIT-free build "
+       "(matches the parallel " [:code "mino-lean"] " binary; embed "
+       "with " [:code "MINO_CPJIT"] " undefined) and the JIT-included "
+       "build (the default Homebrew bottle). Both columns are "
+       "stripped, dead-section-eliminated builds against the same "
+       "C source tree."]
       [:table
        [:thead
-        [:tr [:th "Build"] [:th "Stripped size"] [:th "What's in it"]]]
+        [:tr [:th "Build"] [:th "No JIT"] [:th "+ JIT"] [:th "JIT cost"]
+         [:th "What's in it"]]]
        [:tbody
         [:tr [:td "Floor (" [:code "install_minimal"] " only)"]
-             [:td "~601 KB"]
+             [:td "~601 KB"] [:td "~651 KB"] [:td "+50 KB (8%)"]
              [:td [:code "mino_state_new"] " + "
                   [:code "mino_install_minimal"] " + "
                   [:code "mino_eval_string"] ". Reader, evaluator, GC, "
                   "persistent collections, numeric ops, foundational "
                   "macros. No " [:code "core.clj"] " evaluation, no "
                   "regex / bignum / multimethods / protocols / "
-                  "transducers, no I/O. Capability-gated names like "
-                  [:code "re-find"] " or " [:code "slurp"]
-                  " raise the MNS002 capability-disabled diagnostic if "
-                  "user code references them."]]
+                  "transducers, no I/O."]]
         [:tr [:td "Sandbox (" [:code "install_sandbox"] ")"]
-             [:td "~909 KB"]
+             [:td "~909 KB"] [:td "~943 KB"] [:td "+34 KB (4%)"]
              [:td "Floor plus regex, bignum, multimethods, protocols, "
                   "transducers, and the safe bundled libs — every name "
                   "a Clojure scripter expects. Still no I/O, FS, "
                   "processes, STM, agents, async."]]
         [:tr [:td "Standalone (" [:code "install_all"] " + REPL)"]
-             [:td "~996 KB"]
+             [:td "~962 KB"] [:td "~996 KB"] [:td "+34 KB (4%)"]
              [:td "Sandbox plus I/O, FS, " [:code "subprocess"]
                   ", STM, agents, async, host-interop, all bundled "
                   [:code "clojure.*"]
                   " namespaces, the project resolver, the task/deps "
                   "machinery, and the REPL crash handler. The "
                   "released " [:code "mino"]
-                  " binary an end user receives from Homebrew (or "
-                  "downloads from a GitHub release)."]]]]
+                  " binary an end user receives from Homebrew. The "
+                  "no-JIT Standalone column is the " [:code "mino-lean"]
+                  " sibling binary."]]]]
+      [:p "JIT adds 34–50 KB across the tiers — under one percent of "
+       "any modern device's disk budget, and well under 1 ms of "
+       "additional disk-load time on a cold launch. The JIT-included "
+       "build pays back 1.8–6.5x on compute-bound hot code (see the "
+       [:a {:href "/documentation/jit/"} "JIT page"]
+       " for the workload table). Embedders running one-shot scripts "
+       "on Floor get marginal value from JIT (no hot loops to "
+       "amortize against); embedders on Sandbox or Standalone with "
+       "any sustained execution should keep it on."]
       [:p "Source-side numbers for what an in-tree embedder pulls in:"]
       [:table
        [:thead
@@ -138,30 +153,42 @@
        (src-link "tests/refresh_perf.clj")]
       [:p "Wall time from " [:code "fork+exec"] " to process exit. Each "
        "row is the median of 50 invocations after three warmup runs to "
-       "prime the OS page cache."]
+       "prime the OS page cache. Both columns evaluate the same "
+       [:code "(+ 1 2)"]
+       " expression; the difference between the two is the cost of "
+       "linking the JIT pipeline in (a small mmap + symbol-table init "
+       "at " [:code "mino_state_new"] " time, with no actual "
+       "compilation triggered by the one-shot expression)."]
       [:table
        [:thead
-        [:tr [:th "Tier"] [:th "Wall time (median)"]
-         [:th "Footprint"] [:th "Notes"]]]
+        [:tr [:th "Tier"]
+         [:th "No JIT"] [:th "+ JIT"] [:th "JIT cost"]
+         [:th "Notes"]]]
        [:tbody
         [:tr [:td "Floor (" [:code "install_minimal"] ")"]
-             [:td "3.85 ms"]
-             [:td "601 KB"]
+             [:td "3.98 ms"] [:td "4.01 ms"] [:td "~0"]
              [:td "Process spawn + " [:code "mino_state_new"] " + "
                   [:code "mino_install_minimal"] " + eval + exit. No "
                   [:code "core.clj"] " parse / eval."]]
         [:tr [:td "Sandbox ("
               [:code "install_sandbox"] ")"]
-             [:td "6.74 ms"]
-             [:td "909 KB"]
+             [:td "6.99 ms"] [:td "6.99 ms"] [:td "0"]
              [:td "Floor + regex + bignum + multimethods + protocols "
                   "+ transducers + the safe bundled libs. Parses and "
                   "evaluates " [:code "core.clj"] " at install."]]
         [:tr [:td "Standalone (" [:code "./mino -e ..."] ")"]
-             [:td "7.83 ms"]
-             [:td "996 KB"]
+             [:td "8.09 ms"] [:td "8.04 ms"] [:td "~0"]
              [:td "Sandbox plus I/O, FS, processes, STM, agents, async, "
-                  "bundled " [:code "clojure.*"] ". The Homebrew binary."]]]]
+                  "bundled " [:code "clojure.*"] ". The Homebrew binary. "
+                  "No-JIT column is the " [:code "mino-lean"] " sibling."]]]]
+      [:p "JIT contributes essentially zero to cold start. The "
+       "pipeline initializes an mmap'd page at "
+       [:code "mino_state_new"] " (sub-millisecond), and the hot-call "
+       "threshold means " [:em "nothing compiles"] " until user code "
+       "calls a function past " [:code "MINO_JIT_THRESHOLD"]
+       " (default 10) times. A one-shot script that fits in a single "
+       "expression therefore pays the same wall-time on JIT and "
+       "no-JIT builds."]
       [:p "Per-process initialization cost, measured in-process over 50 "
        "init/teardown cycles inside one binary (no fork/exec overhead). "
        "An embedder that creates one runtime up-front pays this once; "
