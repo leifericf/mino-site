@@ -89,47 +89,49 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
        [:h2 "Small enough to drop in. Fast enough to be useful."]
        [:p {:style "margin-bottom: 1rem;"}
         "Three tiers — Floor (the minimum embedder commits to), "
-        "Standard (full Clojure stdlib surface), and Standalone (the "
-        "Homebrew bottle). Each row pairs stripped footprint with the "
-        "in-process init cost from "
-        [:code "mino_state_new"] " through the install call."]
+        "Sandbox (canonical Clojure-core surface plus safe bundled "
+        "libs), and Standalone (the Homebrew bottle). Each row pairs "
+        "stripped footprint with the in-process init cost from "
+        [:code "mino_state_new"] " through the install call. Measured "
+        "on Apple Silicon (arm64-darwin) against mino v0.323.0."]
        [:div.stat-grid
         [:div.stat-card
          [:div.stat-eyebrow "Floor — minimum"]
          [:div.stat-row
-          [:span.stat-value "613 KB"]
-          [:span.stat-aside "0.23 ms init"]]
+          [:span.stat-value "601 KB"]
+          [:span.stat-aside "0.18 ms init"]]
          [:p.stat-detail
           "Reader, evaluator, GC, persistent collections, numeric ops, "
           "foundational macros. No "
           [:code "core.clj"] " eval. Call "
           [:code "mino_install_minimal"] " and you are running."]]
         [:div.stat-card
-         [:div.stat-eyebrow "Standard — full Clojure"]
+         [:div.stat-eyebrow "Sandbox — full Clojure"]
          [:div.stat-row
-          [:span.stat-value "728 KB"]
-          [:span.stat-aside "5.3 ms init"]]
+          [:span.stat-value "909 KB"]
+          [:span.stat-aside "2.65 ms init"]]
          [:p.stat-detail
           "Floor plus regex, bignum, multimethods, protocols, "
-          "transducers — every name a Clojure scripter expects. The "
-          "sandbox preset, "
-          [:code "mino_install(S, env, MINO_CAP_DEFAULT)"]
+          "transducers, and the safe bundled libs — every name a "
+          "Clojure scripter expects. Call "
+          [:code "mino_install_sandbox"]
+          " or " [:code "mino_install(S, env, MINO_CAP_DEFAULT)"]
           ". No I/O capabilities yet; the host opts into those "
           "individually."]]
         [:div.stat-card
          [:div.stat-eyebrow "Standalone — everything"]
          [:div.stat-row
-          [:span.stat-value "987 KB"]
-          [:span.stat-aside "5.5 ms init"]]
+          [:span.stat-value "996 KB"]
+          [:span.stat-aside "2.78 ms init"]]
          [:p.stat-detail
-          "Standard plus I/O, FS, STM, agents, async, bundled "
+          "Sandbox plus I/O, FS, STM, agents, async, bundled "
           [:code "clojure.*"] " stdlib, REPL, crash handler. The "
           "released Homebrew bottle. Same surface a Clojure scripter "
           "sees today."]]]
        [:p.stat-footnote
-        "Wall-time cold start (full process spawn) on x86_64 Linux: "
-        "Floor 1.04 ms (median, 50 runs), comparable to Lua 5.5 at "
-        "0.78 ms and ahead of Janet at 1.95 ms. See "
+        "Wall-time cold start (full process spawn): Floor "
+        "3.85 ms, Sandbox 6.74 ms, Standalone 7.83 ms (median of 50 "
+        "runs each). See "
         [:a {:href "/documentation/performance/"} "Performance"]
         " for the full table, per-operation costs, and capability "
         "opt-in mechanics."]]
@@ -159,7 +161,7 @@ static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
         [:div.use-case
          [:strong "Clojure-inspired ergonomics"]
          [:p "Persistent immutable data structures, lazy sequences, "
-          "macros, and a REPL-driven workflow. Mino is Clojure-inspired "
+          "macros, and a REPL-driven workflow. mino is Clojure-inspired "
           "today and continues to close canon gaps over time."]]]]
       [:section {:style "margin-top: 4rem;"}
        [:h2 "Three roles, one runtime"]

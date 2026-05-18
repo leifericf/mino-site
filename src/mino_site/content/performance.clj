@@ -21,8 +21,8 @@
       [:h1 "Performance"]
 
       [:p.banner
-       "Numbers below were measured against mino v0.148.0 on x86_64 "
-       "Linux (WSL2, kernel 6.6) under normal desktop load. Treat them "
+       "Numbers below were measured against mino v0.323.0 on Apple "
+       "Silicon (arm64-darwin) under normal desktop load. Treat them "
        "as directional; different hardware will shift absolute numbers "
        "but the ratios between rows hold. The bc-frontiers cycle "
        "(v0.152.0 – v0.157.0) landed targeted fast lanes that moved "
@@ -86,7 +86,7 @@
         [:tr [:th "Build"] [:th "Stripped size"] [:th "What's in it"]]]
        [:tbody
         [:tr [:td "Floor (" [:code "install_minimal"] " only)"]
-             [:td "~613 KB"]
+             [:td "~601 KB"]
              [:td [:code "mino_state_new"] " + "
                   [:code "mino_install_minimal"] " + "
                   [:code "mino_eval_string"] ". Reader, evaluator, GC, "
@@ -97,87 +97,70 @@
                   [:code "re-find"] " or " [:code "slurp"]
                   " raise the MNS002 capability-disabled diagnostic if "
                   "user code references them."]]
-        [:tr [:td "Standard (" [:code "install_core"] " back-compat alias)"]
-             [:td "~728 KB"]
+        [:tr [:td "Sandbox (" [:code "install_sandbox"] ")"]
+             [:td "~909 KB"]
              [:td "Floor plus regex, bignum, multimethods, protocols, "
-                  "transducers — every name a Clojure scripter expects. "
-                  "Still no I/O, FS, processes, STM, agents, async, "
-                  "no bundled " [:code "clojure.*"] " stdlib."]]
+                  "transducers, and the safe bundled libs — every name "
+                  "a Clojure scripter expects. Still no I/O, FS, "
+                  "processes, STM, agents, async."]]
         [:tr [:td "Standalone (" [:code "install_all"] " + REPL)"]
-             [:td "~987 KB"]
-             [:td "Standard plus I/O, FS, " [:code "subprocess"]
+             [:td "~996 KB"]
+             [:td "Sandbox plus I/O, FS, " [:code "subprocess"]
                   ", STM, agents, async, host-interop, all bundled "
                   [:code "clojure.*"]
                   " namespaces, the project resolver, the task/deps "
                   "machinery, and the REPL crash handler. The "
                   "released " [:code "mino"]
                   " binary an end user receives from Homebrew (or "
-                  "downloads from a GitHub release; the release "
-                  "tarball is ~360 KB gzip-compressed)."]]]]
+                  "downloads from a GitHub release)."]]]]
       [:p "Source-side numbers for what an in-tree embedder pulls in:"]
       [:table
        [:thead
         [:tr [:th "Item"] [:th "Size"] [:th "Notes"]]]
        [:tbody
         [:tr [:td "C source tree (" [:code "src/"] " minus vendor)"]
-             [:td "~1.6 MB"]
+             [:td "~2.27 MB"]
              [:td "C source plus generated bundled-source headers"]]
         [:tr [:td "Vendor (" [:code "imath"] " for BigInt)"]
-             [:td "~150 KB"]
+             [:td "~157 KB"]
              [:td "Only loaded when arithmetic exceeds 64-bit range"]]
         [:tr [:td "Bundled stdlib source (" [:code "clojure.*"] " "
               "headers compiled into the binary)"]
-             [:td "~147 KB"]
+             [:td "~194 KB"]
              [:td "Lazy-installed; the minimum-embed build drops these"]]
         [:tr [:td [:code "core.clj"] " source"]
-             [:td "~113 KB"]
+             [:td "~121 KB"]
              [:td "Embedded as a C string literal; evaluated the first "
                   "time " [:code "mino_install"]
                   " brings in a non-floor capability"]]]]
 
       [:h2 "Cold startup"
-       (src-link "tests/coldstart_compare.clj")
        (src-link "tests/refresh_perf.clj")]
       [:p "Wall time from " [:code "fork+exec"] " to process exit. Each "
        "row is the median of 50 invocations after three warmup runs to "
-       "prime the OS page cache. Lua 5.5, Janet 1.41, and Babashka 1.12 "
-       "are shown from the same host (x86_64 Linux) for reference; the "
-       "Floor tier is what an embedder pays today."]
+       "prime the OS page cache."]
       [:table
        [:thead
-        [:tr [:th "Interpreter / tier"] [:th "Wall time (median)"]
+        [:tr [:th "Tier"] [:th "Wall time (median)"]
          [:th "Footprint"] [:th "Notes"]]]
        [:tbody
-        [:tr [:td "Lua 5.5"]
-             [:td "0.78 ms"]
-             [:td "33 KB"]
-             [:td "Reference. Different language, far smaller surface."]]
-        [:tr [:td "mino Floor (" [:code "install_minimal"] ")"]
-             [:td "1.04 ms"]
-             [:td "598 KB"]
+        [:tr [:td "Floor (" [:code "install_minimal"] ")"]
+             [:td "3.85 ms"]
+             [:td "601 KB"]
              [:td "Process spawn + " [:code "mino_state_new"] " + "
                   [:code "mino_install_minimal"] " + eval + exit. No "
-                  [:code "core.clj"] " parse / eval. Within 30% of Lua "
-                  "on cold start."]]
-        [:tr [:td "Janet 1.41"]
-             [:td "1.95 ms"]
-             [:td "888 KB"]
-             [:td "Reference."]]
-        [:tr [:td "Babashka 1.12"]
-             [:td "3.58 ms"]
-             [:td "67 MB"]
-             [:td "Reference. GraalVM AOT, Clojure dialect."]]
-        [:tr [:td "mino Standard ("
+                  [:code "core.clj"] " parse / eval."]]
+        [:tr [:td "Sandbox ("
               [:code "install_sandbox"] ")"]
-             [:td "6.77 ms"]
-             [:td "710 KB"]
+             [:td "6.74 ms"]
+             [:td "909 KB"]
              [:td "Floor + regex + bignum + multimethods + protocols "
                   "+ transducers + the safe bundled libs. Parses and "
                   "evaluates " [:code "core.clj"] " at install."]]
-        [:tr [:td "mino Standalone (" [:code "./mino -e ..."] ")"]
-             [:td "7.27 ms"]
-             [:td "899 KB"]
-             [:td "Standard plus I/O, FS, processes, STM, agents, async, "
+        [:tr [:td "Standalone (" [:code "./mino -e ..."] ")"]
+             [:td "7.83 ms"]
+             [:td "996 KB"]
+             [:td "Sandbox plus I/O, FS, processes, STM, agents, async, "
                   "bundled " [:code "clojure.*"] ". The Homebrew binary."]]]]
       [:p "Per-process initialization cost, measured in-process over 50 "
        "init/teardown cycles inside one binary (no fork/exec overhead). "
@@ -191,13 +174,13 @@
         [:tr [:td [:code "mino_state_new"] " + "
               [:code "mino_install_minimal"] " + "
               [:code "mino_state_free"]]
-             [:td "0.23 ms"]
+             [:td "0.18 ms"]
              [:td "Floor tier. No " [:code "core.clj"] " parse / eval."]]
         [:tr [:td [:code "mino_state_new"] " + "
               [:code "mino_install_sandbox"]
               " + " [:code "mino_state_free"]]
-             [:td "5.25 ms"]
-             [:td "Standard tier. Equivalent to "
+             [:td "2.65 ms"]
+             [:td "Sandbox tier. Equivalent to "
                   [:code "mino_install(S, env, MINO_CAP_DEFAULT)"]
                   ". Parses and evaluates "
                   [:code "core.clj"] " with regex, bignum, "
@@ -205,12 +188,12 @@
                   "bundled libs enabled."]]
         [:tr [:td [:code "mino_state_new"] " + "
               [:code "mino_install_all"] " + " [:code "mino_state_free"]]
-             [:td "5.48 ms"]
+             [:td "2.78 ms"]
              [:td "Adds I/O, FS, STM, agents, bundled "
                   [:code "clojure.*"]
                   " registration (lazy; not evaluated until "
                   [:code "require"] "d). The standalone CLI path."]]]]
-      [:p "The Floor tier saves ~5 ms on every cold start by skipping "
+      [:p "The Floor tier saves ~2.5 ms on every cold start by skipping "
        [:code "core.clj"] " evaluation. The cost is that "
        "capability-gated names (e.g. " [:code "re-find"] ", "
        [:code "defmulti"] ", " [:code "slurp"]
@@ -229,36 +212,36 @@
         [:tr [:th "Operation"] [:th "Cost"] [:th "Notes"]]]
        [:tbody
         [:tr [:td "Primitive call " [:code "(+ 1 2)"]]
-             [:td "1.7 µs"]
+             [:td "5.5 µs"]
              [:td "Fused int-add fast lane, no boxing"]]
         [:tr [:td "User fn call (1 arg)"]
-             [:td "1.9 µs"]
+             [:td "5.5 µs"]
              [:td "Compiled to bytecode; register-window entry"]]
         [:tr [:td "User fn call (3 args)"]
-             [:td "2.1 µs"]
-             [:td "Cost grows ~0.07 µs per arg in the bc path"]]
+             [:td "5.8 µs"]
+             [:td "Cost grows ~0.1 µs per arg in the bc path"]]
         [:tr [:td "Vector literal " [:code "[1 2 3]"]]
-             [:td "1.7 µs"]
+             [:td "5.0 µs"]
              [:td "32-way trie allocation"]]
         [:tr [:td "Map literal " [:code "{:a 1}"]]
-             [:td "1.8 µs"]
+             [:td "5.1 µs"]
              [:td "HAMT insertion per key"]]
         [:tr [:td [:code "(get m k)"] " on 100-key map"]
-             [:td "2.1 µs"]
+             [:td "5.8 µs"]
              [:td "Hash + HAMT traversal"]]
-        [:tr [:td [:code "(read-string \"42\")"]]
-             [:td "2.6 µs"]
-             [:td "Tokenize + parse"]]
-        [:tr [:td [:code "(read-string \"(+ 1 2 3)\")"]]
-             [:td "3.0 µs"]
-             [:td "Cons-list construction during read"]]
         [:tr [:td "Symbol resolution (local " [:code "let"] ")"]
-             [:td "1.6 µs"]
+             [:td "4.7 µs"]
              [:td "Register read; no env walk"]]
         [:tr [:td "Symbol resolution (global var)"]
-             [:td "1.6 µs"]
+             [:td "4.9 µs"]
              [:td "Inline-cache hit on the bc " [:code "GETGLOBAL"]
-                  " slot"]]]]
+                  " slot"]]
+        [:tr [:td "Closure capture (1 var)"]
+             [:td "4.9 µs"]
+             [:td "Env-chain extend + restore"]]
+        [:tr [:td "Closure capture (5 vars)"]
+             [:td "5.0 µs"]
+             [:td "Captures scale below noise"]]]]
 
       [:h2 "Bulk operations"
        (src-link "benchmarks/vec_bench.clj")
@@ -273,35 +256,46 @@
         [:tr [:th "Operation"] [:th "Cost"] [:th "Per element"]]]
        [:tbody
         [:tr [:td [:code "(into [] (range 100))"]]
-             [:td "29 µs"]
-             [:td "0.29 µs"]]
+             [:td "29.8 µs"]
+             [:td "0.30 µs"]]
         [:tr [:td [:code "(reduce + 0 (range 100))"]]
-             [:td "6.7 µs"]
-             [:td "0.067 µs"]]
+             [:td "12.6 µs"]
+             [:td "0.13 µs"]]
         [:tr [:td [:code "(reduce + 0 (range 1000))"]]
-             [:td "9.4 µs"]
-             [:td "0.009 µs"]]
+             [:td "13.9 µs"]
+             [:td "0.014 µs"]]
         [:tr [:td [:code "loop/recur"] " 1,000 iterations"]
-             [:td "13.2 µs"]
-             [:td "0.013 µs"]]
+             [:td "5.5 µs"]
+             [:td "0.006 µs"]]
         [:tr [:td [:code "loop/recur"] " 10,000 iterations"]
-             [:td "133 µs"]
-             [:td "0.013 µs"]]
+             [:td "73 µs"]
+             [:td "0.007 µs"]]
         [:tr [:td "Build 100-key map (" [:code "assoc"] " loop)"]
-             [:td "246 µs"]
-             [:td "2.46 µs/key"]]
-        [:tr [:td [:code "(fib 20)"] " recursive (~21k calls)"]
-             [:td "639 µs"]
-             [:td "0.030 µs/call"]]
+             [:td "282 µs"]
+             [:td "2.82 µs/key"]]
+        [:tr [:td [:code "conj"] " 1,000-element vector"]
+             [:td "183 µs"]
+             [:td "0.18 µs/elt"]]
+        [:tr [:td [:code "conj"] " 10,000-element vector"]
+             [:td "2.29 ms"]
+             [:td "0.23 µs/elt"]]
+        [:tr [:td [:code "nth"] " random on 1,000-vec"]
+             [:td "5.5 µs"]
+             [:td "—"]]
+        [:tr [:td [:code "(get m k)"] " on 1,000-key map"]
+             [:td "5.4 µs"]
+             [:td "—"]]
         [:tr [:td [:code "(fib 25)"] " recursive (~242k calls)"]
-             [:td "7.0 ms"]
-             [:td "0.029 µs/call"]]]]
+             [:td "6.65 ms"]
+             [:td "0.027 µs/call"]]]]
       [:p "Tight integer loops run at near-native speed when the "
        "compiler can prove the iteration is int-typed. "
-       [:code "loop/recur"] " over 10,000 iterations and recursive "
-       "Fibonacci both clock in around 13 ns per step because the "
-       "fused-loop opcode collapses the test/dec/back-jump into a "
-       "single dispatch with two tagged-int checks."]
+       [:code "loop/recur"] " over 10,000 iterations clocks in "
+       "around 7 ns per step because the fused-loop opcode "
+       "collapses the test/dec/back-jump into a single dispatch "
+       "with two tagged-int checks. Recursive Fibonacci sees the "
+       "JIT compile the recursion hot path and reaches roughly 27 "
+       "ns per call."]
 
       [:h2 "Eager collection builders"
        (src-link "benchmarks/micro_bench.clj")
@@ -409,29 +403,29 @@
         [:tr [:th "Workload"] [:th "GC share"] [:th "Max pause"]]]
        [:tbody
         [:tr [:td "Small function calls (empty, identity, let)"]
-             [:td "~10%"]
-             [:td "~0.5 ms"]]
+             [:td "~12%"]
+             [:td "~1.4 ms"]]
         [:tr [:td [:code "loop/recur"] " 10,000 iterations"]
-             [:td "~3%"]
-             [:td "~0.4 ms"]]
+             [:td "~0%"]
+             [:td "—"]]
         [:tr [:td "Build 1,000-element vector via " [:code "conj"]]
-             [:td "~28%"]
-             [:td "~1.6 ms"]]
+             [:td "~19%"]
+             [:td "~1.4 ms"]]
         [:tr [:td "Build 10,000-element vector via " [:code "conj"]]
-             [:td "~29%"]
-             [:td "~1.6 ms"]]
+             [:td "~21%"]
+             [:td "~7.8 ms"]]
         [:tr [:td "Build 5k int-map and sum"]
-             [:td "~29%"]
-             [:td "~1.5 ms"]]
-        [:tr [:td "map/filter/map/reduce over 50,000"]
-             [:td "~34%"]
-             [:td "~2.2 ms"]]
+             [:td "~16%"]
+             [:td "~1.8 ms"]]
+        [:tr [:td "map/filter/map/reduce over 50,000 (fused transducers)"]
+             [:td "~0%"]
+             [:td "—"]]
         [:tr [:td "Nested vectors 500x100"]
-             [:td "~34%"]
-             [:td "~2.2 ms"]]
+             [:td "~17%"]
+             [:td "~2.0 ms"]]
         [:tr [:td "Realize 10k of lazy range"]
-             [:td "~38%"]
-             [:td "~3.8 ms"]]]]
+             [:td "~33%"]
+             [:td "~4.0 ms"]]]]
       [:p "Five tuning knobs are exposed through "
        [:code "mino_gc_set_param"] ": nursery size, major growth "
        "multiplier, promotion age, incremental slice budget, and "

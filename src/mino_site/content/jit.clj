@@ -286,9 +286,9 @@ mino_jit_capability_t mino_state_jit_capability(const mino_state_t *S);"]]
        "which blockers side-exit picked up."]
 
       [:h2 "JIT on/off A/B against realistic_bench"]
-      [:p "Median of three runs per cell, captured on the dev "
-       "host against the current jit-roi-cycle HEAD. All numbers "
-       "in ms/op except the sub-ms row in µs/op."]
+      [:p "Median of three runs per cell, captured on Apple Silicon "
+       "(arm64-darwin) against mino v0.323.0. All numbers in ms/op "
+       "except the sub-ms row in µs/op."]
       [:table
        [:thead
         [:tr [:th "Row"]
@@ -298,33 +298,32 @@ mino_jit_capability_t mino_state_jit_capability(const mino_state_t *S);"]]
              [:th "Reading"]]]
        [:tbody
         [:tr [:td "build 5k int-map and sum"]
-             [:td "9.79 ms"] [:td "10.32 ms"] [:td "1.05x"]
+             [:td "10.05 ms"] [:td "10.34 ms"] [:td "1.03x"]
              [:td "within noise envelope"]]
         [:tr [:td "bump 5k int-map values"]
-             [:td "17.52 ms"] [:td "17.16 ms"] [:td "0.98x"]
+             [:td "17.97 ms"] [:td "16.94 ms"] [:td "0.94x"]
              [:td "within noise envelope"]]
         [:tr [:td "map/filter/map/reduce over 50k"]
-             [:td "734 µs"] [:td "778 µs"] [:td "1.06x"]
-             [:td "small JIT win"]]
+             [:td "757 µs"] [:td "779 µs"] [:td "1.03x"]
+             [:td "within noise envelope"]]
         [:tr [:td "nested vectors 500x100"]
-             [:td "17.41 ms"] [:td "18.28 ms"] [:td "1.05x"]
+             [:td "18.03 ms"] [:td "18.67 ms"] [:td "1.04x"]
              [:td "within noise envelope"]]
         [:tr [:td "realize 10k of lazy range"]
-             [:td "4.09 ms"] [:td "4.32 ms"] [:td "1.06x"]
+             [:td "4.19 ms"] [:td "4.48 ms"] [:td "1.07x"]
              [:td "within noise envelope"]]
         [:tr [:td "fibonacci(25)"]
-             [:td "6.67 ms"] [:td "9.21 ms"] [:td "1.38x"]
+             [:td "6.65 ms"] [:td "9.21 ms"] [:td "1.38x"]
              [:td "meaningful JIT win"]]]]
       [:p "Five of six rows land within the +/- 7% noise envelope. "
        "Allocation- and GC-dominated workloads are not where the "
        "JIT lives; they are dominated by nursery sizing, write-"
        "barrier cost, and minor-cycle frequency. The JIT sits "
        "above the GC and cannot accelerate work the allocator and "
-       "collector are already doing. The two rows that move are "
-       "exactly the rows where the JIT's stencils target the "
-       "inner loop: pure compute "
-       "(" [:code "fibonacci(25)"] ") and a fused transducer "
-       "reduce (" [:code "map/filter/map/reduce"] ")."]
+       "collector are already doing. The one row that moves "
+       "meaningfully is " [:code "fibonacci(25)"]
+       ", pure compute that the JIT's recursive-call inline cache "
+       "and fused tagged-int arithmetic cover end-to-end."]
 
       [:h2 "Out of scope"]
       [:ul
