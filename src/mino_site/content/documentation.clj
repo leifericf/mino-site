@@ -123,20 +123,14 @@
          "loops, the soundness discipline, and how mino's VM "
          "compares to Lua, Janet, and BEAM."]]
 
-       [:a.card {:href "/documentation/jit-matrix/"}
-        [:div.card-title "JIT support matrix"]
+       [:a.card {:href "/documentation/jit/"}
+        [:div.card-title "JIT"]
         [:div.card-desc
-         "Per-host CPJIT verification posture: which targets have "
-         "extract / generate / build / smoke / parity green, and an "
-         "on/off A/B against realistic_bench."]]
-
-       [:a.card {:href "/documentation/jit-status/"}
-        [:div.card-title "JIT status"]
-        [:div.card-desc
-         "Feature-complete declaration for the CPJIT layer: stencil "
-         "registry, dual-binary build, four-way parity, embed API "
-         "surface, and the perf thresholds for the runtime track "
-         "that follows."]]
+         "The CPJIT layer end to end: 58 opcode stencils across "
+         "five host arches, dual-binary build, four-way parity, "
+         "side-exit deopt, cancellable JIT'd loops, runtime "
+         "control, per-host verification matrix, and an on/off "
+         "A/B against realistic_bench."]]
 
        [:a.card {:href "/documentation/garbage-collection/"}
         [:div.card-title "Garbage Collection"]
