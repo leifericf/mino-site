@@ -19,9 +19,15 @@
        "that allocates may advance the collector, which is why "
        "borrowed values can become invalid after the next call."]
       [:p "Objects survive collection if they are reachable from a root: "
-       "registered environments, host refs, the intern tables, the "
-       "module cache, or the C stack (via conservative scanning). See "
-       "the "
+       "registered environments, host refs, the module cache, vars, "
+       "namespace env tables, compiled bytecode constants, or the C "
+       "stack (via conservative scanning). The symbol and keyword "
+       "intern tables are " [:em "weak"] ": they hold entries by "
+       "value but do not pin them across major cycles. An interned "
+       "symbol survives only as long as some other root still "
+       "references it; the next intern of the same string after a "
+       "sweep that pruned the previous entry returns a fresh value. "
+       "See the "
        [:a {:href "/documentation/embedding/#value-retention"} "Value retention"]
        " section of the Embedding Guide for how to keep host-held "
        "values reachable across collection."]
@@ -52,10 +58,13 @@
        [:li [:strong "Two barriers, always armed. "]
         "A remembered-set barrier tracks old-to-young pointer stores, "
         "so a minor cycle does not have to scan the whole old-gen to "
-        "find young reachability. A snapshot-at-the-beginning (SATB) "
-        "barrier captures slot values overwritten during major mark, "
-        "so values that were reachable at cycle start stay marked "
-        "even if the mutator unlinks them mid-cycle. Both reduce to "
+        "find young reachability. An insertion (Dijkstra) barrier "
+        "during major mark pushes every newly installed slot value "
+        "onto the mark stack so any old-gen target reachable through "
+        "a fresh edge gets traced. Major remark re-walks every "
+        "precise root before the final stack scan, which keeps "
+        "anything still reachable through any root alive without "
+        "needing a deletion-side snapshot. Both barriers reduce to "
         "a dirty-bit check per store in the common case."]]
 
       [:h2 "Phases"]
@@ -70,14 +79,17 @@
         "the remembered set plus conservative stack scan."]
        [:li [:strong "major-mark"] ": old-gen tracing in progress. "
         "Paced across many slices interleaved with mutator progress. "
-        "The SATB (snapshot-at-the-beginning) barrier is armed so "
-        "overwritten slot values stay live for the cycle."]
+        "The Dijkstra insertion barrier pushes every newly installed "
+        "slot value so any old-gen target reachable through a fresh "
+        "edge gets traced before the cycle ends."]
        [:li [:strong "major-sweep"] ": one-shot stop-the-world sweep "
-        "of dead old-gen objects. Runs immediately after the final "
-        "mark-stack drain."]]
+        "of dead old-gen objects. Major remark re-walks every "
+        "precise root immediately before the sweep so anything still "
+        "reachable through any root stays marked; weak intern slots "
+        "whose entries are unmarked are tombstoned at this point."]]
       [:p "Both barriers -- the remembered-set barrier that tracks "
-       "old-to-young edges, and the SATB barrier that captures "
-       "overwritten values during major mark -- are always armed. "
+       "old-to-young edges, and the insertion barrier that captures "
+       "new slot values during major mark -- are always armed. "
        "Their cost is one dirty-bit check per store in the common case."]
 
       [:p "Transitions between phases:"]
@@ -108,7 +120,7 @@
       [:p "A minor cycle can nest safely inside major-mark: when the "
        "nursery fills during an in-flight major, minor runs to "
        "completion and returns to major-mark without disturbing the "
-       "mark stack or the SATB snapshot. "
+       "outer mark stack. "
        [:code "MINO_GC_FULL"] " from the idle state runs a minor, "
        "then a complete major cycle back-to-back."]
 
