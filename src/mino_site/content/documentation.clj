@@ -35,9 +35,11 @@
        [:a.card {:href "/documentation/cookbook/"}
         [:div.card-title "Embedding Cookbook"]
         [:div.card-desc
-         "Six worked examples: config loader, rules engine, "
-         "REPL on socket, plugin host, data pipeline, and "
-         "game scripting console."]]
+         "Twelve worked examples: hello-world walk-through, "
+         "handle / record / atom decision tree, collection "
+         "builders, agents, config loader, console, error "
+         "handling, iterators, pipelines, plugins, rules "
+         "engine, REPL on socket."]]
 
        [:a.card {:href "/examples/bindings/"}
         [:div.card-title "Language Bindings"]

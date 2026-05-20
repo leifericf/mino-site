@@ -169,7 +169,7 @@ mino> (doc 'map)
        [:li [:a {:href "/documentation/language/"} "Language Reference"]
         ": every built-in function, special form, and macro."]
        [:li [:a {:href "/documentation/cookbook/"} "Embedding Cookbook"]
-        ": six worked examples for real-world patterns."]]
+        ": twelve worked examples for real-world patterns."]]
 
       [:h2 "License"]
       [:p "mino is released under the "

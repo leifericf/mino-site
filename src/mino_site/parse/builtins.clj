@@ -68,9 +68,9 @@
    "def" "defmacro" "if" "do" "let" "fn" "loop" "recur" "try"])
 
 (def ^:private io-prim-names
-  "Primitives installed by mino_install_io. Listed here so the
-  page can render them in their own section, since the host may
-  call mino_install_core without mino_install_io."
+  "Primitives installed by the MINO_CAP_IO capability bit. Listed
+  here so the page can render them in their own section, since an
+  embedder can opt out of I/O by installing without MINO_CAP_IO."
   #{"println" "prn" "print" "pr" "newline"
     "slurp" "spit" "exit" "time-ms" "nano-time" "file-seq"
     "getenv" "getcwd" "chdir" "gc-stats" "gc!"})

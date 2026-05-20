@@ -120,7 +120,7 @@
      "/documentation/cookbook/index.html"
      (fn [ctx]
        (render/html-page {:title "Embedding Cookbook"
-                          :description "Six worked examples showing how to embed mino in a C application."
+                          :description "Twelve worked examples showing how to embed mino in a C application."
                           :active-page :documentation
                           :wide true}
          (cookbook-page/cookbook-page cookbook-data)))

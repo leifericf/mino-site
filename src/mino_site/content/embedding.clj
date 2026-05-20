@@ -17,6 +17,27 @@
        "For the full function-by-function listing, see the "
        [:a {:href "/documentation/api/"} "C API Reference"] "."]
 
+      [:h2 "Vendoring mino"]
+      [:p "The canonical drop-in form is the single-file "
+       "amalgamation under " [:code "dist/"] ":"]
+      [:pre [:code {:data-lang "shell"}
+"# In the mino source tree, regenerate the amalgamation:
+./mino task amalgamate
+
+# Vendor the two files into your project:
+cp mino/dist/mino.c vendor/mino/
+cp mino/dist/mino.h vendor/mino/
+
+# Build:
+cc -std=c99 -O2 -c vendor/mino/mino.c -o vendor/mino/mino.o
+cc app.c vendor/mino/mino.o -lm -lpthread -o app"]]
+      [:p "No " [:code "-I"] " paths beyond the vendor directory. "
+       "No transitive header dependencies. No build-system "
+       "dependency. See the "
+       [:a {:href "/documentation/vendored-first/"}
+        "Zero dependencies, vendored first"]
+       " Internals page for the distribution philosophy."]
+
       [:h2 "Runtime state"]
       [:p "Every mino session begins with a runtime state. The state owns "
        "the garbage collector, intern tables, module cache, and every "
@@ -554,8 +575,10 @@ mino_register_fn(S, env, \"host-inbox-drain\", prim_inbox_drain);"]]
       [:h2 "Next steps"]
       [:ul
        [:li [:a {:href "/documentation/cookbook/"} "Embedding Cookbook"]
-        ": six worked examples showing patterns for configuration, "
-        "rules engines, plugins, data pipelines, and interactive consoles."]
+        ": twelve worked examples — start with the five-minute "
+        "hello-world and the handle / record / atom decision tree, "
+        "then drill into configuration, rules engines, plugins, "
+        "data pipelines, and interactive consoles."]
        [:li [:a {:href "/documentation/api/"} "C API Reference"]
         ": every public function, type, and enum in " [:code "mino.h"] "."]
        [:li [:a {:href "/about/"} "About"]

@@ -57,7 +57,7 @@
   (str
     (h/html
       [:h1 "Embedding Cookbook"]
-      [:p "Six worked examples showing real-world embedding patterns. "
+      [:p "Twelve worked examples showing real-world embedding patterns. "
        "Each includes the full annotated C source with build instructions."]
       [:div.docs-layout
        (render-sidebar cookbook-data)
