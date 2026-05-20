@@ -153,10 +153,10 @@
 const char *mino_last_error(S);
 
 /* Structured diagnostic (internal fields) */
-const mino_diag_t *mino_last_diag(S);
+const mino_diag *mino_last_diag(S);
 
 /* Diagnostic as a mino map with :mino/* keys */
-mino_val_t *mino_last_error_map(S);
+mino_val *mino_last_error_map(S);
 
 /* Render to buffer in compact or pretty mode */
 int mino_render_diag(S, diag, MINO_DIAG_RENDER_PRETTY, buf, sizeof(buf));"]]

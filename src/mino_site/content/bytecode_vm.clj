@@ -30,7 +30,7 @@
 
       [:h2 "Value representation"]
       [:p "Every mino value flows through the runtime as a "
-       [:code "mino_val_t *"] ". The low three bits of the pointer "
+       [:code "mino_val *"] ". The low three bits of the pointer "
        "carry a tag that picks between a heap object and one of four "
        "inline shapes:"]
       [:pre [:code
@@ -339,7 +339,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         " Per-process isolation, message-passing-only communication, "
         "and a preemptive scheduler are a fundamentally different "
         "concurrency model. mino shares a heap within a single "
-        [:code "mino_state_t"]
+        [:code "mino_state"]
         " and recovers BEAM's isolation property at a coarser grain "
         "via multiple runtimes and " [:code "mino_clone"]
         ". The per-state GIL is explicit rather than emergent."]]

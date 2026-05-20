@@ -171,7 +171,7 @@
      " for the full model."]
 
     [:dt "Threading"]
-    [:dd "A " [:code "mino_state_t"] " is not thread-safe: the host "
+    [:dd "A " [:code "mino_state"] " is not thread-safe: the host "
      "must not call into one state from multiple threads at once. "
      "Worker threads for agents, futures, and the blocking async ops "
      "are spawned by the runtime itself, but only after the host "

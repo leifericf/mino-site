@@ -22,7 +22,7 @@
        "the garbage collector, intern tables, module cache, and every "
        "object allocated within it."]
       [:pre [:code {:data-lang "c"}
-"mino_state_t *S = mino_state_new();"]]
+"mino_state *S = mino_state_new();"]]
       [:p "Multiple states can coexist in the same process. They share "
        "nothing. This is the foundation of mino's isolation model: each "
        "state is a self-contained runtime that can be created, used, and "
@@ -32,11 +32,11 @@
       [:p "An environment holds name-to-value bindings. The quickest "
        "start installs the sandbox preset in one call:"]
       [:pre [:code {:data-lang "c"}
-"mino_env_t *env = mino_env_new_default(S);   /* sandbox preset */"]]
+"mino_env *env = mino_env_new_default(S);   /* sandbox preset */"]]
       [:p "Or build the env explicitly and pick the capabilities you "
        "want with a bitmask:"]
       [:pre [:code {:data-lang "c"}
-"mino_env_t *env = mino_env_new(S);
+"mino_env *env = mino_env_new(S);
 mino_install(S, env, MINO_CAP_DEFAULT | MINO_CAP_IO);"]]
       [:p "Tear down in reverse order when done:"]
       [:pre [:code {:data-lang "c"}
@@ -114,7 +114,7 @@ mino_state_free(S);"]]
 int has_regex = mino_capability_installed(S, MINO_CAP_REGEX);
 
 /* Iterate the registry, printing what is on / off */
-for (const mino_capability_info_t *p = mino_capability_list();
+for (const mino_capability_info *p = mino_capability_list();
      p->name != NULL; p++) {
     printf(\"  %s: %s\\n\", p->name,
            mino_capability_installed(S, p->bit) ? \"on\" : \"off\");
@@ -130,13 +130,13 @@ for (const mino_capability_info_t *p = mino_capability_list();
        ". It reads and evaluates all forms in a string and returns the "
        "value of the last one:"]
       [:pre [:code {:data-lang "c"}
-"mino_val_t *result = mino_eval_string(S, \"(+ 1 2)\", env);
+"mino_val *result = mino_eval_string(S, \"(+ 1 2)\", env);
 /* result is a mino integer with value 3 */"]]
       [:p "If evaluation fails (parse error, runtime error, undefined "
        "name), the return value is NULL. The error message is available "
        "via " [:code "mino_last_error(S)"] ":"]
       [:pre [:code {:data-lang "c"}
-"mino_val_t *result = mino_eval_string(S, \"(undefined-fn 1)\", env);
+"mino_val *result = mino_eval_string(S, \"(undefined-fn 1)\", env);
 if (result == NULL) {
     fprintf(stderr, \"error: %s\\n\", mino_last_error(S));
 }"]]
@@ -146,8 +146,8 @@ if (result == NULL) {
        [:code "mino_pcall"] " to catch the error without unwinding "
        "your C stack:"]
       [:pre [:code {:data-lang "c"}
-"mino_val_t *out = NULL;
-mino_val_t *ex  = NULL;
+"mino_val *out = NULL;
+mino_val *ex  = NULL;
 if (mino_pcall(S, fn, args, env, &out, &ex) != 0) {
     /* ex carries the raw value the user passed to (throw ...) */
 }"]]
@@ -205,21 +205,21 @@ mino_clear_error(S);                     /* reset for next call */"]]
        "value or extract its data promptly, and ref anything that must "
        "survive across many mino calls."]
       [:pre [:code {:data-lang "c"}
-"mino_val_t *v = mino_int(S, 42);
+"mino_val *v = mino_int(S, 42);
 /* v is valid here */
 
-mino_val_t *w = mino_int(S, 99);
+mino_val *w = mino_int(S, 99);
 /* v might have been collected -- do not use it */"]]
 
       [:h3 "Retaining values with refs"]
       [:p "To keep a value alive across multiple mino calls, root it "
        "with a ref:"]
       [:pre [:code {:data-lang "c"}
-"mino_ref_t *r = mino_ref(S, val);    /* root val               */
+"mino_ref *r = mino_ref_new(S, val);    /* root val               */
 
 /* ... any number of allocations / evals ... */
 
-mino_val_t *v = mino_deref(r);       /* get the value back     */
+mino_val *v = mino_deref(r);       /* get the value back     */
 mino_unref(S, r);                    /* release the root       */"]]
       [:p "Refs are owned by the state. Forgetting to unref is not a "
        "leak in the traditional sense (the ref is freed when the state "
@@ -238,30 +238,29 @@ mino_unref(S, r);                    /* release the root       */"]]
       [:p "When the host produces a value element-by-element — parsing "
        "incremental input, copying a C array, gathering rows out of a "
        "database row iterator — use a builder. Each builder wraps a "
-       "transient and exposes an "
-       [:code "_add"] " step plus a "
-       [:code "_persistent!"] " finaliser. The persistent result is a "
-       "mino value the embedder can return; the builder itself must "
-       "not be reused after " [:code "_persistent!"] " runs."]
+       "transient and exposes a per-shape add/push/put step plus a "
+       [:code "_finish"] " finaliser that returns the persistent "
+       "result; the builder itself must not be reused after "
+       [:code "_finish"] " runs."]
       [:pre [:code {:data-lang "c"}
 "/* Vector: positional accumulation. */
-mino_vector_builder_t *vb = mino_vector_builder_new(S);
+mino_vec_builder *vb = mino_vector_builder_new(S);
 for (size_t i = 0; i < n; i++) {
     mino_vector_builder_push(vb, mino_int(S, items[i]));
 }
-mino_val_t *v = mino_vector_builder_persistent(vb);
+mino_val *v = mino_vector_builder_finish(vb);
 
 /* Map: insertion-ordered key-value pairs. */
-mino_map_builder_t *mb = mino_map_builder_new(S);
+mino_map_builder *mb = mino_map_builder_new(S);
 mino_map_builder_put(mb, mino_keyword(S, \"a\"), mino_int(S, 1));
 mino_map_builder_put(mb, mino_keyword(S, \"b\"), mino_int(S, 2));
-mino_val_t *m = mino_map_builder_persistent(mb);
+mino_val *m = mino_map_builder_finish(mb);
 
 /* Set: deduplicated values. */
-mino_set_builder_t *sb = mino_set_builder_new(S);
+mino_set_builder *sb = mino_set_builder_new(S);
 mino_set_builder_add(sb, mino_int(S, 1));
 mino_set_builder_add(sb, mino_int(S, 1));   /* dropped, already present */
-mino_val_t *s = mino_set_builder_persistent(sb);"]]
+mino_val *s = mino_set_builder_finish(sb);"]]
       [:p "When every element is already sitting in a C array, the "
        "fixed-arity constructors are simpler and shorter: "
        [:code "mino_vector(S, elems, n)"] ", "
@@ -282,9 +281,9 @@ mino_val_t *s = mino_set_builder_persistent(sb);"]]
        [:code "mino_iter_sizeof()"] " bytes (typically on the C stack "
        "via " [:code "alloca"] ") and drive it with the lifecycle:"]
       [:pre [:code {:data-lang "c"}
-"mino_iter_t *it = alloca(mino_iter_sizeof());
+"mino_iter *it = alloca(mino_iter_sizeof());
 mino_iter_init(S, it, coll);
-mino_val_t *k, *v;
+mino_val *k, *v;
 while (mino_iter_next(it, &k, &v)) {
     /* vectors / sets / lists: k is the element, v is NULL.
      * maps: k is the key, v is the value. */
@@ -307,8 +306,8 @@ mino_iter_done(it);"]]
       [:p "Register C functions as mino primitives with "
        [:code "mino_register_fn"] ":"]
       [:pre [:code {:data-lang "c"}
-"static mino_val_t *my_greet(mino_state_t *S, mino_val_t *args,
-                            mino_env_t *env)
+"static mino_val *my_greet(mino_state *S, mino_val *args,
+                            mino_env *env)
 {
     const char *name;
     size_t len;
@@ -322,7 +321,7 @@ mino_iter_done(it);"]]
 }
 
 mino_register_fn(S, env, \"greet\", my_greet);"]]
-      [:p "The runtime passes the active " [:code "mino_state_t *S"]
+      [:p "The runtime passes the active " [:code "mino_state *S"]
        " as the first argument to every primitive callback. Use it "
        "for all value construction and API calls within the function."]
 
@@ -355,7 +354,7 @@ mino_host_register_getter(S, \"Counter\", \"value\", counter_value, NULL);"]]
        "around without knowing what they contain:"]
       [:pre [:code {:data-lang "c"}
 "FILE *fp = fopen(\"data.txt\", \"r\");
-mino_val_t *h = mino_handle(S, fp, \"file\");"]]
+mino_val *h = mino_handle(S, fp, \"file\");"]]
       [:p "Retrieve the pointer later with " [:code "mino_handle_ptr(h)"]
        " and check the type with " [:code "mino_handle_tag(h)"] "."]
 
@@ -367,7 +366,7 @@ mino_val_t *h = mino_handle(S, fp, \"file\");"]]
     fclose((FILE *)ptr);
 }
 
-mino_val_t *h = mino_handle_ex(S, fp, \"file\", close_file);"]]
+mino_val *h = mino_handle_ex(S, fp, \"file\", close_file);"]]
       [:p "Finalizers must not call back into the mino API. They run "
        "during GC sweep when the runtime is not in a safe state for "
        "re-entry."]
@@ -381,7 +380,7 @@ mino_val_t *h = mino_handle_ex(S, fp, \"file\", close_file);"]]
        "shared-state primitives. The host controls exactly what "
        "untrusted code can do:"]
       [:pre [:code {:data-lang "c"}
-"mino_env_t *sandbox = mino_env_new(S);
+"mino_env *sandbox = mino_env_new(S);
 mino_install_sandbox(S, sandbox);
 /* sandbox has map, filter, reduce, etc. but no slurp, spit, sh,
    refs, agents, or host-interop. */
@@ -415,10 +414,10 @@ mino_set_resolver(S, my_resolver, NULL);"]]
       [:p "Multiple independent evaluation contexts can share a single "
        "state by cloning an environment:"]
       [:pre [:code {:data-lang "c"}
-"mino_env_t *base = mino_env_new_default(S);       /* sandbox preset */
+"mino_env *base = mino_env_new_default(S);       /* sandbox preset */
 
-mino_env_t *session1 = mino_env_clone(S, base);
-mino_env_t *session2 = mino_env_clone(S, base);"]]
+mino_env *session1 = mino_env_clone(S, base);
+mino_env *session2 = mino_env_clone(S, base);"]]
       [:p "Each clone starts with the same bindings but evolves "
        "independently. Defining a name in one session does not affect "
        "the other. This is the building block for nREPL-style session "
@@ -440,8 +439,8 @@ mino_interrupt(S);"]]
       [:p "The in-process REPL lets a host drive read-eval-print one "
        "line at a time without managing a read buffer:"]
       [:pre [:code {:data-lang "c"}
-"mino_repl_t *repl = mino_repl_new(S, env);
-mino_val_t *result;
+"mino_repl *repl = mino_repl_new(S, env);
+mino_val *result;
 
 int rc = mino_repl_feed(repl, \"(+ 1 2)\", &result);
 switch (rc) {
@@ -455,7 +454,7 @@ mino_repl_free(repl);"]]
        "and live inspection tools inside running applications."]
 
       [:h2 "Threading rules"]
-      [:p "A " [:code "mino_state_t"] " is not thread-safe. The host "
+      [:p "A " [:code "mino_state"] " is not thread-safe. The host "
        "must not call into a state from multiple threads at the same "
        "time. Different states can be used from different threads "
        "simultaneously since they share nothing: each state owns its "
@@ -473,8 +472,8 @@ mino_repl_free(repl);"]]
       [:pre [:code {:data-lang "c"}
 "/* One pthread per state. */
 void *worker(void *arg) {
-    mino_state_t *S   = mino_state_new();
-    mino_env_t   *env = mino_env_new_default(S);
+    mino_state *S   = mino_state_new();
+    mino_env   *env = mino_env_new_default(S);
     mino_load_file(S, \"bot.clj\", env);
     mino_state_free(S);
     return NULL;
@@ -487,7 +486,7 @@ void *worker(void *arg) {
       [:p "To move values between states (which may live on different "
        "threads), use " [:code "mino_clone"] ":"]
       [:pre [:code {:data-lang "c"}
-"mino_val_t *copy = mino_clone(dst_state, src_state, val);"]]
+"mino_val *copy = mino_clone(dst_state, src_state, val);"]]
       [:p "Only data values (numbers, strings, collections) can cross "
        "state boundaries. Functions, environments, atoms, and handles "
        "are not transferable. Clone is safe only when both states are "
@@ -506,13 +505,13 @@ void *worker(void *arg) {
 "/* Per-thread pointer: each thread runs exactly one state. */
 static _Thread_local host_inbox_t *current_inbox;
 
-static mino_val_t *prim_inbox_drain(mino_state_t *S,
-                                    mino_val_t *args,
-                                    mino_env_t *env) {
+static mino_val *prim_inbox_drain(mino_state *S,
+                                    mino_val *args,
+                                    mino_env *env) {
     host_msg_t m;
     (void)args; (void)env;
     while (host_inbox_try_pop(current_inbox, &m)) {
-        mino_val_t *v = host_msg_to_mino_val(S, &m);
+        mino_val *v = host_msg_to_mino_val(S, &m);
         /* push v onto a channel held on the mino side */
         (void)v;
     }

@@ -501,7 +501,7 @@
         [:code "loop/recur"] " when iterating without building a "
         "collection."]
        [:li [:strong "Core library initialization."]
-        " A " [:code "mino_state_t"] " on the Standard or Standalone "
+        " A " [:code "mino_state"] " on the Standard or Standalone "
         "tier parses and evaluates " [:code "core.clj"]
         " (~5.2 ms here, smaller on faster hardware). The Floor tier "
         "(" [:code "mino_install_minimal"] ") skips this entirely "

@@ -54,7 +54,7 @@
         [:code "unistd.h"] ", " [:code "dirent.h"] ", and the usual "
         [:code "sys/stat.h"] " surface are assumed on non-Windows."]
        [:li [:strong "Threads: "] "host responsibility. The runtime "
-        "itself is single-threaded per " [:code "mino_state_t"]
+        "itself is single-threaded per " [:code "mino_state"]
         ". Cross-state serialization uses a small internal mutex "
         "(pthreads on POSIX, Win32 primitives on Windows)."]]
 
@@ -114,7 +114,7 @@
        "exposes both as "
        [:code "--jit=auto|off|on"] " and "
        [:code "--jit-threshold=N"] ". Capability discovery returns a "
-       [:code "mino_jit_capability_t"] " struct documenting "
+       [:code "mino_jit_capability"] " struct documenting "
        "{available, mode, threshold, host_arch, host_os} so an "
        "embedder can size the host's tuning at startup."]
 

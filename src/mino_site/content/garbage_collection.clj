@@ -43,7 +43,7 @@
         "is large. Promotion to old-gen happens once a value has "
         "survived a configurable number of minor cycles."]
        [:li [:strong "Non-moving. "]
-        "Host code holds raw " [:code "mino_val_t *"] " pointers. A "
+        "Host code holds raw " [:code "mino_val *"] " pointers. A "
         "copying collector would have to update every live reference "
         "at every collection, which means either a read barrier on "
         "the host side or extremely careful pinning. Non-moving keeps "
@@ -70,7 +70,7 @@
       [:h2 "Phases"]
       [:p "The collector runs in one of four phases, reported as the "
        [:code ":phase"] " key of " [:code "(gc-stats)"] " and the "
-       [:code "phase"] " field of " [:code "mino_gc_stats_t"] ":"]
+       [:code "phase"] " field of " [:code "mino_gc_stats_out"] ":"]
       [:ul
        [:li [:strong "idle"] ": no cycle is in flight. Most calls to "
         [:code "mino_gc_collect"] " start here."]
@@ -163,7 +163,7 @@ mino_gc_set_param(S, MINO_GC_STEP_ALLOC_BYTES,     16 * 1024);"]]
       [:p "Query collector counters via a plain out-struct. No "
        "allocation is performed."]
       [:pre [:code {:data-lang "c"}
-"mino_gc_stats_t st;
+"mino_gc_stats_out st;
 mino_gc_stats(S, &st);
 printf(\"live=%zu minor=%zu major=%zu max_pause_ns=%zu\\n\",
        st.bytes_live, st.collections_minor,

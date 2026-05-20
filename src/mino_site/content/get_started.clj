@@ -93,8 +93,8 @@ make
 #include <stdio.h>
 
 /* A host function exposed to mino as (add-tax amount). */
-static mino_val_t *host_add_tax(mino_state_t *S, mino_val_t *args,
-                                mino_env_t *env)
+static mino_val *host_add_tax(mino_state *S, mino_val *args,
+                                mino_env *env)
 {
     long long amount;
     (void)env;
@@ -105,12 +105,12 @@ static mino_val_t *host_add_tax(mino_state_t *S, mino_val_t *args,
 
 int main(void)
 {
-    mino_state_t *S   = mino_state_new();
-    mino_env_t   *env = mino_env_new(S);
+    mino_state *S   = mino_state_new();
+    mino_env   *env = mino_env_new(S);
     mino_install(S, env, MINO_CAP_DEFAULT);  /* sandbox preset      */
     mino_register_fn(S, env, \"add-tax\", host_add_tax);
 
-    mino_val_t *result = mino_eval_string(S,
+    mino_val *result = mino_eval_string(S,
         \"(def prices [100 200 300])\\n\"
         \"(reduce + (map add-tax prices))\\n\",
         env);

@@ -6,8 +6,8 @@
 
 (def ^:private embed-example
   "// Create a runtime and register a C++ type.
-mino_state_t *S   = mino_state_new();
-mino_env_t   *env = mino_env_new(S);
+mino_state *S   = mino_state_new();
+mino_env   *env = mino_env_new(S);
 mino_install(S, env, MINO_CAP_DEFAULT | MINO_CAP_HOST);
 
 mino_host_enable(S);
@@ -16,14 +16,14 @@ mino_host_register_method(S, \"EventSource\", \"next\", 0, source_next, NULL);
 mino_host_register_getter(S, \"EventSource\", \"count\", source_count, NULL);
 
 // Evaluate a mino script, extract the result.
-mino_val_t *result = mino_eval_string(S, script, env);
+mino_val *result = mino_eval_string(S, script, env);
 if (result)
     mino_println(S, result);")
 
 (def ^:private expose-example
   "// Wrap a C++ object as a mino handle.
-static mino_val_t *source_new(mino_state_t *S, mino_val_t *,
-                              mino_val_t *, void *) {
+static mino_val *source_new(mino_state *S, mino_val *,
+                              mino_val *, void *) {
     auto *src = new EventSource;
     src->events.push_back(make_event(S, \"temp\", \"sensor-01\", 21.3));
     src->events.push_back(make_event(S, \"temp\", \"sensor-02\", 19.8));
@@ -33,8 +33,8 @@ static mino_val_t *source_new(mino_state_t *S, mino_val_t *,
 }
 
 // Return the next event as a mino map, or nil.
-static mino_val_t *source_next(mino_state_t *S, mino_val_t *target,
-                               mino_val_t *, void *) {
+static mino_val *source_next(mino_state *S, mino_val *target,
+                               mino_val *, void *) {
     auto *src = (EventSource *)mino_handle_ptr(target);
     if (src->cursor >= src->events.size())
         return mino_nil(S);

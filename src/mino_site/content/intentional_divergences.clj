@@ -46,7 +46,7 @@
       [:h2 {:id "host-threads"} "Host-grant-gated host threads"]
       [:p "Threading is a per-state runtime " [:em "capability"]
        " the host grants, not a build-time feature. Each "
-       [:code "mino_state_t"] " starts at "
+       [:code "mino_state"] " starts at "
        [:code "thread_limit = 1"] " (single-threaded). Embedders "
        "raise the limit via " [:code "mino_set_thread_limit(S, n)"]
        "; while the limit is " [:code "<= 1"]
@@ -80,7 +80,7 @@
        "custom pthread pool); workers from that pool service "
        [:code "future"] " spawns. The work item carries the state pointer, "
        "not the thread, so the same N-worker pool can service an "
-       "unbounded number of isolated " [:code "mino_state_t"]
+       "unbounded number of isolated " [:code "mino_state"]
        " runtimes - multi-tenant by construction. "
        [:code "mino_set_thread_factory"] " hooks per-worker naming, "
        "affinity, priority for the spawn-per-future path; "

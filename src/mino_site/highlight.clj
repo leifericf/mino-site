@@ -29,8 +29,8 @@
     // C keywords
     code = code.replace(/\\b(void|int|long|double|char|const|static|struct|enum|typedef|return|if|else|while|for|do|switch|case|break|continue|sizeof|NULL|unsigned|signed)\\b/g,
       '<span class=\"hl-keyword\">$1</span>');
-    // C types (mino-specific)
-    code = code.replace(/\\b(mino_val_t|mino_env_t|mino_repl_t|mino_prim_fn|mino_type_t|mino_resolve_fn|mino_vec_node_t|mino_hamt_node_t|size_t|FILE)\\b/g,
+    // C types (mino-specific).
+    code = code.replace(/\\b(mino_val|mino_env|mino_repl|mino_state|mino_future|mino_ref|mino_type|mino_iter|mino_vec_builder|mino_map_builder|mino_set_builder|mino_diag|mino_gc_kind|mino_gc_param|mino_gc_stats_out|mino_jit_mode|mino_jit_capability|mino_thread_pool|mino_capability_info|mino_reg|mino_prim_fn|mino_prim_fn2|mino_finalizer_fn|mino_host_fn|mino_resolve_fn|mino_tx_xform_fn|mino_tx_body_fn|mino_thread_lifecycle_fn|mino_vec_node_t|mino_hamt_node_t|size_t|FILE)\\b/g,
       '<span class=\"hl-type\">$1</span>');
     // Preprocessor
     code = code.replace(/^(#\\w+)/gm, '<span class=\"hl-keyword\">$1</span>');

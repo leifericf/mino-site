@@ -137,7 +137,7 @@
 
       [:h3 "Cross-state ref defense"]
       [:p "JVM Clojure has one global transactional surface. mino "
-       "supports many " [:code "mino_state_t"]
+       "supports many " [:code "mino_state"]
        " in a single host process, so a host that accidentally "
        "passes a ref allocated in one state to another state's "
        [:code "mino_tx_*"] " entries would silently mutate the "
@@ -222,7 +222,7 @@
        "takes the same " [:code "mino_lock"] " perimeter "
        [:code "mino_call"] " uses, and the cross-state guard fires "
        "at the boundary -- passing an agent from another "
-       [:code "mino_state_t"] " throws "
+       [:code "mino_state"] " throws "
        [:code "MST007"] " and returns NULL."]
 
       [:h2 "What still doesn't work"]

@@ -63,7 +63,7 @@
        "ownership contract visible in the code."]
 
       [:h3 "Runtime isolation"]
-      [:p "Each " [:code "mino_state_t"] " is a complete, independent "
+      [:p "Each " [:code "mino_state"] " is a complete, independent "
        "runtime. Two runtimes in the same process share no mutable "
        "state that affects evaluation. A small process-wide filename "
        "intern table exists for reader diagnostics, but it does not "

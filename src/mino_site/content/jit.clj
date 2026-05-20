@@ -208,15 +208,15 @@ stencil_extract selftest: OK"]]]]
        "the pipeline executes. The five public symbols are stable "
        "across releases:"]
       [:pre [:code {:data-lang "c"}
-"void                  mino_state_set_jit_mode(mino_state_t *S,
-                                              mino_jit_mode_t mode);
-mino_jit_mode_t       mino_state_jit_mode(const mino_state_t *S);
+"void                  mino_state_set_jit_mode(mino_state *S,
+                                              mino_jit_mode mode);
+mino_jit_mode       mino_state_jit_mode(const mino_state *S);
 
-void                  mino_state_set_jit_hot_threshold(mino_state_t *S,
+void                  mino_state_set_jit_hot_threshold(mino_state *S,
                                                        unsigned n);
-unsigned              mino_state_jit_hot_threshold(const mino_state_t *S);
+unsigned              mino_state_jit_hot_threshold(const mino_state *S);
 
-mino_jit_capability_t mino_state_jit_capability(const mino_state_t *S);"]]
+mino_jit_capability mino_state_jit_capability(const mino_state *S);"]]
 
       [:h3 "Modes"]
       [:p [:code "MINO_JIT_MODE_AUTO"] " (default): compile when "
