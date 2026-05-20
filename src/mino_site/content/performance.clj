@@ -133,15 +133,16 @@
        [:thead
         [:tr [:th "Item"] [:th "Size"] [:th "Notes"]]]
        [:tbody
-        [:tr [:td "C source tree (" [:code "src/"] " minus vendor)"]
-             [:td "~2.27 MB"]
-             [:td "C source plus generated bundled-source headers"]]
+        [:tr [:td "C source tree (" [:code "src/"] " minus vendor "
+              "and the generated bundled-source headers)"]
+             [:td "~3.4 MB"]
+             [:td "Hand-written runtime, VM, JIT, prims, GC, collections"]]
         [:tr [:td "Vendor (" [:code "imath"] " for BigInt)"]
-             [:td "~157 KB"]
+             [:td "~158 KB"]
              [:td "Only loaded when arithmetic exceeds 64-bit range"]]
         [:tr [:td "Bundled stdlib source (" [:code "clojure.*"] " "
               "headers compiled into the binary)"]
-             [:td "~194 KB"]
+             [:td "~244 KB"]
              [:td "Lazy-installed; the minimum-embed build drops these"]]
         [:tr [:td [:code "core.clj"] " source"]
              [:td "~121 KB"]

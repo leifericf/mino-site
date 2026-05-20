@@ -71,12 +71,13 @@ make
        [:code
 "cc -std=c99 -O2 \\
   -Imino/src -Imino/src/public -Imino/src/runtime -Imino/src/gc \\
-  -Imino/src/eval -Imino/src/collections -Imino/src/prim \\
-  -Imino/src/async -Imino/src/interop -Imino/src/diag \\
-  -Imino/src/vendor/imath \\
+  -Imino/src/eval -Imino/src/values -Imino/src/collections \\
+  -Imino/src/prim -Imino/src/async -Imino/src/interop \\
+  -Imino/src/diag -Imino/src/vendor/imath \\
   -o myapp myapp.c \\
   mino/src/public/*.c mino/src/runtime/*.c mino/src/gc/*.c \\
-  mino/src/eval/*.c mino/src/collections/*.c mino/src/prim/*.c \\
+  mino/src/eval/*.c mino/src/eval/bc/*.c mino/src/eval/bc/jit/*.c \\
+  mino/src/values/*.c mino/src/collections/*.c mino/src/prim/*.c \\
   mino/src/async/*.c mino/src/interop/*.c mino/src/regex/*.c \\
   mino/src/diag/*.c mino/src/vendor/imath/*.c \\
   -lm"]]

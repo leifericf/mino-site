@@ -82,7 +82,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
 
       [:h2 "Dispatch and the register window"]
       [:p "The runtime maintains a single growable register stack on "
-       "the state (" [:code "S->bc_regs"]
+       "the state (" [:code "S->bc.bc_regs"]
        "). Each entry into a compiled function pushes a window of "
        [:code "n_regs"] " slots onto the stack and points "
        [:code "regs"] " at the window base. Arguments arrive in "
@@ -101,7 +101,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        "dispatch is rarely the bottleneck."]
       [:p "Any opcode that can re-enter user code (calls, global "
        "resolution, closure construction, var redefinition) re-reads "
-       "the window pointer from " [:code "S->bc_regs + base"]
+       "the window pointer from " [:code "S->bc.bc_regs + base"]
        " on the next cycle so a recursive " [:code "mino_bc_run"]
        " that triggers register-stack growth — and therefore "
        "reallocation — does not leave the outer frame with a dangling "
@@ -250,7 +250,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        [:li [:strong "Register stack roots."]
         " The GC root walk scans every live register slot in "
         [:code "[0, bc_top)"]
-        " on " [:code "S->bc_regs"]
+        " on " [:code "S->bc.bc_regs"]
         ". The window grows on demand; "
         [:code "bc_pop_window"]
         " clears every slot before the next push lands on it so "

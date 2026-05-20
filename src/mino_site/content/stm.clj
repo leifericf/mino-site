@@ -75,7 +75,7 @@
 
       [:h3 "Global commit lock"]
       [:p "mino serializes all commits behind one mutex "
-       "(" [:code "S->stm_commit_lock"]
+       "(" [:code "S->stm.commit_lock"]
        "). Coarser than JVM's per-ref read/write locks but simpler, "
        "and on a single thread the lock is skipped entirely. Reads "
        "outside a transaction are an atomic load; reads inside a "
