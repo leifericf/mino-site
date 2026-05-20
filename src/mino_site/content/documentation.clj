@@ -123,6 +123,14 @@
          "loops, the soundness discipline, and how mino's VM "
          "compares to Lua, Janet, and BEAM."]]
 
+       [:a.card {:href "/documentation/vendored-first/"}
+        [:div.card-title "Zero dependencies, vendored first"]
+        [:div.card-desc
+         "How mino ships: the single-file amalgamation under "
+         [:code "dist/"] ", no transitive build dependencies, no "
+         "package manager, and the SQLite / Odin / sokol / stb "
+         "spirit of vendor what you use."]]
+
        [:a.card {:href "/documentation/jit/"}
         [:div.card-title "JIT"]
         [:div.card-desc

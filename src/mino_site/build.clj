@@ -28,6 +28,7 @@
     [mino-site.content.platforms :as platforms]
     [mino-site.content.performance :as performance]
     [mino-site.content.bytecode-vm :as bytecode-vm]
+    [mino-site.content.vendored-first :as vendored-first]
     [mino-site.content.jit :as jit]
     [mino-site.content.from-clojure :as from-clojure]
     [mino-site.content.compatibility-matrix :as compatibility-matrix]
@@ -179,6 +180,13 @@
                           :description "How mino's register-based bytecode VM compiles function bodies, what its opcodes do, the soundness discipline behind compile-time folds, and where it sits relative to Lua, Janet, and BEAM."
                           :active-page :documentation}
          (bytecode-vm/bytecode-vm-page)))
+
+     "/documentation/vendored-first/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Zero dependencies, vendored first"
+                          :description "How mino ships: a single-file amalgamation under dist/, no transitive build dependencies, the SQLite / Odin / sokol / stb spirit of vendor what you use."
+                          :active-page :documentation}
+         (vendored-first/vendored-first-page)))
 
      "/documentation/jit/index.html"
      (fn [ctx]
