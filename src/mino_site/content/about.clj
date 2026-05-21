@@ -54,6 +54,22 @@
        "processes communicating by message passing. Mino combines "
        "these lineages into an embeddable runtime with persistent "
        "data and capability-gated host interop."]
+      [:p "Mino borrows from BEAM twice. The first borrowing is "
+       "isolation: each "
+       [:code "mino_state"] " owns its heap and communicates with "
+       "peers via cross-state channels and values, never shared "
+       "mutable references. The second is "
+       [:a {:href "https://www.erlang.org/doc/system/bit_syntax.html"}
+        "Erlang's bit syntax"]
+       " - binary data as a first-class type with bit-precise "
+       "field access. mino's "
+       [:a {:href "/documentation/bytes/"}
+        [:code "MINO_BYTES"]]
+       " value and the "
+       [:code "bits"] " / " [:code "bits-get"] " / "
+       [:code "let-bits"]
+       " surface bring the same shape to embedded scripts, where "
+       "binary protocols and sensor packets are common."]
 
       [:h2 "Related projects"]
       [:ul

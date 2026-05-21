@@ -529,6 +529,65 @@
       ;; --- Recent additions ---
 
       [:h2 "Recent additions"]
+      [:p "The v0.409 – v0.419 series closed the last canon-parity
+            gaps and added an Erlang-inspired bit-syntax surface:"]
+      [:ul
+       [:li [:strong "Lazy-seq namespace scoping."] " A "
+        [:code "(lazy-seq ...)"]
+        " form now captures the namespace where it was written and
+        restores it during realization. Library helpers referenced
+        from inside the lazy body resolve correctly even when the
+        seq is forced from a foreign namespace."]
+       [:li [:strong "Print dynvars."] " The remaining "
+        [:code "*print-readably*"] ", " [:code "*print-meta*"] ", "
+        [:code "*print-dup*"] ", " [:code "*print-namespace-maps*"]
+        ", and " [:code "*flush-on-newline*"]
+        " dynvars are wired end-to-end with state-cached
+        resolution."]
+       [:li [:strong "Full math-context rounding modes."]
+        " " [:code "(with-precision N :rounding mode (/ a b))"]
+        " accepts every JVM rounding mode: "
+        [:code ":down"] ", " [:code ":up"] ", " [:code ":floor"]
+        ", " [:code ":ceiling"] ", "
+        [:code ":half-up"] ", " [:code ":half-down"] ", "
+        [:code ":half-even"] " (banker's), "
+        [:code ":unnecessary"] " (throws when rounding occurs)."]
+       [:li [:strong "JVM Class/Member statics."]
+        " " [:code "Long/MAX_VALUE"] ", "
+        [:code "Math/sqrt"] ", " [:code "Double/parseDouble"]
+        ", " [:code "java.util.UUID/randomUUID"] ", "
+        [:code "java.util.List/of"]
+        ", and the rest of the JVM-Clojure preamble surface
+        resolve without any custom interop wiring. Embedded-host
+        capabilities (wall-clock time, env, exit) route through
+        the canonical JVM names."]
+       [:li [:strong "inst? / inst-ms / #inst literal."]
+        " The " [:code "#inst \"...\""]
+        " reader literal produces a component-map carrying
+        " [:code ":mino/instant true"]
+        " meta; " [:code "(inst? v)"]
+        " detects the marker and " [:code "(inst-ms v)"]
+        " returns epoch millis without host-Date dependencies."]
+       [:li [:strong "MINO_BYTES + bit syntax."]
+        " First-class immutable binary-data type "
+        "(" [:code "byte-array"] ", " [:code "bytes?"]
+        ", " [:code "bitstring?"] ") plus an Erlang-inspired bit-
+        syntax surface "
+        "(" [:code "bits"] ", " [:code "bits-get"] ", "
+        [:code "subbits"] ", " [:code "let-bits"] ", "
+        [:code "#bytes \"...\""]
+        " reader literal). See the dedicated "
+        [:a {:href "/documentation/bytes/"}
+         "Bytes and Bit Syntax"]
+        " page. This is one place where mino outshines JVM Clojure
+        for the embedded-runtime niche."]
+       [:li [:code "*clojure-version*"] " + AOT-compiler dynvars
+        (" [:code "*compile-path*"] ", " [:code "*source-path*"]
+        ", " [:code "*compile-files*"] ", "
+        [:code "*warn-on-reflection*"] ", "
+        [:code "*unchecked-math*"]
+        ") for shape parity with JVM Clojure."]]
+
       [:p "The v0.401 – v0.407 series tightened mino against
             JVM-Clojure-canon ports:"]
       [:ul

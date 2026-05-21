@@ -185,6 +185,31 @@
           "dispatch, and " [:code "instance?"] ". "
           [:code "(= record map-with-same-content)"] " is "
           [:code "false"] " by design."]]
+        [:tr [:td [:code "byte-array"] " / " [:code "bytes?"] " / "
+              [:code "bitstring?"] " / "
+              [:code "aget"] " on a bytes value / "
+              [:code "alength"] " / "
+              [:code "#bytes \"...\""] " reader literal"]
+         [:td "Differs"]
+         [:td [:code "byte-array"] " returns an immutable "
+          [:code "MINO_BYTES"] " value, not a host-mutable Java "
+          [:code "byte[]"] ". "
+          [:code "aset"] " on it throws "
+          [:code ":mino/state"]
+          " (the persistent-value model excludes in-place writes). "
+          "Other Java primitive-array constructors "
+          "(" [:code "int-array"] ", " [:code "long-array"] ", "
+          "etc.) stay as " [:code "MINO_HOST_ARRAY"] " for backward "
+          "compat. See "
+          [:a {:href "/documentation/bytes/"}
+           "Bytes and Bit Syntax"] "."]]
+        [:tr [:td "Bit syntax: " [:code "bits"] " / "
+              [:code "bits-get"] " / " [:code "subbits"] " / "
+              [:code "let-bits"]]
+         [:td "Extension"]
+         [:td "mino-only surface borrowed from Erlang's bit syntax. "
+          "Builds and reads bit fields at arbitrary offsets / sizes / "
+          "endians / types. JVM Clojure has no equivalent."]]
         [:tr [:td "Chunked-seq APIs ("
               [:code "chunked-seq?"] ", " [:code "chunk-first"]
               ", " [:code "chunk-rest"] ", " [:code "chunk-next"]
@@ -317,9 +342,13 @@
          [:td "Supported"]
          [:td "Stored as " [:code "{unscaled scale}"] " over "
           [:code "MINO_BIGINT"] ". "
-          [:code "with-precision"] " currently honours only "
-          [:code ":half-up"] " rounding; other modes throw "
-          [:code "MHO002"] " until per-mode rounding is wired."]]
+          [:code "with-precision"] " accepts every JVM rounding "
+          "mode: " [:code ":down"] ", " [:code ":up"] ", "
+          [:code ":floor"] ", " [:code ":ceiling"] ", "
+          [:code ":half-up"] ", " [:code ":half-down"] ", "
+          [:code ":half-even"] " (banker's), "
+          [:code ":unnecessary"] " (throws when rounding would "
+          "occur)."]]
         [:tr [:td "Plain " [:code "+"] " / " [:code "-"] " / "
               [:code "*"] " / " [:code "inc"] " / " [:code "dec"]]
          [:td "Differs"]
@@ -818,7 +847,37 @@
           "shapes. User-defined tag dispatch via "
           [:code "*data-readers*"] " is honored; the "
           [:code "*default-data-reader-fn*"] " fallback applies "
-          "for unknown tags."]]]]
+          "for unknown tags."]]
+        [:tr [:td [:code "#inst \"...\""] " literal / "
+              [:code "inst?"] " / " [:code "inst-ms"] " / "
+              [:code "clojure.instant"]]
+         [:td "Supported"]
+         [:td "The " [:code "#inst"]
+          " reader literal parses into a component map carrying "
+          [:code "{:mino/instant true}"] " metadata. "
+          [:code "inst?"] " detects the marker; "
+          [:code "inst-ms"] " decodes epoch millis from the
+          component map. mino has no JVM "
+          [:code "Date"] " / " [:code "Timestamp"]
+          " class -- the map IS the representation."]]
+        [:tr [:td [:code "#uuid \"...\""] " literal / "
+              [:code "uuid?"] " / " [:code "random-uuid"] " / "
+              [:code "parse-uuid"]]
+         [:td "Supported"]
+         [:td "Real " [:code "MINO_UUID"]
+          " value type. " [:code "(str u)"]
+          " emits the canonical 36-char form so it round-trips
+          through " [:code "java.util.UUID/fromString"]
+          " on JVM."]]
+        [:tr [:td [:code "*clojure-version*"] " / "
+              [:code "(clojure-version)"]]
+         [:td "Differs"]
+         [:td "Returns a four-key map and a "
+          [:code "\"M.N.P\""]
+          " string respectively. The version numbers reflect mino,
+          not JVM Clojure -- the Clojure-shape is for code that
+          reads the map's structure; the literal version string
+          differs intentionally."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Namespaces & host
