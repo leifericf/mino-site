@@ -71,6 +71,13 @@
          [:code "deftest"] ", " [:code "is"] ", and "
          [:code "testing"] ". CI-friendly exit codes."]]
 
+       [:a.card {:href "/documentation/bytes/"}
+        [:div.card-title "Bytes and Bit Syntax"]
+        [:div.card-desc
+         "Immutable binary-data values plus an Erlang-inspired "
+         "destructure surface for packing and unpacking bit fields. "
+         "Useful for binary protocols, sensor packets, and bitboards."]]
+
        [:a.card {:href "/documentation/tasks/"}
         [:div.card-title "Task Runner"]
         [:div.card-desc

@@ -25,6 +25,7 @@
     [mino-site.content.embedding :as embedding]
     [mino-site.content.garbage-collection :as garbage-collection]
     [mino-site.content.stm :as stm]
+    [mino-site.content.bytes :as bytes]
     [mino-site.content.platforms :as platforms]
     [mino-site.content.performance :as performance]
     [mino-site.content.bytecode-vm :as bytecode-vm]
@@ -166,6 +167,13 @@
                           :description "Refs, dosync, alter, commute, ensure, ref-set, watches, validators, and the C API mirror. Single-version optimistic locking; deviations from JVM canon."
                           :active-page :documentation}
          (stm/stm-page)))
+
+     "/documentation/bytes/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Bytes and Bit Syntax"
+                          :description "MINO_BYTES (immutable binary-data value) and the Erlang-inspired bit-syntax surface: bits, bits-get, subbits, let-bits. Bit-precise field access for binary protocols, sensor packets, bitboards."
+                          :active-page :documentation}
+         (bytes/bytes-page)))
 
      "/documentation/performance/index.html"
      (fn [ctx]
