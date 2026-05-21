@@ -526,6 +526,52 @@
         "Executor type). See "
         [:a {:href "/documentation/stm/"} "STM"] "."]]
 
+      ;; --- Recent additions ---
+
+      [:h2 "Recent additions"]
+      [:p "The v0.401 – v0.407 series tightened mino against
+            JVM-Clojure-canon ports:"]
+      [:ul
+       [:li [:strong "Strict function arity"] " is verified end-to-end
+        (both tree-walker and bytecode VM throw " [:code "MAR001"]
+        " / " [:code "MAR002"] " on missing or extra args). The
+        diagnostic carries " [:code ":mino/kind = :eval/arity"]
+        " so structured catch dispatch works."]
+       [:li [:code "(is (thrown-with-msg? <re> body))"] " and the
+        JVM-shaped " [:code "(thrown-with-msg? <Class> <re> body)"]
+        " in " [:code "clojure.test"]
+        ". The class symbol is documentation-only; the regex matches
+        the thrown value's message (mino lacks a class hierarchy)."]
+       [:li [:code "*print-length*"] " and " [:code "*print-level*"]
+        " dynvars. " [:code "pr"] " / " [:code "prn"] " / "
+        [:code "print"] " / " [:code "println"] " / " [:code "pr-str"]
+        " consult them at top-level entry; collection printers
+        truncate with " [:code "..."] " or collapse with "
+        [:code "#"] " per JVM semantics."]
+       [:li [:code "pcalls"] ", " [:code "pvalues"] ", and "
+        [:code "alt!"] " (the macro over " [:code "alts!"] ").
+        Round out the parallel surface alongside the existing "
+        [:code "pmap"] "; all share the "
+        [:code "(mino-thread-limit) <= 1"]
+        " sequential fallback."]
+       [:li [:code "hash-combine"] ", " [:code "*math-context*"]
+        ", and " [:code "with-precision"]
+        ". Boost-style 32-bit hash mixer; bigdec division with
+        " [:code "(with-precision N (/ ... ...))"] " using "
+        [:code ":half-up"] " rounding (other rounding modes throw
+        " [:code "MHO002"] " — implementing them properly is queued)."]
+       [:li [:code "unchecked-long"] " on a bigint outside signed
+        long range wraps modulo 2^64 instead of clamping through
+        double. Matches JVM's " [:code "Number.longValue()"]
+        " on " [:code "BigInteger"] "."]
+       [:li [:code "clojure.test.check"] " quick-check now walks
+        rose trees on failure and reports " [:code ":shrunk"]
+        " with the minimal counter-example."]
+       [:li [:code "clojure.core.reducers/fold"] " parallel branch.
+        Vectors larger than the chunk hint partition into
+        thread-budget-many chunks reduced concurrently and combined
+        via " [:code "combinef"] "."]]
+
       ;; --- Quick reference ---
 
       [:h2 "Quick reference"]

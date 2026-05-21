@@ -316,7 +316,10 @@
               [:code "(with-precision n)"] ")"]
          [:td "Supported"]
          [:td "Stored as " [:code "{unscaled scale}"] " over "
-          [:code "MINO_BIGINT"] "."]]
+          [:code "MINO_BIGINT"] ". "
+          [:code "with-precision"] " currently honours only "
+          [:code ":half-up"] " rounding; other modes throw "
+          [:code "MHO002"] " until per-mode rounding is wired."]]
         [:tr [:td "Plain " [:code "+"] " / " [:code "-"] " / "
               [:code "*"] " / " [:code "inc"] " / " [:code "dec"]]
          [:td "Differs"]

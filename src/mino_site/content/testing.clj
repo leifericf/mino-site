@@ -47,7 +47,7 @@
       [:p "The core assertion macro. Returns the result of the expression. "
        "On failure, records the original form, an optional message, and "
        "expected vs. actual values."]
-      [:p "Three assertion modes:"]
+      [:p "Four assertion modes:"]
       [:table
        [:thead
         [:tr [:th "Form"] [:th "Passes when"]]]
@@ -56,6 +56,12 @@
          [:td "Values are equal. Reports expected and actual on failure."]]
         [:tr [:td [:code "(is (thrown? body...))"]]
          [:td "Body throws an exception. Fails if no exception is raised."]]
+        [:tr [:td [:code "(is (thrown-with-msg? <re> body...))"]]
+         [:td "Body throws and the thrown value's message matches the
+                regex. The 4-arg JVM shape "
+              [:code "(thrown-with-msg? <Class> <re> body...)"]
+              " is also accepted; the class symbol is
+                documentation-only (mino has no class hierarchy)."]]
         [:tr [:td [:code "(is expr)"]]
          [:td "Expression is truthy (not " [:code "nil"] " or "
           [:code "false"] ")."]]]]
