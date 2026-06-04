@@ -32,12 +32,17 @@
        "ASan step relies on a libsanitizer that MinGW does not "
        "ship; the smoke build + test suite still gate every push "
        "on that runner. A separate "
-       [:code "cross-compile"] " job runs on macos-14 every push "
-       "and verifies that the committed CPJIT stencil byte tables "
-       "for every supported target (ARM64 Linux, x86_64 Linux, "
-       "x86_64 Darwin, x86_64 Windows) regenerate identically — "
-       "this is the verification floor for x86_64 Darwin since "
-       "GitHub has been retiring Intel Mac runners."]
+       [:code "stencil-determinism"] " job runs on one pinned-"
+       [:code "zig"] " Linux runner every push and verifies that the "
+       "committed CPJIT stencil byte tables for every supported "
+       "target (both Darwin, both Linux, x86_64 Windows) regenerate "
+       "byte-for-byte identically — one version-locked "
+       [:code "zig cc"] " cross-compiles them all, so the check is "
+       "reproducible across machines. This is the verification floor "
+       "for x86_64 Darwin since GitHub has been retiring Intel Mac "
+       "runners. It is kept off the per-OS matrix on purpose: host "
+       "compiler-version skew is what made an earlier matrix-wide "
+       "byte-identity check infeasible."]
       [:p "A nightly workflow (04:00 UTC daily) re-runs the "
        "release-gate plus extended suites (GC stress, fault "
        "injection, embedding stress) on the three non-Windows "
@@ -80,13 +85,33 @@
           "targets assume the modern driver."]]]]
 
       [:h2 "Windows and MSVC"]
-      [:p "Windows CI builds with MinGW-w64 " [:code "gcc"] ". MSVC is "
-       "not in the CI matrix. Historical MSVC had weak C99 support; "
+      [:p "Windows CI gates with MinGW-w64 " [:code "gcc"] ". MSVC is "
+       "not a gating compiler, but an informational "
+       [:code "msvc-compile-canary"] " job compiles the single-file "
+       "amalgamation with MSVC's C frontend (" [:code "cl /TC"] ") on "
+       "every push, so an MSVC-specific C99 gap surfaces without "
+       "blocking merges. Historical MSVC had weak C99 support; "
        "MSVC 2019 (v16.8) and later accept " [:code "/std:c11"] " or "
        [:code "/std:c17"] ", which is a superset of C99 sufficient "
        "for mino. If you build with MSVC, pass " [:code "/std:c11"]
        " (or later) and report build or runtime issues against the "
        "current release."]
+
+      [:h2 "Cross-compiling releases"]
+      [:p "The release binaries are built natively on per-platform "
+       "runners. Optionally, a maintainer can cross-compile the Linux "
+       "(amd64/arm64) and Windows (amd64) binaries from a single host "
+       "with the pinned " [:code "zig cc"] " — "
+       [:code "./mino task cross-build"] ". This is never required to "
+       "build or embed mino (" [:code "make"] " + a C99 compiler stays "
+       "canonical); it is a convenience that also lets the Windows "
+       "build link via mingw without " [:code "-static"] ", so the "
+       [:code ".exe"] " imports only the system Universal CRT and "
+       "carries no " [:code "libgcc"] " / " [:code "libwinpthread"]
+       " DLL dependency. macOS stays a native build: Zig bundles no "
+       "macOS SDK, so the full runtime cannot link " [:code "libSystem"]
+       " when cross-compiled. A CI job cross-builds Linux + Windows "
+       "from one Linux host on every release to keep the path honest."]
 
       [:h2 "JIT support per host"]
       [:p "The copy-and-patch JIT (CPJIT) ships byte tables for "
@@ -104,7 +129,7 @@
         [:tr [:td "ARM64 Darwin"]  [:td "Mach-O 64"] [:td "yes (dev host; release-gate every push)"]]
         [:tr [:td "ARM64 Linux"]   [:td "ELF64"]    [:td "yes (release-gate every push)"]]
         [:tr [:td "x86_64 Linux"]  [:td "ELF64"]    [:td "yes (release-gate every push)"]]
-        [:tr [:td "x86_64 Darwin"] [:td "Mach-O 64"] [:td "yes (cross-compile parity every push)"]]
+        [:tr [:td "x86_64 Darwin"] [:td "Mach-O 64"] [:td "yes (stencil-determinism job, pinned zig cc)"]]
         [:tr [:td "x86_64 Windows"][:td "PE/COFF"]  [:td "yes (smoke build every push)"]]]]
       [:p "Per-state runtime control lives behind "
        [:code "mino_state_set_jit_mode"]
