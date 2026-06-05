@@ -85,12 +85,17 @@
         "eligibility with zero hard rejections."]
 
        [:li [:strong "Cancellable JIT'd loops."]
-        " Each fused-loop stencil polls "
-        [:code "mino_bc_safepoint"] " on a 256-iteration "
-        "downcounter, so a spinning JIT'd loop responds to "
+        " Every native loop back-edge polls the safepoint on a "
+        "256-iteration downcounter: fused-loop stencils keep the "
+        "counter in a register, and every other loop shape gets a "
+        "safepoint stencil planted before its backward jump. A "
+        "spinning JIT'd loop responds to "
         [:code "(future-cancel f)"] " within bounded wall time "
-        "even when the body is entirely native. Per-iteration "
-        "cost is one decrement plus one branch on the hot path."]
+        "even when the body is entirely native, and the poll keeps "
+        "the runtime's lock auto-yield at the same cadence the "
+        "interpreter produces, so a native spin cannot starve "
+        "sibling workers. Per-iteration cost is one decrement plus "
+        "one branch on the fused hot path."]
 
        [:li [:strong "Adaptive tiering."]
         " In " [:code "AUTO"] " mode any callee invoked from "
