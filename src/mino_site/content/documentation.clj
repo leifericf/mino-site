@@ -143,7 +143,7 @@
        [:a.card {:href "/documentation/jit/"}
         [:div.card-title "JIT"]
         [:div.card-desc
-         "The CPJIT layer end to end: 58 opcode stencils across "
+         "The CPJIT layer end to end: 65 opcode stencils across "
          "five host arches, dual-binary build, four-way parity, "
          "side-exit deopt, cancellable JIT'd loops, runtime "
          "control, per-host verification matrix, and an on/off "

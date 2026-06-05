@@ -26,7 +26,7 @@
 
       [:h2 "What ships today"]
       [:ul
-       [:li [:strong "58 opcode stencils"] " covering arithmetic ("
+       [:li [:strong "65 opcode stencils"] " covering arithmetic ("
         [:code "OP_ADD_II"] ", " [:code "OP_SUB_II"] ", "
         [:code "OP_MUL_II"] ", k-immediate variants), comparison ("
         [:code "OP_EQ_II"] " through " [:code "OP_GE_II"] " plus "
@@ -57,19 +57,22 @@
         [:code "OP_POP_ENV"] ", " [:code "OP_ENV_BIND"] "), leaf "
         "shapes (" [:code "OP_LOAD_K"] ", " [:code "OP_MOVE"] ", "
         [:code "OP_RETURN"] ", and the fused "
-        [:code "OP_LOAD_K_RETURN"] " superinstruction), and one "
-        "synthetic " [:code "OP_DEOPT_TO_INTERP"] " stencil that "
-        "the compile path inserts to bail back to the interpreter."]
+        [:code "OP_LOAD_K_RETURN"] " superinstruction), and two "
+        "synthetic stencils the compile path inserts itself: "
+        [:code "OP_DEOPT_TO_INTERP"] " to bail back to the "
+        "interpreter and " [:code "OP_SAFEPOINT_POLL"] " planted "
+        "before every backward jump so generic loops stay "
+        "cancellable."]
 
        [:li [:strong "5 host arches with on-disk byte tables."]
         " Each generated header carries the stencil bytes plus the "
         "symbol and relocation tables the runtime patcher consumes:"
         [:ul
-         [:li [:code "stencils_arm64_darwin.h"] " (101,201 bytes)"]
-         [:li [:code "stencils_arm64_linux.h"] " (101,314 bytes)"]
-         [:li [:code "stencils_x86_64_darwin.h"] " (94,893 bytes)"]
-         [:li [:code "stencils_x86_64_linux.h"] " (95,317 bytes)"]
-         [:li [:code "stencils_x86_64_windows.h"] " (97,856 bytes)"]]]
+         [:li [:code "stencils_arm64_darwin.h"] " (102,298 bytes)"]
+         [:li [:code "stencils_arm64_linux.h"] " (102,410 bytes)"]
+         [:li [:code "stencils_x86_64_darwin.h"] " (95,897 bytes)"]
+         [:li [:code "stencils_x86_64_linux.h"] " (96,317 bytes)"]
+         [:li [:code "stencils_x86_64_windows.h"] " (99,068 bytes)"]]]
 
        [:li [:strong "Side-exit deopt path."]
         " Fns whose first unstenciled op sits past PC 0 compile "
