@@ -98,20 +98,33 @@
        "current release."]
 
       [:h2 "Cross-compiling releases"]
-      [:p "The release binaries are built natively on per-platform "
-       "runners. Optionally, a maintainer can cross-compile the Linux "
-       "(amd64/arm64) and Windows (amd64) binaries from a single host "
-       "with the pinned " [:code "zig cc"] " — "
-       [:code "./mino task cross-build"] ". This is never required to "
-       "build or embed mino (" [:code "make"] " + a C99 compiler stays "
-       "canonical); it is a convenience that also lets the Windows "
-       "build link via mingw without " [:code "-static"] ", so the "
-       [:code ".exe"] " imports only the system Universal CRT and "
-       "carries no " [:code "libgcc"] " / " [:code "libwinpthread"]
+      [:p "The native per-platform runners build the platform-native "
+       "binaries. From a single host, a maintainer also cross-compiles "
+       "the Linux (amd64/arm64) and Windows (amd64) binaries with the "
+       "pinned " [:code "zig cc"] " — " [:code "./mino task cross-build"]
+       ". This is never required to build or embed mino (" [:code "make"]
+       " + a C99 compiler stays canonical); it produces two extra "
+       "things. First, a fully static " [:strong "musl"] " Linux binary "
+       "(amd64/arm64) with zero shared-library dependencies — the "
+       "single-file standalone download that runs on any Linux, glibc "
+       "or musl alike — published alongside the glibc builds. Second, a "
+       "Windows " [:code ".exe"] " linked via mingw without "
+       [:code "-static"] ", importing only the system Universal CRT, "
+       "with no " [:code "libgcc"] " / " [:code "libwinpthread"]
        " DLL dependency. macOS stays a native build: Zig bundles no "
-       "macOS SDK, so the full runtime cannot link " [:code "libSystem"]
-       " when cross-compiled. A CI job cross-builds Linux + Windows "
-       "from one Linux host on every release to keep the path honest."]
+       "macOS SDK, so a Linux host cannot cross-compile darwin (an "
+       "informational CI canary evaluates building darwin natively with "
+       [:code "zig cc"] " on a Mac runner). A CI job cross-builds and "
+       "validates Linux + Windows from one Linux host on every release."]
+      [:p "The pinned " [:code "zig cc"] " is a hard requirement for "
+       "developing mino — it gates stencil regeneration, cross-builds, "
+       "and the reproducible QA lanes (a UBSan + TSan sanitizer run, a "
+       "curated strict-warning lens, an advisory clang static-analyzer "
+       "report, and a hermetic build that does not depend on the runner "
+       "image's compiler). It is never required of embedders. "
+       [:code "./mino task doctor"] " checks the toolchain; the pinned "
+       "version and the full task list live in "
+       [:code "docs/MAINTAINER_TOOLCHAIN.md"] "."]
 
       [:h2 "JIT support per host"]
       [:p "The copy-and-patch JIT (CPJIT) ships byte tables for "

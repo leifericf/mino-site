@@ -31,6 +31,21 @@
       [:pre [:code "scoop bucket add mino https://github.com/leifericf/scoop-mino\nscoop install mino"]]
       [:p [:code "scoop update mino"] " picks up new releases."]
 
+      [:h3 "Direct download (Linux, static)"]
+      [:p "Each release also publishes a fully static Linux binary "
+       "(amd64 and arm64), built against musl. It is a single file with "
+       "no dynamic dependencies "
+       [:span {:title "zero ELF NEEDED entries"} "(zero shared-library "
+        "links)"] ", so it runs on any Linux — glibc or musl, Alpine, "
+       "old kernels or new — with nothing to install. Grab "
+       [:code "mino_linux_<arch>_musl_<version>.tar.gz"] " from the "
+       [:a {:href "https://github.com/leifericf/mino/releases"}
+        "releases page"] ", unpack, and run:"]
+      [:pre [:code "tar -xzf mino_linux_amd64_musl_*.tar.gz\n./mino_linux_amd64_musl_*/mino --version"]]
+      [:p "These are cross-compiled from one host with a pinned "
+       [:code "zig cc"] "; the glibc-dynamic builds remain available as "
+       "the platform-native artifacts."]
+
       [:h3 "Verify"]
       [:pre [:code "mino --version\nmino"]]
       [:p "The first command prints the installed version. The "
