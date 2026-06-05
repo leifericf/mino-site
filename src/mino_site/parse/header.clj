@@ -325,11 +325,26 @@
 
             ;; #define
             (str/starts-with? trimmed "#define")
-            (let [decl (parse-define trimmed)
+            (let [;; A backslash-continued macro spans multiple physical
+                  ;; lines; consume them all so the continuation body is
+                  ;; not reparsed as a stray declaration.
+                  span (loop [j idx]
+                         (if (and (str/ends-with? (str/trimr (nth lines j)) "\\")
+                                  (< (inc j) (count lines)))
+                           (recur (inc j))
+                           (inc (- j idx))))
+                  ;; Function-like macros -- #define NAME(args) ... -- and
+                  ;; multi-line macros are implementation detail, not
+                  ;; documented API entries; skip them silently. Only an
+                  ;; object-like #define that genuinely fails to parse is
+                  ;; worth a warning.
+                  fn-like? (re-find #"^#define\s+\w+\(" trimmed)
+                  decl (when (and (not fn-like?) (= span 1))
+                         (parse-define trimmed))
                   doc (extract-doc-comment preceding)]
-              (when-not decl
+              (when (and (not decl) (not fn-like?) (= span 1))
                 (warn-skip :unparseable-define trimmed idx))
-              (recur (inc idx) []
+              (recur (+ idx span) []
                      (if decl
                        (conj declarations (assoc decl :doc doc))
                        declarations)))
@@ -419,6 +434,15 @@
                      (if decl
                        (conj declarations (assoc decl :doc doc))
                        declarations)))
+
+            ;; Forward-declared / opaque struct: `struct foo;` with no
+            ;; body (a trailing /* ... */ comment is fine). Not a
+            ;; documented API entry -- skip rather than run the brace
+            ;; collector off the end of the section.
+            (and (str/starts-with? trimmed "struct ")
+                 (str/includes? trimmed ";")
+                 (not (str/includes? trimmed "{")))
+            (recur (inc idx) [] declarations)
 
             ;; struct definition — collect until closing };
             (str/starts-with? trimmed "struct ")
