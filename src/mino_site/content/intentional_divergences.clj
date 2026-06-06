@@ -250,26 +250,6 @@
 
       ;; ----------------------------------------------------------------
 
-      [:h2 {:id "regex-strings"} "Regex patterns are strings"]
-      [:p "mino's regex literal " [:code "#\"...\""]
-       " parses to a " [:code "MINO_STRING"] " whose contents are "
-       "the pattern source. " [:code "re-find"] ", "
-       [:code "re-matches"] ", " [:code "re-seq"] ", "
-       [:code "re-pattern"] ", and the " [:code "clojure.string"]
-       " regex consumers compile from that string at the call site. "
-       "There is no separate " [:code "java.util.regex.Pattern"]
-       "-equivalent value type."]
-      [:p [:strong "Consequences."] " Two regex values produced from "
-       "the same source string compare equal under "
-       [:code "="] " (they're the same string). On the JVM, "
-       [:code "(= #\"x\" #\"x\")"] " is " [:code "false"] " because "
-       "Pattern instances rely on identity. The mino behaviour is "
-       "convenient (regex patterns can be used as map keys, "
-       "deduplicated in sets) but does diverge from Clojure's "
-       "Pattern semantics."]
-
-      ;; ----------------------------------------------------------------
-
       [:h2 {:id "fn-arity"} "Permissive function arity"]
       [:p "Calling a fixed-arity function with too few or too many "
        "arguments does not throw in mino. Missing positional "
