@@ -213,7 +213,9 @@
        [:li [:code "alt!"] " macro is not implemented (use " [:code "alts!"] ")"]
        [:li "Parks in " [:code "catch"] "/" [:code "finally"] " bodies "
         "are not supported"]
-       [:li "Nested parks in function call arguments require explicit "
+       [:li "Parks nested in plain function-call arguments are lifted "
+        "automatically (left-to-right order preserved); parks under a "
+        "macro call or inside map/set literals still need explicit "
         [:code "let"] " bindings"]]
 
       [:h3 "Futures, promises, threads"]

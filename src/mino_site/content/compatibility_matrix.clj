@@ -637,11 +637,13 @@
           "the same publish)."]]
         [:tr [:td [:code "locking"] " / " [:code "monitor-enter"]
               " / " [:code "monitor-exit"]]
-         [:td "Absent"]
-         [:td "Each runtime serializes mutator threads under a "
-          "per-state lock; user code does not see preemption "
-          "inside one runtime, so there is nothing to lock against "
-          "from inside mino."]]
+         [:td "Partial"]
+         [:td [:code "locking"] " is supported: a cooperative,
+          identity-keyed, reentrant monitor that holds across yield
+          points (sleeps and blocking channel operations inside the
+          body) and releases on throw. The low-level "
+          [:code "monitor-enter"] " / " [:code "monitor-exit"]
+          " special forms stay absent; use " [:code "locking"] "."]]
         [:tr [:td [:code "volatile!"] " / " [:code "vswap!"]
               " / " [:code "vreset!"] " / " [:code "volatile?"]]
          [:td "Supported"]
