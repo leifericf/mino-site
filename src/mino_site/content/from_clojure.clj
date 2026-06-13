@@ -150,6 +150,14 @@
        "every other namespace's root env chains to it via a parent "
        "pointer, so unqualified " [:code "if"] ", " [:code "map"]
        ", " [:code "let"] " keep working without an explicit refer."]
+      [:p "The macro-family special forms are reachable by their "
+       "fully qualified names too: " [:code "(clojure.core/let ...)"]
+       ", " [:code "(clojure.core/when ...)"] ", and "
+       [:code "(clojure.core/fn ...)"] " evaluate identically to the "
+       "bare forms. Syntax-quote qualifies those forms to "
+       [:code "clojure.core/X"] " the way Clojure does, while the "
+       "true special forms (" [:code "if"] ", " [:code "do"] ", "
+       [:code "recur"] ", " [:code "quote"] ") stay bare."]
       [:pre [:code
         "(ns myapp.core\n"
         "  (:require [clojure.string :as str]))\n"

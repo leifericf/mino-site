@@ -77,6 +77,26 @@
         [:tr [:td [:code "quote"] " / " [:code "var"] " / "
               [:code "#'sym"]]
          [:td "Supported"] [:td]]
+        [:tr [:td "Qualified special forms "
+              [:code "(clojure.core/let ...)"] " / "
+              [:code "clojure.core/when"] " / "
+              [:code "clojure.core/fn"]]
+         [:td "Supported"]
+         [:td "The macro-family special forms evaluate the same "
+          "whether written bare or qualified with "
+          [:code "clojure.core/"] ". True special forms ("
+          [:code "if"] ", " [:code "do"] ", " [:code "recur"]
+          ", " [:code "quote"] ") stay bare."]]
+        [:tr [:td [:code "type"] " / " [:code "class"]]
+         [:td "Supported"]
+         [:td [:code "class"] " returns a concrete type tag: "
+          [:code "(class nil)"] " is " [:code "nil"]
+          ", a record value reports its record type, and every "
+          "other value reports its type keyword. It is not an "
+          "alias of " [:code "type"] " and it ignores "
+          [:code ":type"] " metadata; " [:code "type"]
+          " honors " [:code ":type"] " metadata first and falls "
+          "back to the value's class."]]
         [:tr [:td "Reader conditionals "
               [:code "#?"] " / " [:code "#?@"]]
          [:td "Supported"]
@@ -739,6 +759,32 @@
           "shrinking is deferred. Backs the "
           [:code "s/gen"] " and " [:code "s/exercise"]
           " hooks under " [:code "clojure.spec.alpha"] "."]]
+        [:tr [:td [:code "clojure.spec.gen.alpha"] " / "
+              [:code "clojure.spec.test.alpha"]]
+         [:td "Supported"]
+         [:td "Bundled, loaded on " [:code "require"] ". "
+          [:code "clojure.spec.test.alpha"] " provides "
+          [:code "instrument"] ", " [:code "unstrument"] ", "
+          [:code "check"] ", and " [:code "summarize-results"]
+          "; the JVM " [:code ":stub"] " / " [:code ":replace"]
+          " instrument options are not provided."]]
+        [:tr [:td [:code "clojure.test.tap"] " / "
+              [:code "clojure.test.junit"]]
+         [:td "Supported"]
+         [:td "Bundled report-format hooks for "
+          [:code "clojure.test"] ", loaded on "
+          [:code "require"] ": TAP and JUnit XML output."]]
+        [:tr [:td [:code "clojure.core.unify"]]
+         [:td "Supported"]
+         [:td "Bundled, loaded on " [:code "require"] ". "
+          "Logic-style term unification."]]
+        [:tr [:td [:code "clojure.core.cache"] " / "
+              [:code "clojure.core.memoize"]]
+         [:td "Supported"]
+         [:td "Bundled caching strategies and cached function "
+          "factories, loaded on " [:code "require"] ". The "
+          [:code "SoftCache"] " strategy is not provided -- mino "
+          "has no host soft-reference layer to back it."]]
         [:tr [:td [:code "special-symbol?"]]
          [:td "Supported"]
          [:td "Returns " [:code "true"] " for the Clojure-reserved "
