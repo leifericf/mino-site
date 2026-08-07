@@ -34,14 +34,14 @@
        "recursive call is in tail position, it runs in constant "
        "stack space:"]
       [:pre [:code {:data-lang "mino"}
-"(defn countdown (n)
+"(defn countdown [n]
   (if (= n 0) :done (countdown (- n 1))))
 
 (countdown 1000000) ;; => :done (no stack overflow)"]]
 
       [:p "Accumulator patterns work the same way:"]
       [:pre [:code {:data-lang "mino"}
-"(defn sum-to (n acc)
+"(defn sum-to [n acc]
   (if (= n 0) acc (sum-to (- n 1) (+ acc n))))
 
 (sum-to 100000 0) ;; => 5000050000"]]
@@ -50,10 +50,10 @@
       [:p "Two or more functions can call each other in tail "
        "position without stack growth:"]
       [:pre [:code {:data-lang "mino"}
-"(defn is-even? (n)
+"(defn is-even? [n]
   (if (= n 0) true (is-odd? (- n 1))))
 
-(defn is-odd? (n)
+(defn is-odd? [n]
   (if (= n 0) false (is-even? (- n 1))))
 
 (is-even? 100000) ;; => true"]]
@@ -64,7 +64,7 @@
        "behavior. For example, both calls in a tree traversal are "
        "non-tail:"]
       [:pre [:code {:data-lang "mino"}
-"(defn fib (n)
+"(defn fib [n]
   (if (< n 2)
     n
     (+ (fib (- n 1))    ;; not tail: + still needs to run

@@ -75,7 +75,7 @@
   (testing \"vectors\"
     (testing \"equality\"
       (is (= [1 2 3] [1 2 3])))))
-;; On failure: \"vectors > equality\""]]
+;; On failure: \"vectors equality\""]]
 
       [:h3 [:code "(run-tests)"]]
       [:p "Executes all registered tests and prints a summary. Each test "
@@ -112,4 +112,4 @@
       [:p "The test framework works in the REPL too. Load it, define a "
        "test, and call " [:code "run-tests"] " interactively:"]
       [:pre [:code {:data-lang "mino"}
-"mino> (require \"test\")\nmino> (deftest quick-check (is (= 4 (+ 2 2))))\nmino> (run-tests)\n1 tests, 1 assertions: 1 passed, 0 failed, 0 errors"]])))
+"mino=> (require \"tests/test\")\nmino=> (deftest quick-check (is (= 4 (+ 2 2))))\nmino=> (run-tests)\n1 tests, 1 assertions: 1 passed, 0 failed, 0 errors"]])))

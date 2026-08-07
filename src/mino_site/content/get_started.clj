@@ -157,18 +157,22 @@ int main(void)
       [:h2 "5. Try the REPL"]
       [:p "The standalone REPL is useful for exploring the language "
        "interactively:"]
-      [:pre
-       [:code {:data-lang "mino"}
+       [:pre
+        [:code {:data-lang "mino"}
 "$ mino
-mino 0.96.8
-mino> (def greet (fn [name] (str \"hello, \" name \"!\")))
-#<fn>
-mino> (greet \"world\")
+mino 2026.08.07-alpha1
+Type :help for help, :quit to exit
+mino=> (def greet (fn [name] (str \"hello, \" name \"!\")))
+#'user/greet
+mino=> (greet \"world\")
 \"hello, world!\"
-mino> (map greet [\"alice\" \"bob\" \"carol\"])
+mino=> (map greet [\"alice\" \"bob\" \"carol\"])
 (\"hello, alice!\" \"hello, bob!\" \"hello, carol!\")
-mino> (doc 'map)
-\"(map f coll) -- apply f to each element, return a list of results.\""]]
+mino=> (doc map)
+Returns a lazy sequence of applying f to each item in coll. When
+   called with multiple collections, maps f across them in parallel.
+   When called with no collection, returns a transducer.
+nil"]]
 
       [:h2 "Next steps"]
       [:ul
