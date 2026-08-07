@@ -10,21 +10,21 @@
     "Compile-time version constants, bumped by the release process. mino\nuses calendar versioning (YYYY.MM.DD[-prerelease]); MAJOR/MINOR/PATCH\ncarry the year/month/day numerically for any preprocessor-time check,\nand MINO_VERSION is the canonical, pre-formatted string (zero-padded,\nwith any prerelease suffix) returned by mino_version_string().\n\n#if MINO_VERSION_MAJOR < 2026\n# error \"embedded mino is too old\"\n#endif\n\nThe linked-in version (which may differ if the header was updated\nwithout rebuilding the runtime) is available at runtime via\nmino_version_string()."}
    {:kind :define,
     :name "MINO_VERSION_MINOR",
-    :value "6",
+    :value "8",
     :inline-comment nil,
-    :signature "#define MINO_VERSION_MINOR 6",
+    :signature "#define MINO_VERSION_MINOR 8",
     :doc nil}
    {:kind :define,
     :name "MINO_VERSION_PATCH",
-    :value "30",
+    :value "7",
     :inline-comment nil,
-    :signature "#define MINO_VERSION_PATCH 30",
+    :signature "#define MINO_VERSION_PATCH 7",
     :doc nil}
    {:kind :define,
     :name "MINO_VERSION",
-    :value "\"2026.06.30-alpha1\"",
+    :value "\"2026.08.07-alpha1\"",
     :inline-comment nil,
-    :signature "#define MINO_VERSION       \"2026.06.30-alpha1\"",
+    :signature "#define MINO_VERSION       \"2026.08.07-alpha1\"",
     :doc nil}
    {:kind :function,
     :name "mino_version_string",
@@ -32,7 +32,7 @@
     :params "void",
     :signature "const char *mino_version_string(void);",
     :doc
-    "Human-readable version string of the *linked* runtime, e.g. \"0.48.0\".\nThe pointer is to a static string with program lifetime; callers must not\nfree it."}]}
+    "Human-readable version string of the *linked* runtime, e.g. \"2026.08.07\".\nThe pointer is to a static string with program lifetime; callers must not\nfree it."}]}
  {:name "Value types",
   :unstable false,
   :declarations
