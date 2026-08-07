@@ -4,6 +4,19 @@ All notable changes to mino-site are documented here.
 
 ## Unreleased
 
+- Get Started, TCO, and Testing code examples were corrected against
+  the real binary. The Get Started REPL transcript now shows the live
+  prompt (`mino=>`), the current version, the actual `def` return
+  (`#'user/greet`), and the unquoted `(doc map)` form with the
+  docstring the runner prints. TCO examples use the idiomatic vector
+  argvec `[n]` rather than the permissive paren form. The Testing REPL
+  transcript uses `(require "tests/test")` with the correct prompt, and
+  the nested-`testing` failure label is shown space-joined
+  (`vectors equality`), matching what the test runner prints. A new
+  replay test feeds every doc REPL transcript back through the mino
+  binary so later drift fails the suite. The C API snapshot is
+  refreshed to 2026.08.07-alpha1.
+
 - The Bytecode VM page picks up three new "Recently picked up"
   entries for the pre-JIT perf sweep (mino v0.164.0 – v0.166.0):
   the unboxed long-long accumulator that `reduce` over the
