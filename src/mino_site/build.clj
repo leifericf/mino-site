@@ -64,11 +64,19 @@
                               (render/html-page
                                 {:title (use-case-page/use-case-title slug)
                                  :description (:description uc)
-                                 :active-page :home
+                                 :active-page :use-cases
                                  :wide true}
                                 (use-case-page/use-case-page uc)))]))]
     (merge use-case-pages
-    {"/examples/bindings/index.html"
+    {"/use-cases/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Use Cases"
+                          :description "Worked examples of embedding mino: configuration, rules engines, plugins, data pipelines, event processing, game scripting, automation, and interactive consoles."
+                          :active-page :use-cases
+                          :wide true}
+         (use-case-page/use-case-index-page)))
+
+     "/examples/bindings/index.html"
      (fn [ctx]
        (render/html-page {:title "Language Bindings"
                           :description "Embed mino from C, C++, Java, Zig, Rust, C#, Go, and Swift."

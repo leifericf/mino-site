@@ -76,7 +76,7 @@
         (when subtitle
           [:p.use-case-subtitle subtitle])
 
-        [:p [:a {:href "/"} "\u2190 Back to use cases"]]
+        [:p [:a {:href "/use-cases/"} "\u2190 Back to use cases"]]
 
         ;; Full source listing
         [:section.use-case-section
@@ -102,7 +102,7 @@
                  "mino/src/async/*.c mino/src/interop/*.c \\\n"
                  "  mino/src/regex/*.c mino/src/diag/*.c "
                  "mino/src/vendor/imath/*.c \\\n"
-                 "  -lm\n"
+                  "  -lm -lpthread\n"
                  "./use-cases/" slug)]]]]
 
         ;; Script excerpt
@@ -113,7 +113,24 @@
            [:pre [:code {:data-lang "mino"} mino-script]]])
 
         [:p.use-case-nav
-         [:a {:href "/"} "\u2190 All use cases"]]))))
+         [:a {:href "/use-cases/"} "\u2190 All use cases"]]))))
+
+;; --- Index page ---
+
+(defn use-case-index-page
+  "Render the use cases landing page."
+  []
+  (str
+    (h/html
+      [:h1 "Use Cases"]
+      [:p "Worked examples sized as small applications. Each is a "
+       "self-contained C++ program you can copy, compile, and run "
+       "against the mino library."]
+      [:div.use-case-grid
+       (for [{:keys [slug title subtitle]} use-case-meta]
+         [:a.use-case {:href (str "/use-cases/" slug "/")}
+          [:strong title]
+          [:p subtitle]])])))
 
 ;; --- Index page helpers ---
 
