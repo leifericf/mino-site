@@ -71,12 +71,18 @@
        "from different threads (one thread per runtime) and safe to "
        "create and destroy at will."]
 
-      [:h3 "Concurrency between runtimes, not within"]
-      [:p "A single runtime is single-threaded. Concurrency happens "
-       "between runtimes via message passing. The host creates "
-       "runtimes, sends messages between them, and controls "
-       "scheduling. This eliminates shared-state concurrency bugs "
-       "by construction."]
+      [:h3 "Concurrency: cooperative by default, threads when granted"]
+      [:p "Each " [:code "mino_state"] " starts single-threaded "
+       "(" [:code "thread_limit = 1"] "). Cooperative async via "
+       [:code "core.async"] " channels and " [:code "go"] " blocks "
+       "runs without OS threads. The host can raise the per-state "
+       "thread limit via "
+       [:code "mino_set_option(S, MINO_OPT_THREAD_LIMIT, n)"] ", "
+       "which unlocks " [:code "future"] ", " [:code "promise"]
+       ", " [:code "thread"] ", and the blocking channel ops "
+       "(" [:code "<!!"] ", " [:code ">!!"] ", " [:code "alts!!"]
+       ") across OS threads. The standalone binary grants "
+       [:code "cpu_count"] " by default."]
 
       [:h3 "No cross-runtime sharing"]
       [:p "Values cannot be shared between runtimes. To move a value "
@@ -95,19 +101,20 @@
 
       [:h3 "Host controls orchestration"]
       [:p "The host decides when code runs, how long it runs, what "
-       "capabilities it has, and when it stops. Runtimes do not "
-       "spawn threads, open sockets, or perform I/O on their own. "
-       "The host is always in control. This is essential for "
-       "embedding: the host application has its own event loop, its "
-       "own threading model, and its own resource constraints."]
+       "capabilities it has, and when it stops. The runtime starts "
+       "no threads and performs no I/O unless the host grants the "
+       "capability. This is essential for embedding: the host "
+       "application has its own event loop, its own threading model, "
+       "and its own resource constraints."]
 
       [:h3 "Small trusted core"]
       [:p "The C implementation provides the irreducible core: the "
        "reader, evaluator, printer, garbage collector, persistent "
        "data structures, and a small set of primitive operations. "
        "Everything else is built in mino code on top of these "
-       "primitives. The standard library is a mino file loaded at "
-       "startup, not compiled into the binary."]
+       "primitives. " [:code "core.clj"] " loads at startup; the "
+       "broader " [:code "clojure.*"] " stdlib is compiled into the "
+       "binary as generated C headers."]
 
       [:h2 "Trade-offs we chose"]
       [:ul
@@ -128,23 +135,20 @@
         "scripting (configuration, commands, small data), the cost "
         "is negligible."]
        [:li [:strong "Host control over VM autonomy."] " The runtime "
-        "never acts on its own. It does not spawn threads, schedule "
-        "timers, or perform background work. This gives the host "
-        "complete authority over resource usage and scheduling, "
-        "which matters in resource-constrained environments like "
-        "game engines and embedded systems."]]
+        "starts with no capabilities and no threads. Nothing happens "
+        "unless the host grants it. This gives the host complete "
+        "authority over resource usage and scheduling, which matters "
+        "in resource-constrained environments like game engines and "
+        "embedded systems."]]
 
       [:h2 "What we rejected and why"]
       [:ul
-       [:li [:strong "Shared-memory concurrency."] " Locks, "
-        "mutexes, and shared mutable state inside the language "
-        "runtime create bugs that are hard to find and harder to "
-        "fix. The isolation model avoids them entirely."]
-       [:li [:strong "Software transactional memory."] " STM "
-        "assumes a shared-memory threading model. In mino, there "
-        "is no shared memory between runtimes, so STM has nothing "
-        "to coordinate. Atoms provide single-runtime mutation; "
-        "cross-runtime coordination uses message passing."]
+       [:li [:strong "Shared mutable state between runtimes."] " Each "
+        [:code "mino_state"] " owns its own heap. Cross-runtime data "
+        "moves by deep copy, never by shared pointer. This avoids an "
+        "entire class of concurrency bugs at the process level. "
+        "Within a single runtime, atoms, refs, and agents provide "
+        "controlled shared-state concurrency."]
        [:li [:strong "Implicit GC assumptions."] " Many runtimes "
         "assume the host will not hold pointers across allocations. "
         "mino makes the contract explicit: values are borrowed, "
@@ -163,10 +167,12 @@
         " mino is designed to be embedded inside another program. "
         "The standalone REPL is a development convenience, not the "
         "primary use case."]
-       [:li [:strong "Not designed for shared-memory parallelism."]
-        " Concurrency happens between isolated runtimes. If you "
-        "need threads operating on shared data structures, mino is "
-        "not the right tool."]
+       [:li [:strong "Not sharing state across runtimes."] " Each "
+        [:code "mino_state"] " is isolated. Cross-runtime "
+        "coordination uses message passing with deep-copied values, "
+        "not shared memory. Within a single runtime, atoms, refs, "
+        "and agents provide shared-state concurrency when the host "
+        "grants threads."]
        [:li [:strong "Not self-hosting."] " The implementation "
         "language is C through v1.0. Self-hosting would undermine "
         "the embedding pitch: hosts link a C library, not a "
