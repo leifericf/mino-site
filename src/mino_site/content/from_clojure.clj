@@ -218,9 +218,8 @@
         "threads when the host has granted them. See the "
         [:a {:href "/documentation/intentional-divergences/#host-threads"}
          "host-threads contract"] "."]
-       [:li [:code "alt!"] " macro is not implemented (use " [:code "alts!"] ")"]
-       [:li "Parks in " [:code "catch"] "/" [:code "finally"] " bodies "
-        "are not supported"]
+        [:li "Parks in " [:code "catch"] "/" [:code "finally"] " bodies "
+         "are not supported"]
        [:li "Parks nested in plain function-call arguments are lifted "
         "automatically (left-to-right order preserved); parks under a "
         "macro call or inside map/set literals still need explicit "
@@ -237,21 +236,22 @@
        [:code "pthread_cond_wait"] "; the blocking core.async ops "
        "park on the same condition variables when the runtime "
        "thread limit is greater than 1."]
-      [:p [:code "thread"] " is a stable alias for "
-       [:code "future-call"] "; both share the same worker pool. "
-       "Embedders raise the per-state limit via "
-       [:code "mino_set_thread_limit(S, n)"] "; the standalone "
-       [:code "./mino"] " binary grants " [:code "cpu_count"]
-       " by default, so REPL and script users see the canonical "
-       "surface working out of the box. Embedders that want "
-       "sandboxed scripts withhold the grant."]
+       [:p [:code "thread"] " is a stable alias for "
+        [:code "future-call"] "; both share the same worker pool. "
+        "Embedders raise the per-state limit via "
+        [:code "mino_set_option(S, MINO_OPT_THREAD_LIMIT, n)"] ". "
+        "The standalone "
+        [:code "./mino"] " binary grants " [:code "cpu_count"]
+        " by default, so REPL and script users see the canonical "
+        "surface working out of the box. Embedders that want "
+        "sandboxed scripts withhold the grant."]
       [:p "When the limit is " [:code "<= 1"] ", the same forms "
        "throw " [:code ":mino/unsupported"] " with a message "
        "naming the policy. " [:code "agent"] " ships and "
        "constructors work, but " [:code "send"] " / "
        [:code "send-off"] " throw " [:code "MTH001"]
        " when their pool's worker can't spawn under the granted "
-       "limit. " [:code "pmap"] " is not provided. See the "
+       "limit. See the "
        [:a {:href "/documentation/intentional-divergences/#host-threads"}
         "host-threads contract"]
        " for the embed-distinctive pool / factory / stack-size "
@@ -277,7 +277,7 @@
         "(host/get c :value)\n"
         "(host/static-call :Math :add 3 4)"]]
       [:p "The host decides which types and methods each runtime "
-       "gets. There is no ambient access to system resources. See "
+        "gets. No ambient access to system resources. See "
        "the " [:a {:href "/documentation/embedding/"} "Embedding Guide"]
        " for details."]
 
@@ -431,16 +431,13 @@
         " controls division rounding."]
        [:li "Plain " [:code "+"] " / " [:code "-"] " / "
         [:code "*"] " / " [:code "inc"] " / " [:code "dec"]
-        " auto-promote to bigint on long overflow rather than "
-        "throwing. This matches the semantics of Clojure's prime "
-        "variants (" [:code "+'"] " / " [:code "-'"] " / "
-        [:code "*'"] " / " [:code "inc'"] " / " [:code "dec'"]
-        ") and is a deliberate divergence from JVM Clojure where "
-        "the unprimed forms raise " [:code "ArithmeticException"]
-        ". For wraparound semantics use the "
-        [:code "unchecked-*"] " family. Mixed-type tower dispatch "
-        "(long × bigint, ratio × bigdec, etc.) follows the "
-        "standard promotion order."]
+        " throw on long overflow, matching JVM Clojure's unprimed "
+        "contract. The primed variants (" [:code "+'"] " / "
+        [:code "-'"] " / " [:code "*'"] " / " [:code "inc'"] " / "
+        [:code "dec'"] ") auto-promote to bigint. For wraparound "
+        "semantics use the " [:code "unchecked-*"] " family. "
+        "Mixed-type tower dispatch (long × bigint, ratio × bigdec, "
+        "etc.) follows the standard promotion order."]
        [:li [:code "mod"] " / " [:code "rem"] " / "
         [:code "quot"] " preserve the higher operand tier: "
         [:code "(mod 10 3N)"] " is " [:code "1N"] ", "
@@ -451,9 +448,11 @@
         " / " [:code ">="] " require numeric operands and short-"
         "circuit to " [:code "false"] " when any operand is "
         [:code "##NaN"] ", matching Clojure's unordered semantics."]
-       [:li "Float arithmetic follows IEEE 754. mino has only one "
-        "float tier (double); " [:code "(float x)"] " and "
-        [:code "(double x)"] " return values that compare equal."]]
+       [:li "Float arithmetic follows IEEE 754. mino has two float "
+        "tiers: 64-bit " [:code "double"] " and 32-bit "
+        [:code "float"] ". " [:code "(float x)"] " returns a "
+        "32-bit value; " [:code "float?"] " matches both tiers "
+        "while " [:code "double?"] " matches only the 64-bit tier."]]
 
       ;; --- Error handling ---
 
@@ -512,10 +511,11 @@
         " " [:code "future"] " / " [:code "promise"] " / "
         [:code "deliver"] " / " [:code "thread"] " throw "
         [:code ":mino/unsupported"] " until the host calls "
-        [:code "mino_set_thread_limit(S, n>1)"] ". Standalone "
+        [:code "mino_set_option(S, MINO_OPT_THREAD_LIMIT, n>1)"] ". "
+        "Standalone "
         [:code "./mino"] " grants " [:code "cpu_count"] " by "
         "default, so REPL/script users see the canon surface "
-        "without configuration. " [:code "pmap"] " stays absent."]
+        "without configuration."]
        [:li [:strong "Async agents."]
         " " [:code "agent"] " / " [:code "send"] " / "
         [:code "send-off"] " / " [:code "await"] " / "
@@ -535,111 +535,6 @@
         [:code "send-via"] " is intentionally deferred (no public "
         "Executor type). See "
         [:a {:href "/documentation/stm/"} "STM"] "."]]
-
-      ;; --- Recent additions ---
-
-      [:h2 "Recent additions"]
-      [:p "The v0.409 – v0.419 series closed the last canon-parity
-            gaps and added an Erlang-inspired bit-syntax surface:"]
-      [:ul
-       [:li [:strong "Lazy-seq namespace scoping."] " A "
-        [:code "(lazy-seq ...)"]
-        " form now captures the namespace where it was written and
-        restores it during realization. Library helpers referenced
-        from inside the lazy body resolve correctly even when the
-        seq is forced from a foreign namespace."]
-       [:li [:strong "Print dynvars."] " The remaining "
-        [:code "*print-readably*"] ", " [:code "*print-meta*"] ", "
-        [:code "*print-dup*"] ", " [:code "*print-namespace-maps*"]
-        ", and " [:code "*flush-on-newline*"]
-        " dynvars are wired end-to-end with state-cached
-        resolution."]
-       [:li [:strong "Full math-context rounding modes."]
-        " " [:code "(with-precision N :rounding mode (/ a b))"]
-        " accepts every JVM rounding mode: "
-        [:code ":down"] ", " [:code ":up"] ", " [:code ":floor"]
-        ", " [:code ":ceiling"] ", "
-        [:code ":half-up"] ", " [:code ":half-down"] ", "
-        [:code ":half-even"] " (banker's), "
-        [:code ":unnecessary"] " (throws when rounding occurs)."]
-       [:li [:strong "JVM Class/Member statics."]
-        " " [:code "Long/MAX_VALUE"] ", "
-        [:code "Math/sqrt"] ", " [:code "Double/parseDouble"]
-        ", " [:code "java.util.UUID/randomUUID"] ", "
-        [:code "java.util.List/of"]
-        ", and the rest of the JVM-Clojure preamble surface
-        resolve without any custom interop wiring. Embedded-host
-        capabilities (wall-clock time, env, exit) route through
-        the canonical JVM names."]
-       [:li [:strong "inst? / inst-ms / #inst literal."]
-        " The " [:code "#inst \"...\""]
-        " reader literal produces a component-map carrying
-        " [:code ":mino/instant true"]
-        " meta; " [:code "(inst? v)"]
-        " detects the marker and " [:code "(inst-ms v)"]
-        " returns epoch millis without host-Date dependencies."]
-       [:li [:strong "MINO_BYTES + bit syntax."]
-        " First-class immutable binary-data type "
-        "(" [:code "byte-array"] ", " [:code "bytes?"]
-        ", " [:code "bitstring?"] ") plus an Erlang-inspired bit-
-        syntax surface "
-        "(" [:code "bits"] ", " [:code "bits-get"] ", "
-        [:code "subbits"] ", " [:code "let-bits"] ", "
-        [:code "#bytes \"...\""]
-        " reader literal). See the dedicated "
-        [:a {:href "/documentation/bytes/"}
-         "Bytes and Bit Syntax"]
-        " page. This is one place where mino outshines JVM Clojure
-        for the embedded-runtime niche."]
-       [:li [:code "*clojure-version*"] " + AOT-compiler dynvars
-        (" [:code "*compile-path*"] ", " [:code "*source-path*"]
-        ", " [:code "*compile-files*"] ", "
-        [:code "*warn-on-reflection*"] ", "
-        [:code "*unchecked-math*"]
-        ") for shape parity with JVM Clojure."]]
-
-      [:p "The v0.401 – v0.407 series tightened mino against
-            JVM-Clojure-canon ports:"]
-      [:ul
-       [:li [:strong "Strict function arity"] " is verified end-to-end
-        (both tree-walker and bytecode VM throw " [:code "MAR001"]
-        " / " [:code "MAR002"] " on missing or extra args). The
-        diagnostic carries " [:code ":mino/kind = :eval/arity"]
-        " so structured catch dispatch works."]
-       [:li [:code "(is (thrown-with-msg? <re> body))"] " and the
-        JVM-shaped " [:code "(thrown-with-msg? <Class> <re> body)"]
-        " in " [:code "clojure.test"]
-        ". The class symbol is documentation-only; the regex matches
-        the thrown value's message (mino lacks a class hierarchy)."]
-       [:li [:code "*print-length*"] " and " [:code "*print-level*"]
-        " dynvars. " [:code "pr"] " / " [:code "prn"] " / "
-        [:code "print"] " / " [:code "println"] " / " [:code "pr-str"]
-        " consult them at top-level entry; collection printers
-        truncate with " [:code "..."] " or collapse with "
-        [:code "#"] " per JVM semantics."]
-       [:li [:code "pcalls"] ", " [:code "pvalues"] ", and "
-        [:code "alt!"] " (the macro over " [:code "alts!"] ").
-        Round out the parallel surface alongside the existing "
-        [:code "pmap"] "; all share the "
-        [:code "(mino-thread-limit) <= 1"]
-        " sequential fallback."]
-       [:li [:code "hash-combine"] ", " [:code "*math-context*"]
-        ", and " [:code "with-precision"]
-        ". Boost-style 32-bit hash mixer; bigdec division with
-        " [:code "(with-precision N (/ ... ...))"] " using "
-        [:code ":half-up"] " rounding (other rounding modes throw
-        " [:code "MHO002"] " — implementing them properly is queued)."]
-       [:li [:code "unchecked-long"] " on a bigint outside signed
-        long range wraps modulo 2^64 instead of clamping through
-        double. Matches JVM's " [:code "Number.longValue()"]
-        " on " [:code "BigInteger"] "."]
-       [:li [:code "clojure.test.check"] " quick-check now walks
-        rose trees on failure and reports " [:code ":shrunk"]
-        " with the minimal counter-example."]
-       [:li [:code "clojure.core.reducers/fold"] " parallel branch.
-        Vectors larger than the chunk hint partition into
-        thread-budget-many chunks reduced concurrently and combined
-        via " [:code "combinef"] "."]]
 
       ;; --- Quick reference ---
 
@@ -678,7 +573,7 @@
          [:td "Real Ratio / BigInt / BigDec"]]
         [:tr [:td "Plain " [:code "+"] " / " [:code "-"] " / "
          [:code "*"] " on long overflow"]
-         [:td "Same. Auto-promotes to BigInt."]]
+         [:td "Same. Throws (use " [:code "+'"] " to auto-promote)."]]
         [:tr [:td [:code "unchecked-+"] " / " [:code "unchecked--"]
               " / " [:code "unchecked-*"]]
          [:td "Same"]]]])))

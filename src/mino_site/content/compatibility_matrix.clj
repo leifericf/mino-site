@@ -371,16 +371,12 @@
           "occur)."]]
         [:tr [:td "Plain " [:code "+"] " / " [:code "-"] " / "
               [:code "*"] " / " [:code "inc"] " / " [:code "dec"]]
-         [:td "Differs"]
-         [:td "Auto-promotes to bigint on long overflow rather than "
-          "raising " [:code "ArithmeticException"] " as JVM Clojure "
-          "does for the unprimed forms. Equivalent to Clojure's "
-          [:code "+'"] " / " [:code "-'"] " / " [:code "*'"]
-          " / " [:code "inc'"] " / " [:code "dec'"] ". Use the "
-          [:code "unchecked-*"] " family for wraparound. "
-          "Documented under "
-          [:a {:href "/documentation/intentional-divergences/#auto-promote"}
-           "auto-promoting math"] "."]]
+         [:td "Supported"]
+         [:td "Unprimed forms throw on long overflow, matching JVM "
+          "Clojure. The primed variants (" [:code "+'"] " / "
+          [:code "-'"] " / " [:code "*'"] " / " [:code "inc'"] " / "
+          [:code "dec'"] ") auto-promote to bigint. Use the "
+          [:code "unchecked-*"] " family for wraparound."]]
         [:tr [:td [:code "unchecked-+"] " / " [:code "unchecked--"]
               " / " [:code "unchecked-*"] " / "
               [:code "unchecked-inc"] " / " [:code "unchecked-dec"]
@@ -533,7 +529,7 @@
           "Embedded states default to "
           [:code "thread_limit = 1"] " and throw "
           [:code ":mino/unsupported"] " until the host calls "
-          [:code "mino_set_thread_limit"] "; standalone "
+          [:code "mino_set_option(S, MINO_OPT_THREAD_LIMIT, n)"] "; standalone "
           [:code "./mino"] " grants " [:code "cpu_count"] " by "
           "default, so the REPL surface matches canonical Clojure "
           "out of the box. See "
@@ -541,11 +537,10 @@
            "host-grant-gated host threads"] " for the embed contract "
           "and the multi-tenant pool surface."]]
         [:tr [:td [:code "pmap"]]
-         [:td "Absent"]
-         [:td "Not provided. When threading is granted, the same "
-          "shape is reachable as a small composition of "
-          [:code "future"] " and " [:code "deref"]
-          " over a partitioned input."]]
+         [:td "Supported"]
+         [:td "Parallel map over a single collection. Falls back to "
+          "sequential when " [:code "(mino-thread-limit)"] " is "
+          [:code "<= 1"] "; uses host threads when granted."]]
         [:tr [:td [:code "ref"] " / " [:code "ref?"]]
          [:td "Supported"]
          [:td "STM ref construction and identity predicate. See "
@@ -632,10 +627,11 @@
           [:a {:href "/documentation/stm/"} "STM"]
           " for the deviations."]]
         [:tr [:td [:code "send-via"]]
-         [:td "Absent"]
-         [:td "Intentionally deferred -- no public Executor type "
-          "is exposed yet. " [:code "send"] " and " [:code "send-off"]
-          " each have their own per-state worker (POOLED and SOLO)."]]
+         [:td "Differs"]
+         [:td "Callable but throws a deferred message: no public "
+          "Executor type is exposed yet. " [:code "send"] " and "
+          [:code "send-off"] " each have their own per-state worker "
+          "(POOLED and SOLO)."]]
         [:tr [:td [:code "shutdown-agents"]]
          [:td "Supported"]
          [:td "Quiesces both per-state workers (drains the queues, "
@@ -983,7 +979,7 @@
            "no JVM interop"] "."]]
         [:tr [:td [:code "*warn-on-reflection*"]]
          [:td "Absent"]
-         [:td "There is no reflection in mino."]]]]
+         [:td "mino has no reflection."]]]]
 
       [:p {:style "margin-top:2.5rem;font-size:0.9em;color:#666"}
        "Items marked " [:em "supported"] " round-trip through "

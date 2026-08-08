@@ -33,11 +33,11 @@
        "methods. " [:code "(.next obj)"] ", "
        [:code "(.-field obj)"] ", "
        [:code "(Type/static-call ...)"] ", and "
-       [:code "(new Type ...)"] " all work - but they dispatch "
+       [:code "(new Type ...)"] " all work, but they dispatch "
        "through a capability registry the embedder controls. "
        "Each method, getter, and constructor is opted in by "
-       "the host. There is no ambient access to system resources, "
-       "and there is no reflection at all. See the "
+       "the host. No ambient access to system resources, "
+       "and no reflection at all. See the "
        [:a {:href "/documentation/embedding/"} "Embedding Guide"]
        " for the full host contract."]
 
@@ -48,7 +48,7 @@
        " the host grants, not a build-time feature. Each "
        [:code "mino_state"] " starts at "
        [:code "thread_limit = 1"] " (single-threaded). Embedders "
-       "raise the limit via " [:code "mino_set_thread_limit(S, n)"]
+       "raise the limit via "        [:code "mino_set_option(S, MINO_OPT_THREAD_LIMIT, n)"]
        "; while the limit is " [:code "<= 1"]
        ", " [:code "future"] ", " [:code "promise"] ", "
        [:code "deliver"] ", " [:code "thread"] ", and the blocking "
@@ -119,7 +119,7 @@
        ", and " [:code "ref-history-count"] " are stubs returning "
        [:code "0"] " / " [:code "10"] " / " [:code "0"]
        ". A single global commit lock serializes commits in place "
-       "of per-ref read/write locks, and there is no barging or "
+       "of per-ref read/write locks, and no barging or "
        "mid-body retry. Long readers under sustained writer "
        "pressure may exhaust the 10000-retry cap rather than serve "
        "an older snapshot from history."]
@@ -200,73 +200,7 @@
        "(prefix with namespace) so the global hierarchy stays "
        "uncontested."]
 
-      ;; ----------------------------------------------------------------
-
-      [:h2 {:id "auto-promote"} "Auto-promoting math operators"]
-      [:p "Plain " [:code "+"] " / " [:code "-"] " / " [:code "*"]
-       " / " [:code "inc"] " / " [:code "dec"] " auto-promote to "
-       [:code "MINO_BIGINT"] " on long overflow. JVM Clojure raises "
-       [:code "ArithmeticException"] " for the unprimed forms and "
-       "reserves the prime variants (" [:code "+'"] " / "
-       [:code "-'"] " / etc.) for the auto-promoting behaviour; "
-       "mino keeps only one form and chooses the safe one. "
-       [:code "(* Long/MIN_VALUE -1)"] " on the JVM throws; on mino "
-       "it returns " [:code "9223372036854775808N"] "."]
-      [:p [:strong "Why."] " mino's stated goal is correctness over "
-       "throughput. Long overflow is a frequent source of subtle "
-       "production bugs in JVM Clojure and forces every numeric "
-       "library to choose between throwing and primed-everywhere. "
-       "Auto-promotion makes the obvious form mathematically right; "
-       "the embedded use case rarely needs the wraparound shape, and "
-       "when it does the " [:code "unchecked-*"] " family "
-       "(" [:code "unchecked-+"] ", " [:code "unchecked--"] ", "
-       [:code "unchecked-*"] ", " [:code "unchecked-inc"] ", "
-       [:code "unchecked-dec"] ", " [:code "unchecked-divide-int"]
-       ") is the explicit opt-in. Same surface as Clojure, sharper "
-       "default."]
-
-      ;; ----------------------------------------------------------------
-
-      [:h2 {:id "float-double"} "One float tier (double)"]
-      [:p "mino has a single 64-bit IEEE 754 float tier ("
-       [:code "MINO_FLOAT"] "). " [:code "(float 0.1)"] " and "
-       [:code "(double 0.1)"] " return the same value, "
-       [:code "(= (float 0.5) (double 0.5))"] " is "
-       [:code "true"] ", and " [:code "float?"] " / "
-       [:code "double?"] " are aliases. JVM Clojure exposes both "
-       [:code "java.lang.Float"] " and " [:code "java.lang.Double"]
-       " as distinct types; cross-type equality is "
-       [:code "false"] " there even when the values are numerically "
-       "equal."]
-      [:p [:strong "Why."] " A 32-bit float tier exists in JVM "
-       "Clojure mostly because Java's primitive set forces it; the "
-       "values exist on the heap as boxed " [:code "java.lang.Float"]
-       " objects, and cross-tier comparison is a frequent source of "
-       "bugs (" [:code "(= 0.1 (float 0.1))"] " is "
-       [:code "false"] " on the JVM). mino picks one float tier and "
-       "uses it consistently. The C-level embedding API exposes "
-       [:code "double"] " for both reading and writing, so there's "
-       "no representational gap to span."]
-
-      ;; ----------------------------------------------------------------
-
-      [:h2 {:id "fn-arity"} "Permissive function arity"]
-      [:p "Calling a fixed-arity function with too few or too many "
-       "arguments does not throw in mino. Missing positional "
-       "parameters bind to " [:code "nil"] ", and trailing "
-       "arguments are silently ignored: "
-       [:code "((fn [x] x) 1 2 3)"] " returns " [:code "1"]
-       ", and " [:code "((fn [x y] [x y]))"] " returns "
-       [:code "[nil nil]"] ". JVM Clojure raises "
-       [:code "clojure.lang.ArityException"] " in both cases."]
-      [:p [:strong "Why."] " The embedded use case favours "
-       "robustness over strictness; permissive arity makes "
-       "host-supplied callbacks easier to slot in without exact "
-       "shape negotiation. Variadic " [:code "& rest"] " parameters "
-       "are still respected, and a future strict mode is on the "
-       "long-term roadmap."]
-
-      ;; ----------------------------------------------------------------
+       ;; ----------------------------------------------------------------
 
       [:h2 "What is in scope for future versions"]
       [:p "One queued item remains on the roadmap:"]
@@ -276,53 +210,6 @@
         "numeric-tower type tags (" [:code "MINO_BIGINT"]
         ", " [:code "MINO_RATIO"] ", " [:code "MINO_BIGDEC"]
         ") sit under the same evolving-API umbrella."]]
-      [:p "Items that shipped recently: regex literal escapes; the "
-       [:code "*out*"] " / " [:code "*err*"] " / " [:code "*in*"]
-       " print pipeline; REPL specials and "
-       [:code "clojure.repl"] " / " [:code "clojure.stacktrace"]
-       "; " [:code "clojure.core.protocols"] " and "
-       [:code "clojure.datafy"] "; auto-promoting "
-       [:code "+"] " / " [:code "-"] " / " [:code "*"] " / "
-       [:code "inc"] " / " [:code "dec"] " plus the "
-       [:code "unchecked-*"] " family; real "
-       [:code "defrecord"] " / " [:code "deftype"] " / "
-       [:code "reify"] " / " [:code "instance?"] "; "
-       "bundled stdlib + per-group install hooks; "
-       [:code "clojure.template"] " + " [:code "clojure.instant"]
-       "; " [:code "*data-readers*"] " reader hook; "
-       [:code "clojure.spec.alpha"] " + "
-       [:code "clojure.core.specs.alpha"] "; the "
-       "host-thread capability and metadata surface; real OS-thread "
-       [:code "future"] " / " [:code "promise"] " / "
-       [:code "thread"] " backed by " [:code "pthread_create"]
-       "; blocking " [:code "<!!"] " / " [:code ">!!"] " / "
-       [:code "alts!!"] " parking across threads; "
-       "the embed-distinctive thread pool, factory, and "
-       "stack-size surface; real "
-       [:code "MINO_VOLATILE"] " backing "
-       [:code "volatile!"] " / " [:code "vswap!"] " / "
-       [:code "vreset!"] " for stateful transducers; "
-       [:code "iteration"] " (Clojure 1.11); the "
-       [:code "clojure.core.async"] " namespace wrap with "
-       [:code "merge"] " and " [:code "into"]
-       " under their canon names; the chunked-seq family ("
-       [:code "MINO_CHUNKED_CONS"] " value type, "
-       [:code "chunked-seq?"] ", " [:code "chunk-first"] ", "
-       [:code "chunk-rest"] ", " [:code "chunk-next"] ", "
-       [:code "chunk-cons"] ", " [:code "chunk-buffer"] ", "
-       [:code "chunk-append"] ", " [:code "chunk"] ") with "
-       [:code "map"] "/" [:code "filter"] "/" [:code "take"]
-       "/" [:code "keep"] "/" [:code "keep-indexed"] "/"
-       [:code "map-indexed"] " propagating chunkedness end-to-end "
-       "and source-side auto-chunking on " [:code "(seq vec)"]
-       " and lazy " [:code "range"] "; cross-type "
-       [:code "compare"] " over the canon order "
-       "(" [:code "nil"] " < " [:code "false"] " < "
-       [:code "true"] " < numbers < strings < symbols < keywords"
-       "); and a minimal "
-       [:code "clojure.test.check"] " port (generators, properties, "
-       [:code "quick-check"] "; shrinking deferred) backing "
-       [:code "s/gen"] " and " [:code "s/exercise"] "."]
       [:p "The remaining items above (no JVM interop, simpler STM "
        "underneath, no proxy / definterface) are stable design "
        "choices, not deferrals."])))
