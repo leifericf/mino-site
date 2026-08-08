@@ -19,6 +19,7 @@
   [{:href "/get-started/"    :label "Get Started"   :page :get-started}
    {:href "/documentation/"  :label "Documentation" :page :documentation}
    {:href "/use-cases/"      :label "Use Cases"     :page :use-cases}
+   {:href "/changelog/"      :label "Changelog"     :page :changelog}
    {:href "https://github.com/leifericf/mino"
     :label "GitHub"
     :external true}])
