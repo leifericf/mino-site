@@ -102,8 +102,11 @@
   "Generates the Changelog page HTML body."
   [mino-root]
   (let [path (str mino-root "/CHANGELOG.md")
-        md   (when (.exists (io/file path))
-               (slurp path))]
+        raw  (when (.exists (io/file path))
+               (slurp path))
+        md   (when raw
+               (-> raw
+                   (str/replace #"—" "-")))]
     (str
       (h/html
         [:h1 "Changelog"]
