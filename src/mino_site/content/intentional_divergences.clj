@@ -84,7 +84,7 @@
        " runtimes - multi-tenant by construction. "
        [:code "mino_set_thread_factory"] " hooks per-worker naming, "
        "affinity, priority for the spawn-per-future path; "
-       [:code "mino_set_thread_stack_size"] " tunes RSS for tight "
+       [:code "mino_set_option(S, MINO_OPT_THREAD_STACK_BYTES, n)"] " tunes RSS for tight "
        "embedders. JVM Clojure cannot offer this because the JVM "
        "forces one global heap; mino's per-state isolation makes "
        "it natural. See "
