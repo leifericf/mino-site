@@ -21,47 +21,17 @@
       [:h1 "Performance"]
 
       [:p.banner
-       "Numbers below were measured against mino v0.323.0 on Apple "
-       "Silicon (arm64-darwin) under normal desktop load. Treat them "
-       "as directional; different hardware will shift absolute numbers "
-       "but the ratios between rows hold. The bc-frontiers cycle "
-       "(v0.152.0 – v0.157.0) landed targeted fast lanes that moved "
-       "the write-side, small-prim, record-access, generic-get, "
-       "call-site, and transducer-fusion rows by 9–93%; the Clojure-"
-       "aware cycle (v0.158.0 – v0.163.0) added a protocol-method "
-       "inline cache (proto-mono-area -57%), generalised the seq "
-       "fusion to "
-       [:code "into"] " / " [:code "mapv"] " / " [:code "filterv"]
-       " / " [:code "dorun"]
-       " (-65 to -95%), and inlined canonical-prim stages over a "
-       "chunked-source walk (reduce-pipeline rows -9 to -19% on top "
-       "of the v0.157.0 fusion); the follow-on pre-JIT sweep "
-       "(v0.164.0 – v0.166.0) routes the canonical numeric reducers "
-       "through an unboxed long-long accumulator (reduce on vec / "
-       "set / list -24 to -49% on 100k sizes), ships real in-place "
-       "transient vector mutation (into-vec-pipeline -74%, mapv-"
-       "pipeline -69%), and rewrites the persistent-builder loop "
-       "shape at compile time to use the new in-place transients "
-       "((loop ... (conj acc i)) at N=100k -71%); the CPJIT cycle "
-       "(v0.178.0 – v0.240.0) added a copy-and-patch runtime JIT, "
-       "the dual-binary "
-       [:code "mino"] " / " [:code "mino-lean"] " split, runtime "
-       "JIT modes ("
-       [:code "--jit=auto|on|off"] "), and end-to-end portability "
-       "across five host arches (ARM64 Darwin / Linux, x86_64 "
-       "Linux / Darwin / Windows); the GC nursery bump in v0.250.0 "
-       "(1 MiB  to  4 MiB default) cut total GC wall-time by 35–60% "
-       "across realistic_bench rows (1.14–1.42x speedup) without "
-       "raising worst-case minor-GC pause. Those later rows are "
-       "not yet re-tabled here. The full bench suite lives in "
+       "Numbers below were measured on Apple Silicon (arm64-darwin) "
+       "under normal desktop load. Treat them as directional; "
+       "different hardware will shift absolute numbers but the ratios "
+       "between rows hold. The full bench suite lives in "
        [:a {:href "https://github.com/leifericf/mino-bench/tree/main/benchmarks"}
         "mino-bench/benchmarks/"]
        " and the in-process / cold-start / footprint harnesses live in "
        [:a {:href "https://github.com/leifericf/mino-bench/tree/main/tests"}
         "mino-bench/tests/"]
        ". Every table on this page links to the bench file the row was "
-       "measured against - click the section heading's source link to "
-       "see the actual code."]
+       "measured against."]
 
       [:p "mino's evaluator is now a layered system. The tree-walker "
        "remains as the ground-truth interpreter; on top of it sits a "

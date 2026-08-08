@@ -101,21 +101,17 @@
       [:p "The native per-platform runners build the platform-native "
        "binaries. From a single host, a maintainer also cross-compiles "
        "the Linux (amd64/arm64) and Windows (amd64) binaries with the "
-       "pinned " [:code "zig cc"] " - " [:code "./mino task cross-build"]
+       "pinned " [:code "zig cc"] " via " [:code "./mino task cross-build"]
        ". This is never required to build or embed mino (" [:code "make"]
-       " + a C99 compiler stays canonical); it produces two extra "
-       "things. First, a fully static " [:strong "musl"] " Linux binary "
-       "(amd64/arm64) with zero shared-library dependencies - the "
-       "single-file standalone download that runs on any Linux, glibc "
-       "or musl alike - published alongside the glibc builds. Second, a "
-       "Windows " [:code ".exe"] " linked via mingw without "
-       [:code "-static"] ", importing only the system Universal CRT, "
-       "with no " [:code "libgcc"] " / " [:code "libwinpthread"]
-       " DLL dependency. macOS stays a native build: Zig bundles no "
-       "macOS SDK, so a Linux host cannot cross-compile darwin (an "
-       "informational CI canary evaluates building darwin natively with "
-       [:code "zig cc"] " on a Mac runner). A CI job cross-builds and "
-       "validates Linux + Windows from one Linux host on every release."]
+       " + a C99 compiler stays canonical)."]
+      [:p "It produces two artifacts. First, a fully static "
+       [:strong "musl"] " Linux binary (amd64/arm64) with zero "
+       "shared-library dependencies, published alongside the glibc "
+       "builds. Second, a Windows " [:code ".exe"] " linked via "
+       "mingw without " [:code "-static"]
+       ", importing only the system Universal CRT. macOS stays a "
+       "native build: Zig bundles no macOS SDK, so a Linux host "
+       "cannot cross-compile darwin."]
       [:p "The pinned " [:code "zig cc"] " is a hard requirement for "
        "developing mino - it gates stencil regeneration, cross-builds, "
        "and the reproducible QA lanes (a UBSan + TSan sanitizer run, a "

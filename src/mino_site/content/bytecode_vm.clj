@@ -661,47 +661,28 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
       [:p "Hypotheses worth picking up. Each line is a one-liner; "
        "the shape of the work and rough payoff are obvious from the "
        "sketch."]
-      [:ul
+       [:ul
        [:li [:strong "Dispatch shape rework."]
         " Both standard alternatives to the current switch have "
-        "been tried and regressed. Apple clang at -O2 tail-merges "
-        "every per-handler "
-        [:code "goto *target"]
-        " into a single dispatch site, collapsing the threaded "
-        "interpreter back to switch shape; "
+        "been tried and regressed. Apple clang tail-merges threaded "
+        "dispatch back to switch shape; "
         [:code "asm goto"]
-        " with an explicit label list is the canonical workaround "
-        "but Apple clang miscompiles register-held label addresses. "
-        [:code "[[clang::musttail]]"]
-        " per-handler dispatch was tried in the v0.117.0 era and "
-        "regressed too: per-handler prolog/epilog plus locals reload "
-        "beat the stack-growth savings on short bodies. v0.162.0's "
-        "hot/cold partition mitigated the case-count ceiling that "
-        "had blocked adding new hot ops, so the urgency is lower "
-        "now; the remaining 1–5% real-world win on modern CPUs "
-        "(per a 2026 CPython measurement on M1 and Raptor Lake) "
-        "would need either a Linux GCC build (its tail-merging is "
-        "less aggressive) or a different architecture entirely "
-        "(shared-locals threaded dispatch via explicit register "
-        "pinning, two-tier dispatch, direct-threaded code)."]
+        " miscompiles register-held label addresses on Apple clang; "
+        [:code "[[clang::musttopcall]]"]
+        " per-handler dispatch regressed on short bodies. The "
+        "v0.162.0 hot/cold partition lowered the urgency. The "
+        "remaining 1-5% real-world win would need a different "
+        "architecture (shared-locals threaded dispatch, two-tier "
+        "dispatch)."]
        [:li [:strong "Profile-guided opcode rewriting."]
         " Hot sites swap generic opcodes for specialised variants "
-        "after a stable shape is observed - adaptive specialisation "
+        "after a stable shape is observed: adaptive specialisation "
         "without a JIT. Type-feedback fast lanes for arith on "
-        "observed int+int sites would extend the literal-arg "
-        "fast lanes already shipped, and a runtime "
+        "observed int+int sites, and a runtime "
         [:code "OP_CALL"] " to " [:code "OP_CALL_CACHED"]
-        " rewrite would cover closure-bound heads the compiler "
-        "can't statically prove. v0.163.0 consolidated the three "
-        "existing IC consumers behind shared resolve helpers and a "
-        "unified GC-scan; the framework is now ready for a fourth "
-        "consumer to plug in. The earlier "
-        [:code "OP_TAILCALL_CACHED"]
-        " probe that regressed fib-30 motivated the v0.162.0 "
-        "hot/cold partition, which gives the dispatch switch room "
-        "to grow new hot ops without taxing the existing case "
-        "ladder. Concrete next step: a profile-driven type-feedback "
-        "op-rewrite pass."]
+        " rewrite for closure-bound heads. v0.163.0 consolidated "
+        "the IC consumers behind shared helpers; the framework is "
+        "ready for a fourth."]
        [:li [:strong "Recur-shape fusion expansion."]
         " " [:code "OP_LOOP_INT_DEC"] " / "
         [:code "OP_LOOP_INT_DEC_INC"]

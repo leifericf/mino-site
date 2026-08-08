@@ -171,19 +171,13 @@
        [:code "cpu_count"] " after install. "
        [:code "send"] " / " [:code "send-off"] " throw "
        [:code "MTH001"] " when the host hasn't granted enough thread "
-       "budget -- the same shape "
-       [:code "future"] " / " [:code "promise"] " / "
-       [:code "thread"] " already use. Each pool's worker exits "
-       "when its run-queue drains so it doesn't keep "
-       [:code "thread_count"] " > 0 indefinitely; the next "
-       [:code "send"] " into that pool re-spawns. mino's per-state "
-       "eval lock still serializes one action at a time across both "
-       "pools, so the user-visible behavior is identical to a single "
-       "queue today; the split is the seam for a future "
-       "SOLO-yields-eval-lock-during-blocking-IO design. Embedders "
-       "that want both pools alive concurrently must raise the "
-       "thread limit to at least 2; mixing with futures or host "
-       "threads requires correspondingly more."]
+       "budget. Each pool's worker exits when its run-queue drains; "
+       "the next " [:code "send"] " re-spawns."]
+      [:p "Embedders that want both pools alive concurrently must "
+       "raise the thread limit to at least 2. The per-state eval "
+       "lock serializes one action at a time across both pools today; "
+       "the split is the seam for a future design where SOLO yields "
+       "the eval lock during blocking IO."]
       [:p [:strong "Failure handling."]
        " Action throws and watch throws are both captured into "
        [:code "agent-error"] " via "
