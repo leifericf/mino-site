@@ -672,6 +672,30 @@
      ;; Footer
      [:.footer {:margin-top "3rem"}])])
 
+;; --- TOC sidebar (auto-generated) ---
+
+(def toc-styles
+  [[:.toc-sidebar {:position "fixed"
+                   :right "1.5rem"
+                   :top "6rem"
+                   :width "200px"
+                   :max-height "calc(100vh - 8rem)"
+                   :overflow-y "auto"
+                   :font-size "0.8rem"}
+    [:ul {:list-style "none"
+          :padding 0}
+     [:li {:margin-bottom "0.4rem"}]
+     [:a {:color (:text-muted colors)
+          :line-height "1.4"
+          :display "block"}]
+     ["a:hover" {:color (:text colors)}]]]
+   [:.toc-sidebar>.sidebar-header {:font-size "0.7rem"
+                                   :font-weight "600"
+                                   :text-transform "uppercase"
+                                   :letter-spacing "0.05em"
+                                   :color (:text-muted colors)
+                                   :margin-bottom "0.6rem"}]])
+
 ;; --- Aggregate ---
 
 (defn site-css []
@@ -685,6 +709,7 @@
             callout-styles
             card-styles
             sidebar-styles
+            toc-styles
             code-styles
             decl-styles
             table-styles

@@ -96,4 +96,27 @@
            ". "
            [:a {:href "/about/"} "About"]
            "."]]
-         [:script (hu/raw-string highlight/highlight-js)]]]]))))
+         [:script (hu/raw-string highlight/highlight-js)]
+         [:script (hu/raw-string
+            (str
+             "if(window.matchMedia&&window.matchMedia('(min-width:1100px)').matches){"
+             "var hs=document.querySelectorAll('main h2');"
+             "if(hs.length>2){"
+             "var toc=document.createElement('nav');"
+             "toc.className='toc-sidebar';"
+             "var h=document.createElement('div');"
+             "h.className='sidebar-header';"
+             "h.textContent='On this page';"
+             "toc.appendChild(h);"
+             "var ul=document.createElement('ul');"
+             "hs.forEach(function(h2){"
+             "if(!h2.id){h2.id=h2.textContent.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}"
+             "var li=document.createElement('li');"
+             "var a=document.createElement('a');"
+             "a.href='#'+h2.id;a.textContent=h2.textContent;"
+             "a.addEventListener('click',function(e){e.preventDefault();h2.scrollIntoView({behavior:'smooth'});});"
+             "li.appendChild(a);ul.appendChild(li);"
+             "});"
+             "toc.appendChild(ul);"
+             "document.body.appendChild(toc);"
+             "}}"))]]]]))))
