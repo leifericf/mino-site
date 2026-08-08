@@ -153,12 +153,11 @@
    [:h2 "Conventions"]
    [:dl.api-conventions
     [:dt "Naming"]
-    [:dd [:code "*_new"] " and " [:code "*_alloc"]
+     [:dd [:code "*_new"] " and " [:code "*_alloc"]
      " return values the caller owns; release them with the matching "
      [:code "*_free"] " or " [:code "*_destroy"] ". "
      [:code "*_get"] " and " [:code "*_peek"]
-     " return borrowed pointers that must not be freed. "
-     [:code "*_take"] " transfers ownership from the runtime to the caller."]
+     " return borrowed pointers that must not be freed."]
 
     [:dt "Lifetime"]
     [:dd "Values returned by the runtime are borrowed: they stay valid "
@@ -175,8 +174,8 @@
      "must not call into one state from multiple threads at once. "
      "Worker threads for agents, futures, and the blocking async ops "
      "are spawned by the runtime itself, but only after the host "
-     "raises the per-state ceiling via "
-     [:code "mino_set_thread_limit"]
+      "raises the per-state ceiling via "
+      [:code "mino_set_option(S, MINO_OPT_THREAD_LIMIT, n)"]
      " (default 1, which disables host-threaded primitives). "
      [:code "mino_interrupt(S)"] " is the only function in this "
      "reference that is safe to call from a non-owning thread."]]])

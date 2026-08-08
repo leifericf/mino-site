@@ -145,9 +145,9 @@
         [:tr [:td "x86_64 Darwin"] [:td "Mach-O 64"] [:td "yes (stencil-determinism job, pinned zig cc)"]]
         [:tr [:td "x86_64 Windows"][:td "PE/COFF"]  [:td "yes (smoke build every push)"]]]]
       [:p "Per-state runtime control lives behind "
-       [:code "mino_state_set_jit_mode"]
+       [:code "mino_set_option(S, MINO_OPT_JIT_MODE, ...)"]
        " (AUTO / OFF / ON) and "
-       [:code "mino_state_set_jit_hot_threshold"]
+       [:code "mino_set_option(S, MINO_OPT_JIT_HOT_THRESHOLD, ...)"]
        " (call-count before the JIT compiles a function); the CLI "
        "exposes both as "
        [:code "--jit=auto|off|on"] " and "

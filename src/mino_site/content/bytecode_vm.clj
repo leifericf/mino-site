@@ -418,9 +418,9 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        [:code "VirtualAlloc"] " for the writable / executable "
        "region). The runtime auto-detects the host and enables "
        "the JIT; per-state runtime control lives behind "
-       [:code "mino_state_set_jit_mode"]
+       [:code "mino_set_option(S, MINO_OPT_JIT_MODE, ...)"]
        " (AUTO / OFF / ON) and "
-       [:code "mino_state_set_jit_hot_threshold"]
+       [:code "mino_set_option(S, MINO_OPT_JIT_HOT_THRESHOLD, ...)"]
        " (call count before a function compiles); the CLI exposes "
        "both as " [:code "--jit=auto|off|on"] " and "
        [:code "--jit-threshold=N"] "."]

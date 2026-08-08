@@ -105,7 +105,7 @@
         "inside a JIT-compiled region picks up a threshold of 1, "
         "so warm-up gaps on short-lived scripts collapse to the "
         "first call after the JIT'd caller fires. Tunable via "
-        [:code "mino_state_set_jit_hot_threshold"] " for embedders "
+        [:code "mino_set_option(S, MINO_OPT_JIT_HOT_THRESHOLD, n)"] " for embedders "
         "that want different cold-call counts."]
 
        [:li [:strong "Dual-binary build."]
@@ -225,18 +225,16 @@ stencil_extract selftest: OK"]]]]
       [:h2 "Runtime control"]
       [:p "Each row in the support table is a build claim. At "
        "runtime, every JIT-capable binary lets the host choose how "
-       "the pipeline executes. The five public symbols are stable "
-       "across releases:"]
+       "the pipeline executes. Configuration goes through the "
+       "generic option surface:"]
       [:pre [:code {:data-lang "c"}
-"void                  mino_state_set_jit_mode(mino_state *S,
-                                              mino_jit_mode mode);
-mino_jit_mode       mino_state_jit_mode(const mino_state *S);
+"mino_set_option(S, MINO_OPT_JIT_MODE, MINO_JIT_MODE_AUTO);   /* AUTO / OFF / ON */
+mino_set_option(S, MINO_OPT_JIT_HOT_THRESHOLD, 100);          /* call count     */
 
-void                  mino_state_set_jit_hot_threshold(mino_state *S,
-                                                       unsigned n);
-unsigned              mino_state_jit_hot_threshold(const mino_state *S);
+mino_jit_mode   mode      = (mino_jit_mode)mino_get_option(S, MINO_OPT_JIT_MODE);
+size_t          threshold = mino_get_option(S, MINO_OPT_JIT_HOT_THRESHOLD);
 
-mino_jit_capability mino_state_jit_capability(const mino_state *S);"]]
+mino_jit_capability cap = mino_state_jit_capability(S);"]]
 
       [:h3 "Modes"]
       [:p [:code "MINO_JIT_MODE_AUTO"] " (default): compile when "

@@ -360,7 +360,7 @@
        ", " [:code "thread"] ", and the blocking channel ops "
        [:code "<!!"] "/" [:code ">!!"] "/" [:code "alts!!"] " resolve to "
        "real OS threads. Embedders start at one (single-threaded) and "
-       "raise the limit via " [:code "mino_set_thread_limit"] " or one "
+       "raise the limit via " [:code "mino_set_option(S, MINO_OPT_THREAD_LIMIT, n)"] " or one "
        "of the pool/factory grants. A runtime that has at least one "
        "live worker serializes script execution on a per-state "
        "recursive mutex; cross-state work runs fully concurrent and "
