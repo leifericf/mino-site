@@ -187,4 +187,4 @@
          "How mino ships: the single-file amalgamation under "
          [:code "dist/"] ", no transitive build dependencies, no "
          "package manager, and the SQLite / Odin / sokol / stb "
-         "spirit of vendor what you use."]]]))
+         "spirit of vendor what you use."]]])))
