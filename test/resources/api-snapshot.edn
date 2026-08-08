@@ -16,15 +16,15 @@
     :doc nil}
    {:kind :define,
     :name "MINO_VERSION_PATCH",
-    :value "7",
+    :value "8",
     :inline-comment nil,
-    :signature "#define MINO_VERSION_PATCH 7",
+    :signature "#define MINO_VERSION_PATCH 8",
     :doc nil}
    {:kind :define,
     :name "MINO_VERSION",
-    :value "\"2026.08.07-alpha1\"",
+    :value "\"2026.08.08-alpha1\"",
     :inline-comment nil,
-    :signature "#define MINO_VERSION       \"2026.08.07-alpha1\"",
+    :signature "#define MINO_VERSION       \"2026.08.08-alpha1\"",
     :doc nil}
    {:kind :function,
     :name "mino_version_string",
@@ -32,7 +32,7 @@
     :params "void",
     :signature "const char *mino_version_string(void);",
     :doc
-    "Human-readable version string of the *linked* runtime, e.g. \"2026.08.07\".\nThe pointer is to a static string with program lifetime; callers must not\nfree it."}]}
+    "Human-readable version string of the *linked* runtime, e.g. \"2026.08.08\".\nThe pointer is to a static string with program lifetime; callers must not\nfree it."}]}
  {:name "Value types",
   :unstable false,
   :declarations
