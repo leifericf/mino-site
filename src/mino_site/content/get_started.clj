@@ -160,7 +160,7 @@ int main(void)
        [:pre
         [:code {:data-lang "mino"}
 "$ mino
-mino 2026.08.07-alpha1
+mino 2026.08.08-alpha1
 Type :help for help, :quit to exit
 mino=> (def greet (fn [name] (str \"hello, \" name \"!\")))
 #'user/greet

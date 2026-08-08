@@ -67,12 +67,12 @@
        [:li [:strong "5 host arches with on-disk byte tables."]
         " Each generated header carries the stencil bytes plus the "
         "symbol and relocation tables the runtime patcher consumes:"
-        [:ul
-         [:li [:code "stencils_arm64_darwin.h"] " (102,298 bytes)"]
-         [:li [:code "stencils_arm64_linux.h"] " (102,410 bytes)"]
-         [:li [:code "stencils_x86_64_darwin.h"] " (95,897 bytes)"]
-         [:li [:code "stencils_x86_64_linux.h"] " (96,317 bytes)"]
-         [:li [:code "stencils_x86_64_windows.h"] " (99,068 bytes)"]]]
+         [:ul
+          [:li [:code "stencils_arm64_darwin.h"] " (106,134 bytes)"]
+          [:li [:code "stencils_arm64_linux.h"] " (106,166 bytes)"]
+          [:li [:code "stencils_x86_64_darwin.h"] " (98,515 bytes)"]
+          [:li [:code "stencils_x86_64_linux.h"] " (98,861 bytes)"]
+          [:li [:code "stencils_x86_64_windows.h"] " (103,863 bytes)"]]]
 
        [:li [:strong "Side-exit deopt path."]
         " Fns whose first unstenciled op sits past PC 0 compile "
@@ -246,7 +246,7 @@ mino_jit_capability cap = mino_state_jit_capability(S);"]]
 
       [:h3 "Hot threshold"]
       [:p "Default seed is the compile-time "
-       [:code "MINO_JIT_THRESHOLD"] " (currently 10 calls). Lower "
+       [:code "MINO_JIT_THRESHOLD"] " (currently 100 calls). Lower "
        "for shorter-lived scripts where warm-up matters; raise to "
        "avoid compiling rarely-called functions in long-lived "
        "embedders. Inside an " [:code "AUTO"] " region the "

@@ -148,8 +148,8 @@ mino_gc_set_param(S, MINO_GC_STEP_ALLOC_BYTES,     16 * 1024);"]]
        [:thead
         [:tr [:th "Parameter"] [:th "Default"] [:th "Min"] [:th "Max"] [:th "Effect"]]]
        [:tbody
-        [:tr [:td [:code "NURSERY_BYTES"]]       [:td "4 MiB"]    [:td "64 KiB"]   [:td "256 MiB"]
-         [:td "Larger = fewer minor cycles, more work per cycle, higher peak pause. Default rose from 1 MiB to 4 MiB in v0.250.0 after realistic_bench measurement; allocation-heavy workloads gained 1.14–1.42x with no measurable pause regression."]]
+         [:tr [:td [:code "NURSERY_BYTES"]]       [:td "8 MiB"]    [:td "64 KiB"]   [:td "256 MiB"]
+          [:td "Larger = fewer minor cycles, more work per cycle, higher peak pause. Rose from 1 MiB to 4 MiB in v0.250.0, then to 8 MiB after realistic_bench measurement showed allocation-heavy workloads benefiting from the larger young gen."]]
         [:tr [:td [:code "MAJOR_GROWTH_TENTHS"]] [:td "15 (1.5x)"] [:td "11 (1.1x)"] [:td "40 (4.0x)"]
          [:td "Old-gen growth above baseline before the next major fires."]]
         [:tr [:td [:code "PROMOTION_AGE"]]       [:td "1"]        [:td "1"]        [:td "8"]
@@ -217,7 +217,7 @@ printf(\"live=%zu minor=%zu major=%zu max_pause_ns=%zu\\n\",
        "init without touching source:"]
       [:ul
        [:li [:code "MINO_GC_NURSERY_BYTES"]
-        " -- override the 4 MiB default nursery size. Same lower bound "
+         " -- override the 8 MiB default nursery size. Same lower bound "
         "as " [:code "mino_gc_set_param"] " (64 KiB). Lower it for "
         "embedders running many concurrent VM states under tight memory budgets."]
        [:li [:code "MINO_GC_STRESS=1"]

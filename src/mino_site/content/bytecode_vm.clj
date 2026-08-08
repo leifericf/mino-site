@@ -409,9 +409,10 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        "stencils into a "
        [:code "musttail"] " chain so the host compiler's tail-call "
        "guarantee turns the chain into a single threaded loop. "
-       "There is no inline cache or specialiser inside the JIT — "
-       "the IC machinery lives in the bytecode body and the JIT "
-       "preserves it verbatim."]
+       "There is no type-feedback specialiser inside the JIT. "
+       "The IC machinery lives in the bytecode body (inline caches "
+       "on global, call, and protocol-dispatch opcodes) and the JIT "
+       "preserves those cached opcodes verbatim."]
       [:p "Five host arches ship full byte tables today: ARM64 "
        "Darwin, ARM64 Linux, x86_64 Linux, x86_64 Darwin, "
        "and x86_64 Windows (PE-COFF + "
@@ -437,8 +438,8 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
       [:p [:strong "What the JIT covers today."]
        " Move, load-constant, fused load-then-return, return-arg / "
        "return-immediate, the canonical integer arithmetic and "
-       "comparison ops (add / sub / mul / lt / le / gt / ge / eq, "
-       "both register and constant operand variants), inc / dec, "
+       "comparison ops (add / sub / mul / lt / le / gt / ge / eq; "
+       "add, sub, lt, le, and eq also have constant-operand variants), inc / dec, "
        "zero-test, the loop-with-int-bound hot lane. Functions "
        "that mix unsupported bytecodes fall back to the interpreter "
        "transparently. As the bytecode VM grows, the stencil set "

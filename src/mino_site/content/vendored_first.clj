@@ -145,7 +145,7 @@
        [:li [:a {:href "/documentation/dependencies/"} "Dependencies"]
         " — how the bundled stdlib, on-disk " [:code "lib/"] ", "
         "and git-fetched repos compose via " [:code "mino deps"] "."]
-       [:li [:a {:href "https://github.com/leiffredheim/mino/releases"} "Release assets"]
+       [:li [:a {:href "https://github.com/leifericf/mino/releases"} "Release assets"]
         " — pre-built binaries plus the "
         [:code "mino-amalgamation-vX.Y.Z.tar.gz"] " bundle for "
         "each tag."]])))

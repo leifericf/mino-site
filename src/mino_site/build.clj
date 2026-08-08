@@ -199,7 +199,7 @@
      "/documentation/jit/index.html"
      (fn [ctx]
        (render/html-page {:title "JIT"
-                          :description "Single canonical page on mino's copy-and-patch JIT (CPJIT): 58 opcode stencils across five host arches, dual-binary build, four-way parity, side-exit deopt path, cancellable JIT'd loops, runtime control surface, and an on/off A/B against realistic_bench."
+                          :description "Single canonical page on mino's copy-and-patch JIT (CPJIT): 65 opcode stencils across five host arches, dual-binary build, four-way parity, side-exit deopt path, cancellable JIT'd loops, runtime control surface, and an on/off A/B against realistic_bench."
                           :active-page :documentation}
          (jit/jit-page)))
 

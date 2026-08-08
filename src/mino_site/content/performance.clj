@@ -187,7 +187,7 @@
        [:code "mino_state_new"] " (sub-millisecond), and the hot-call "
        "threshold means " [:em "nothing compiles"] " until user code "
        "calls a function past " [:code "MINO_JIT_THRESHOLD"]
-       " (default 10) times. A one-shot script that fits in a single "
+       " (default 100) times. A one-shot script that fits in a single "
        "expression therefore pays the same wall-time on JIT and "
        "no-JIT builds."]
       [:p "Per-process initialization cost, measured in-process over 50 "
@@ -461,18 +461,19 @@
        "interactive latency on a general workload; embedders with "
        "throughput-dominated batches or tighter pause budgets can "
        "shift the tradeoff without rebuilding."]
-      [:p "The default nursery size rose from 1 MiB to 4 MiB in "
-       "v0.250.0 after a measured pass over "
+      [:p "The default nursery size is 8 MiB, raised from 4 MiB "
+       "(which was itself raised from 1 MiB in v0.250.0) after a "
+       "measured pass over "
        [:a {:href "https://github.com/leifericf/mino-bench/blob/main/benchmarks/realistic_bench.clj"}
         "realistic_bench"]
        ". Allocation-heavy workloads (bump-int-map, nested-vec, "
-       "lazy-range realization) gained 1.14–1.42x with no measurable "
-       "regression in worst-case minor-GC pause — the larger nursery "
+       "lazy-range realization) gained 1.14-1.42x with no measurable "
+       "regression in worst-case minor-GC pause. The larger nursery "
        "collects more bytes per cycle so total GC wall time falls "
        "even though each minor pass sweeps more. Each VM state holds "
-       "3 extra MiB of young-gen residency before the first major "
-       "GC; embedders running many concurrent VM states under tight "
-       "memory budgets override via "
+       "more young-gen residency before the first major GC; embedders "
+       "running many concurrent VM states under tight memory budgets "
+       "override via "
        [:code "MINO_GC_NURSERY_BYTES"] " or "
        [:code "mino_gc_set_param(S, MINO_GC_NURSERY_BYTES, n)"] "."]
       [:p [:strong "realistic_bench (v0.249 vs v0.250):"]]

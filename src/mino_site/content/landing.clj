@@ -96,7 +96,7 @@ static mino_val *source_next(mino_state *S, mino_val *target,
         [:code "mino_state_new"] " through the install call, and "
         "the JIT-vs-no-JIT delta — JIT costs 34-50 KB across the "
         "tiers and effectively zero cold-start ms. Measured on "
-        "Apple Silicon (arm64-darwin) against mino v0.323.0."]
+         "Apple Silicon (arm64-darwin)."]
        [:div.stat-grid
         [:div.stat-card
          [:div.stat-eyebrow "Floor — minimum"]
