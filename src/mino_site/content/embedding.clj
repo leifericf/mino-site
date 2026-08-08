@@ -555,22 +555,13 @@ mino_register_fn(S, env, \"host-inbox-drain\", prim_inbox_drain);"]]
 
       [:h2 "Garbage collection"]
       [:p "The collector is a non-moving generational tracing "
-       "collector with an incremental old-gen mark phase. Short-lived "
-       "allocations live in a young-generation nursery; values that "
-       "survive a minor collection are promoted to old-gen, which is "
-       "marked in paced slices between mutator allocations. A write "
-       "barrier tracks old-to-young pointers so minor collections "
-       "stay proportional to young reachability. Any mino function "
-       "that allocates may advance the collector, which is why "
-       "borrowed values can become invalid after the next call."]
-      [:p "Objects survive collection if they are reachable from a root: "
-       "registered environments, host refs, the intern tables, the "
-       "module cache, or the C stack (via conservative scanning)."]
-      [:p "See the "
+       "collector with an incremental old-gen mark phase. Any mino "
+       "function that allocates may advance the collector, which is "
+       "why borrowed values can become invalid after the next call. "
+       "See the "
        [:a {:href "/documentation/garbage-collection/"} "Garbage Collection"]
-       " reference for collector phases, tuning knobs with accepted "
-       "ranges, the full "
-       [:code "(gc-stats)"] " field list, and the "
+       " reference for collector phases, tuning knobs, "
+       [:code "(gc-stats)"] " fields, and "
        [:code "MINO_GC_*"] " environment variables."]
 
       [:h2 "Next steps"]
