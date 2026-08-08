@@ -78,10 +78,11 @@
 ;; On failure: \"vectors equality\""]]
 
       [:h3 [:code "(run-tests)"]]
-      [:p "Executes all registered tests and prints a summary. Each test "
-       "runs in a " [:code "try/catch"] " so one failure does not prevent "
-       "the rest from running. Calls " [:code "(exit 1)"] " on any "
-       "failures or errors, " [:code "(exit 0)"] " on success."]
+      [:p "Executes tests in the current namespace and prints a summary. "
+       "Each test runs in a " [:code "try/catch"] " so one failure does "
+       "not prevent the rest from running. Returns a summary map. Use "
+       [:code "(run-tests-and-exit)"] " to call " [:code "(exit 1)"] " on "
+       "any failures or errors, " [:code "(exit 0)"] " on success."]
 
       [:h2 "Running Tests"]
       [:pre [:code "# Run the test suite\n./mino task test\n\n# Run under GC stress (collects on every allocation)\nMINO_GC_STRESS=1 ./mino tests/run.clj"]]
@@ -103,7 +104,7 @@
 
       [:h2 "Output"]
       [:p "On success:"]
-      [:pre [:code "1474 tests, 7038 assertions: 7038 passed, 0 failed, 0 errors"]]
+      [:pre [:code "N tests, M assertions: M passed, 0 failed, 0 errors"]]
       [:p "On failure, each failing assertion is reported with its test "
        "name, context path, the original form, and a diff:"]
       [:pre [:code "Failures:\n  in addition\n    arithmetic > basic\n    (= 4 (+ 1 2))\n    expected: 4\n    actual: 3\n\n10 tests, 12 assertions: 11 passed, 1 failed, 0 errors"]]

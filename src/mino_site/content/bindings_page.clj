@@ -109,13 +109,13 @@ if let r = mino_eval_string(s, \"(+ 1 2)\", e) {
 (defn bindings-page
   "Render the language bindings page."
   [mino-root]
-  (let [c-src   (try (slurp (io/file mino-root "examples" "bindings" "embed_c.c"))
+  (let [c-src   (try (slurp (io/file "mino-examples" "src" "embed.c"))
                      (catch Exception _ nil))
-        cpp-src (try (slurp (io/file mino-root "examples" "bindings" "embed_cpp.cpp"))
+        cpp-src (try (slurp (io/file "mino-examples" "src" "embed.cpp"))
                      (catch Exception _ nil))
-        java-src (try (slurp (io/file mino-root "examples" "bindings" "MinoEmbed.java"))
+        java-src (try (slurp (io/file "mino-examples" "jni" "MinoEmbed.java"))
                       (catch Exception _ nil))
-        jni-src  (try (slurp (io/file mino-root "examples" "bindings" "mino_jni.c"))
+        jni-src  (try (slurp (io/file "mino-examples" "jni" "mino_jni.c"))
                       (catch Exception _ nil))]
     (str
       (h/html
@@ -123,9 +123,9 @@ if let r = mino_eval_string(s, \"(+ 1 2)\", e) {
         [:p "mino exposes a plain C ABI with simple types: pointers, integers, "
          "doubles, and null-terminated strings. Any language with C FFI support "
          "can embed it directly, with no wrapper library or code generation step."]
-        [:p "The examples below all run the same scenario: build a vector of "
-         "sensor events, evaluate a mino script that filters, groups, and "
-         "summarizes the data, and print the result."]
+        [:p "Each example creates a runtime, evaluates mino code, and "
+         "extracts the result. The same pattern works from every host "
+         "language with C FFI."]
 
         ;; C
         [:section.use-case-section
@@ -133,7 +133,7 @@ if let r = mino_eval_string(s, \"(+ 1 2)\", e) {
          [:p "The baseline reference. Direct API calls, no translation layer."]
          (when c-src
            [:details {:open true}
-            [:summary "embed_c.c"]
+             [:summary "embed.c"]
             [:pre [:code {:data-lang "c"} c-src]]])]
 
         ;; C++
@@ -144,7 +144,7 @@ if let r = mino_eval_string(s, \"(+ 1 2)\", e) {
           "is needed."]
          (when cpp-src
            [:details {:open true}
-            [:summary "embed_cpp.cpp"]
+             [:summary "embed.cpp"]
             [:pre [:code {:data-lang "c"} cpp-src]]])]
 
         ;; Java

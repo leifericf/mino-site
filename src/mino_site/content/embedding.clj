@@ -98,7 +98,7 @@ mino_state_free(S);"]]
       [:p "Pick exactly the bits you want for a custom tier:"]
       [:pre [:code {:data-lang "c"}
 "mino_install(S, env, MINO_CAP_DEFAULT | MINO_CAP_IO | MINO_CAP_REGEX);"]]
-      [:p "Available bits: "
+      [:p "Common bits include: "
        [:code "MINO_CAP_FLOOR"] ", "
        [:code "MINO_CAP_REGEX"] ", "
        [:code "MINO_CAP_BIGNUM"] ", "
@@ -125,13 +125,14 @@ mino_state_free(S);"]]
        [:code "MINO_CAP_INSTANT"] ", "
        [:code "MINO_CAP_SPEC"] ", "
        [:code "MINO_CAP_TOOLING"]
-       ". " [:code "MINO_CAP_FLOOR"] " is always installed implicitly. "
+       ", and others. Call " [:code "mino_capability_list()"]
+       " for the full registry. " [:code "MINO_CAP_FLOOR"] " is always installed implicitly. "
        [:code "mino_install"] " is idempotent: calling it again with "
        "additional bits adds the missing capabilities and does not "
        "re-evaluate " [:code "core.clj"] "."]
       [:p "Query what is installed at any time:"]
       [:pre [:code {:data-lang "c"}
-"unsigned int caps = mino_capabilities(S);
+"uint64_t caps = mino_capabilities(S);
 int has_regex = mino_capability_installed(S, MINO_CAP_REGEX);
 
 /* Iterate the registry, printing what is on / off */
@@ -412,8 +413,8 @@ mino_register_fn(S, sandbox, \"query\", my_safe_query_fn);"]]
       [:h3 "Execution limits"]
       [:p "Cap eval steps and heap usage to prevent runaway scripts:"]
       [:pre [:code {:data-lang "c"}
-"mino_set_limit(S, MINO_LIMIT_STEPS, 100000);
-mino_set_limit(S, MINO_LIMIT_HEAP, 8 * 1024 * 1024);  /* 8 MB */"]]
+"mino_set_option(S, MINO_OPT_LIMIT_STEPS, 100000);
+mino_set_option(S, MINO_OPT_LIMIT_HEAP, 8 * 1024 * 1024);  /* 8 MB */"]]
       [:p "When a limit is exceeded, the current eval returns NULL and "
        [:code "mino_last_error"] " reports the cause. Pass 0 to disable "
        "a limit."]
