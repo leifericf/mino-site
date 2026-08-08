@@ -42,19 +42,19 @@
 
       [:h2 "Inspirations"]
       [:p "mino draws from four projects that each got something "
-       "deeply right: "
+       "right: "
        [:strong "Clojure"] " for immutable values, persistent data "
        "structures, and a data-first programming model; "
        [:strong "Lua"] " for proving a small, portable C "
-       "implementation can be a world-class embeddable scripting "
+       "implementation can be a fast embeddable scripting "
        "language; "
        [:strong "Fennel"] " for showing Lisp syntax and macros can "
        "layer cleanly over a minimal runtime; and "
        [:strong "Erlang/BEAM"] " for the discipline of isolated "
-       "processes communicating by message passing. Mino combines "
+       "processes communicating by message passing. mino combines "
        "these lineages into an embeddable runtime with persistent "
        "data and capability-gated host interop."]
-      [:p "Mino borrows from BEAM twice. The first borrowing is "
+      [:p "mino borrows from BEAM twice. The first borrowing is "
        "isolation: each "
        [:code "mino_state"] " owns its heap and communicates with "
        "peers via cross-state channels and values, never shared "

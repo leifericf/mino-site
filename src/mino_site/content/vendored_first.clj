@@ -25,8 +25,8 @@
       [:p "mino has no transitive build dependencies. The runtime "
        "compiles against the C99 standard library only; the "
        "platform layer needs " [:code "libm"] " (math) and "
-       [:code "pthreads"] " (concurrency). There is no autotools, "
-       "no cmake, no meson, no bazel. There is no package manager "
+       [:code "pthreads"] " (concurrency). No autotools, "
+       "no cmake, no meson, no bazel. No package manager "
        "to invoke, no lockfile to commit, no fetch step in the "
        "build."]
       [:p "A version of mino in your vendor tree is bit-identical to "
@@ -61,7 +61,7 @@
        "in the runtime tree. " [:code "imath"] " is a small bignum "
        "library; mino needs arbitrary-precision integers, mino "
        "vendored " [:code "imath"] ", mino owns the audit surface. "
-       "There is no plan to add more vendored libraries: every "
+       "No plan to add more vendored libraries: every "
        "new Clojure-side namespace ships as bundled mino source "
        "in " [:code "lib/clojure/"] " (escaped into a C string "
        "literal at build time), and every new C primitive is "
@@ -132,20 +132,20 @@
        [:li "The C API is the contract, not the CLI. Lua is the "
         "cousin for \"I am an embedded scripting engine first.\" "
         "An embedder treats " [:code "mino"] " the binary as a "
-        "diagnostic tool — useful for trying things out, never "
+        "diagnostic tool - useful for trying things out, never "
         "in the production critical path."]]
 
       [:h2 {:id "pointers"} "Pointers"]
       [:ul
        [:li [:a {:href "/documentation/embedding/"} "Embedding mino in your C project"]
-        " — the canonical first-five-minutes integration."]
+        " - the canonical first-five-minutes integration."]
        [:li [:a {:href "/documentation/api/"} "C API Reference"]
-        " — every public function, type, and macro in "
+        " - every public function, type, and macro in "
         [:code "mino.h"] "."]
        [:li [:a {:href "/documentation/dependencies/"} "Dependencies"]
-        " — how the bundled stdlib, on-disk " [:code "lib/"] ", "
+        " - how the bundled stdlib, on-disk " [:code "lib/"] ", "
         "and git-fetched repos compose via " [:code "mino deps"] "."]
        [:li [:a {:href "https://github.com/leifericf/mino/releases"} "Release assets"]
-        " — pre-built binaries plus the "
+        " - pre-built binaries plus the "
         [:code "mino-amalgamation-vX.Y.Z.tar.gz"] " bundle for "
         "each tag."]])))

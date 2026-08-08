@@ -36,7 +36,7 @@
        [:code "zig"] " Linux runner every push and verifies that the "
        "committed CPJIT stencil byte tables for every supported "
        "target (both Darwin, both Linux, x86_64 Windows) regenerate "
-       "byte-for-byte identically — one version-locked "
+       "byte-for-byte identically - one version-locked "
        [:code "zig cc"] " cross-compiles them all, so the check is "
        "reproducible across machines. This is the verification floor "
        "for x86_64 Darwin since GitHub has been retiring Intel Mac "
@@ -101,13 +101,13 @@
       [:p "The native per-platform runners build the platform-native "
        "binaries. From a single host, a maintainer also cross-compiles "
        "the Linux (amd64/arm64) and Windows (amd64) binaries with the "
-       "pinned " [:code "zig cc"] " — " [:code "./mino task cross-build"]
+       "pinned " [:code "zig cc"] " - " [:code "./mino task cross-build"]
        ". This is never required to build or embed mino (" [:code "make"]
        " + a C99 compiler stays canonical); it produces two extra "
        "things. First, a fully static " [:strong "musl"] " Linux binary "
-       "(amd64/arm64) with zero shared-library dependencies — the "
+       "(amd64/arm64) with zero shared-library dependencies - the "
        "single-file standalone download that runs on any Linux, glibc "
-       "or musl alike — published alongside the glibc builds. Second, a "
+       "or musl alike - published alongside the glibc builds. Second, a "
        "Windows " [:code ".exe"] " linked via mingw without "
        [:code "-static"] ", importing only the system Universal CRT, "
        "with no " [:code "libgcc"] " / " [:code "libwinpthread"]
@@ -117,7 +117,7 @@
        [:code "zig cc"] " on a Mac runner). A CI job cross-builds and "
        "validates Linux + Windows from one Linux host on every release."]
       [:p "The pinned " [:code "zig cc"] " is a hard requirement for "
-       "developing mino — it gates stencil regeneration, cross-builds, "
+       "developing mino - it gates stencil regeneration, cross-builds, "
        "and the reproducible QA lanes (a UBSan + TSan sanitizer run, a "
        "curated strict-warning lens, an advisory clang static-analyzer "
        "report, and a hermetic build that does not depend on the runner "
@@ -132,7 +132,7 @@
        [:code "mino"] " binary auto-detects the host and enables "
        "the JIT; the parallel "
        [:code "mino-lean"] " binary is the same build with the JIT "
-       "pipeline compiled out — useful when a host has no executable "
+       "pipeline compiled out - useful when a host has no executable "
        "memory primitives, or when a smaller binary is more valuable "
        "than peak throughput."]
       [:table

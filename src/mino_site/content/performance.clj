@@ -50,7 +50,7 @@
        [:code "--jit=auto|on|off"] "), and end-to-end portability "
        "across five host arches (ARM64 Darwin / Linux, x86_64 "
        "Linux / Darwin / Windows); the GC nursery bump in v0.250.0 "
-       "(1 MiB → 4 MiB default) cut total GC wall-time by 35–60% "
+       "(1 MiB  to  4 MiB default) cut total GC wall-time by 35–60% "
        "across realistic_bench rows (1.14–1.42x speedup) without "
        "raising worst-case minor-GC pause. Those later rows are "
        "not yet re-tabled here. The full bench suite lives in "
@@ -60,7 +60,7 @@
        [:a {:href "https://github.com/leifericf/mino-bench/tree/main/tests"}
         "mino-bench/tests/"]
        ". Every table on this page links to the bench file the row was "
-       "measured against — click the section heading's source link to "
+       "measured against - click the section heading's source link to "
        "see the actual code."]
 
       [:p "mino's evaluator is now a layered system. The tree-walker "
@@ -74,7 +74,7 @@
       [:h2 "Footprint"
        (src-link "tests/min_embed.c")
        (src-link "tests/min_embed_floor.c")]
-      [:p "Three binary footprints worth knowing about — the Floor "
+      [:p "Three binary footprints worth knowing about - the Floor "
        "tier that an embedder commits to, the Sandbox tier with the "
        "canonical Clojure surface, and the Standalone ceiling that "
        "ships from Homebrew. All linked with "
@@ -105,7 +105,7 @@
         [:tr [:td "Sandbox (" [:code "install_sandbox"] ")"]
              [:td "~909 KB"] [:td "~943 KB"] [:td "+34 KB (4%)"]
              [:td "Floor plus regex, bignum, multimethods, protocols, "
-                  "transducers, and the safe bundled libs — every name "
+                  "transducers, and the safe bundled libs - every name "
                   "a Clojure scripter expects. Still no I/O, FS, "
                   "processes, STM, agents, async."]]
         [:tr [:td "Standalone (" [:code "install_all"] " + REPL)"]
@@ -119,7 +119,7 @@
                   " binary an end user receives from Homebrew. The "
                   "no-JIT Standalone column is the " [:code "mino-lean"]
                   " sibling binary."]]]]
-      [:p "JIT adds 34–50 KB across the tiers — under one percent of "
+      [:p "JIT adds 34–50 KB across the tiers - under one percent of "
        "any modern device's disk budget, and well under 1 ms of "
        "additional disk-load time on a cold launch. The JIT-included "
        "build pays back 1.8–6.5x on compute-bound hot code (see the "
@@ -136,7 +136,7 @@
         [:tr [:td "C source tree (" [:code "src/"] " minus vendor "
               "and the generated bundled-source headers)"]
              [:td "~3.4 MB"]
-             [:td "Hand-written runtime, VM, JIT, prims, GC, collections"]]
+             [:td "Ordinary runtime, VM, JIT, prims, GC, collections"]]
         [:tr [:td "Vendor (" [:code "imath"] " for BigInt)"]
              [:td "~158 KB"]
              [:td "Only loaded when arithmetic exceeds 64-bit range"]]
@@ -309,10 +309,10 @@
              [:td "0.23 µs/elt"]]
         [:tr [:td [:code "nth"] " random on 1,000-vec"]
              [:td "5.5 µs"]
-             [:td "—"]]
+             [:td "-"]]
         [:tr [:td [:code "(get m k)"] " on 1,000-key map"]
              [:td "5.4 µs"]
-             [:td "—"]]
+             [:td "-"]]
         [:tr [:td [:code "(fib 25)"] " recursive (~242k calls)"]
              [:td "6.65 ms"]
              [:td "0.027 µs/call"]]]]
@@ -435,7 +435,7 @@
              [:td "~1.4 ms"]]
         [:tr [:td [:code "loop/recur"] " 10,000 iterations"]
              [:td "~0%"]
-             [:td "—"]]
+             [:td "-"]]
         [:tr [:td "Build 1,000-element vector via " [:code "conj"]]
              [:td "~19%"]
              [:td "~1.4 ms"]]
@@ -447,7 +447,7 @@
              [:td "~1.8 ms"]]
         [:tr [:td "map/filter/map/reduce over 50,000 (fused transducers)"]
              [:td "~0%"]
-             [:td "—"]]
+             [:td "-"]]
         [:tr [:td "Nested vectors 500x100"]
              [:td "~17%"]
              [:td "~2.0 ms"]]

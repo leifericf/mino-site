@@ -132,7 +132,7 @@ mino deps"]]
       [:ul
        [:li [:strong "The manifest is the lock."]
         " All coordinates are exact (pinned revisions, direct paths). "
-        "There is no lockfile because there is nothing to resolve."]
+        "No lockfile exists because nothing needs resolving."]
        [:li [:strong "No version ranges."]
         " No constraint solver, no transitive dependencies, no registry. "
         "Dependencies are direct source coordinates."]

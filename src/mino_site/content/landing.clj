@@ -88,18 +88,18 @@ static mino_val *source_next(mino_state *S, mino_val *target,
       [:section {:style "margin-top: 3rem;"}
        [:h2 "Small enough to drop in. Fast enough to be useful."]
        [:p {:style "margin-bottom: 1rem;"}
-        "Three tiers — Floor (the minimum embedder commits to), "
+        "Three tiers - Floor (the minimum embedder commits to), "
         "Sandbox (canonical Clojure-core surface plus safe bundled "
         "libs), and Standalone (the Homebrew bottle). Each card "
         "shows stripped footprint with the JIT pipeline included "
         "(the default), the in-process init cost from "
         [:code "mino_state_new"] " through the install call, and "
-        "the JIT-vs-no-JIT delta — JIT costs 34-50 KB across the "
+        "the JIT-vs-no-JIT delta - JIT costs 34-50 KB across the "
         "tiers and effectively zero cold-start ms. Measured on "
          "Apple Silicon (arm64-darwin)."]
        [:div.stat-grid
         [:div.stat-card
-         [:div.stat-eyebrow "Floor — minimum"]
+         [:div.stat-eyebrow "Floor - minimum"]
          [:div.stat-row
           [:span.stat-value "651 KB"]
           [:span.stat-aside "0.18 ms init"]]
@@ -110,19 +110,19 @@ static mino_val *source_next(mino_state *S, mino_val *target,
           [:code "mino_install_minimal"] " and you are running. "
           "JIT-less variant ships at 601 KB."]]
         [:div.stat-card
-         [:div.stat-eyebrow "Sandbox — full Clojure"]
+         [:div.stat-eyebrow "Sandbox - full Clojure"]
          [:div.stat-row
           [:span.stat-value "943 KB"]
           [:span.stat-aside "2.65 ms init"]]
          [:p.stat-detail
           "Floor plus regex, bignum, multimethods, protocols, "
-          "transducers, and the safe bundled libs — every name a "
+          "transducers, and the safe bundled libs - every name a "
           "Clojure scripter expects. Call "
           [:code "mino_install_sandbox"]
           " or " [:code "mino_install(S, env, MINO_CAP_DEFAULT)"]
           ". JIT-less variant ships at 909 KB."]]
         [:div.stat-card
-         [:div.stat-eyebrow "Standalone — everything"]
+         [:div.stat-eyebrow "Standalone - everything"]
          [:div.stat-row
           [:span.stat-value "996 KB"]
           [:span.stat-aside "2.78 ms init"]]
@@ -136,7 +136,7 @@ static mino_val *source_next(mino_state *S, mino_val *target,
         "Sandbox 7.0 ms, Standalone 8.0 ms (median of 50 runs each). "
         "Disabling the JIT shifts none of those by more than the "
         "measurement noise floor. The JIT pays back 1.8-6.5x on "
-        "compute-bound hot code — see "
+        "compute-bound hot code - see "
         [:a {:href "/documentation/jit/"} "JIT"]
         " for the workload table, "
         [:a {:href "/documentation/performance/"} "Performance"]

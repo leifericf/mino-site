@@ -95,7 +95,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        " over the op byte inside one C function ("
        [:code "mino_bc_run"] "). The switch lets gcc and clang emit "
        "a jump table on platforms that have it; computed-goto "
-       "dispatch is not used — the readability win of a single "
+       "dispatch is not used - the readability win of a single "
        "branch-and-decode loop wins against a fragile portability "
        "footprint, and the per-op cost is already low enough that the "
        "dispatch is rarely the bottleneck."]
@@ -103,8 +103,8 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        "resolution, closure construction, var redefinition) re-reads "
        "the window pointer from " [:code "S->bc.bc_regs + base"]
        " on the next cycle so a recursive " [:code "mino_bc_run"]
-       " that triggers register-stack growth — and therefore "
-       "reallocation — does not leave the outer frame with a dangling "
+       " that triggers register-stack growth - and therefore "
+       "reallocation - does not leave the outer frame with a dangling "
        "pointer."]
 
       [:h2 "Opcode catalog"]
@@ -141,7 +141,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         [:code "(< i 10)"] " avoids loading the literal separately."]
        [:li [:strong "Fused counted loops."]
         " Two common " [:code "loop"]
-        " shapes — single-binding and two-binding inc/dec — emit a "
+        " shapes - single-binding and two-binding inc/dec - emit a "
         "single fused opcode at the recur target. Each iteration is "
         "one decode plus one or two tagged-int updates and a back-jump. "
         "Emission is gated on canonical-prim resolution so a user "
@@ -212,7 +212,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        " and set " [:code "conj"]
        " the property that "
        [:code "(identical? m (assoc m k (get m k)))"]
-       " holds — a real signal callers can rely on, affordable "
+       " holds - a real signal callers can rely on, affordable "
        "because cached hashes keep the equality check O(1) in the "
        "typical no-match case."]
 
@@ -302,7 +302,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "pure-prim call. Anything else fails closed."]
        [:li [:strong "Capture opt-out."]
         " Both folds skip let scopes that publish bindings into an "
-        "env for an inner closure — env publishing is itself "
+        "env for an inner closure - env publishing is itself "
         "observable."]
        [:li [:strong "Overflow handling."]
         " Tagged-int fast lanes decline to the boxed slow lane on "
@@ -327,7 +327,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "below)."]
        [:li [:strong "Janet."]
         " Small, embeddable, register-based, ship the bytecode "
-        "interpreter and call it done — matches mino's ethos for the "
+        "interpreter and call it done - matches mino's ethos for the "
         "core path. mino differs by being a Clojure dialect: "
         "persistent immutable values are the default, lazy sequences "
         "are first-class, STM and agents are in the core surface, "
@@ -409,7 +409,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        "stencils into a "
        [:code "musttail"] " chain so the host compiler's tail-call "
        "guarantee turns the chain into a single threaded loop. "
-       "There is no type-feedback specialiser inside the JIT. "
+       "No type-feedback specialiser lives inside the JIT. "
        "The IC machinery lives in the bytecode body (inline caches "
        "on global, call, and protocol-dispatch opcodes) and the JIT "
        "preserves those cached opcodes verbatim."]
@@ -427,7 +427,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        [:code "--jit-threshold=N"] "."]
       [:p "An embedder that prefers a smaller binary over peak "
        "throughput can link "
-       [:code "mino-lean"] " instead — the same source compiled "
+       [:code "mino-lean"] " instead - the same source compiled "
        "with the JIT pipeline gated out by "
        [:code "-DMINO_CPJIT=0"] ". CI builds both binaries every "
        "push and asserts byte-identical stdout across "
@@ -448,7 +448,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        " Type-feedback specialisation; SSA-style optimisation; "
        "register allocation across stencils; deoptimisation. The "
        "stencil is bytecode-identical to what the interpreter "
-       "runs — just stitched together with the dispatch loop "
+       "runs - just stitched together with the dispatch loop "
        "elided. The soundness model is therefore the same as the "
        "interpreter's: if " [:code "--jit=on"] " and "
        [:code "--jit=off"] " observably diverge, the JIT is the "
@@ -515,7 +515,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "got argv-ABI siblings in the same commit so a "
         [:code "(filter odd? ...)"]
         " stage stays cons-free. "
-        [:em "pipeline-sum -77% (93.5 µs → 21.3 µs); pipeline alloc "
+        [:em "pipeline-sum -77% (93.5 µs  to  21.3 µs); pipeline alloc "
              "count -86%."]]
        [:li [:strong "Protocol-method inline cache."]
         " v0.158.0 adds " [:code "OP_PROTOCOL_CALL_CACHED"]
@@ -525,12 +525,12 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "deref'd map and the first-arg type discriminator against "
         "the cached pair, and on a hit invokes the cached impl "
         "directly via " [:code "apply_callable_argv"]
-        " — no protocol-dispatch trampoline, no map_get on the hot "
+        " - no protocol-dispatch trampoline, no map_get on the hot "
         "path. The miss path performs one "
         [:code "map_get_val"] " with a "
         [:code ":default"] " fallback and refills the IC under "
         "write barriers. "
-        [:em "proto-mono-area -57% (5.03 µs → 2.14 µs); "
+        [:em "proto-mono-area -57% (5.03 µs  to  2.14 µs); "
              "proto-bi-area -50%."]]
        [:li [:strong "Seq-fusion generalisation."]
         " v0.159.0 extracts the v0.157.0 walker from "
@@ -588,7 +588,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         [:code "OP_GETGLOBAL_CACHED"] ", "
         [:code "OP_CALL_CACHED"] ", "
         [:code "OP_PROTOCOL_CALL_CACHED"]
-        ") behind two shared helpers — "
+        ") behind two shared helpers - "
         [:code "ic_resolve_global"]
         " carries the dyn / env / cached / resolve cascade and the "
         "miss-path write-barrier refill; "
@@ -626,7 +626,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         " on a monotonic 32-bit owner ID, and adds an owner field "
         "to every vec trie / tail node. "
         [:code "conj!"] " / " [:code "assoc!"] " / " [:code "pop!"]
-        " on a vector mutate the owner-tagged nodes in place — the "
+        " on a vector mutate the owner-tagged nodes in place - the "
         "first edit through a fresh transient clones the touched "
         "node (and stamps it with the owner); every later edit on "
         "that node is a single slot write + count bump with no "
@@ -637,7 +637,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         [:code "mino_vec_node"]
         " stayed at 264 bytes; the persistent path's clone size is "
         "unchanged. "
-        [:em "into-vec-pipeline -74% (589 µs → 152 µs); "
+        [:em "into-vec-pipeline -74% (589 µs  to  152 µs); "
              "mapv-pipeline -69%; persistent conj/assoc/pop flat."]]
        [:li [:strong "Builder-pattern compile-time rewrite."]
         " v0.166.0 recognises the canonical "
@@ -650,11 +650,11 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         [:code "(persistent! (loop [... acc (transient [])] ...))"]
         " with " [:code "conj!"] " / " [:code "assoc!"]
         " in the recur step. The substrate from the previous release "
-        "makes the rewrite pay off — on the wrapper transients it "
+        "makes the rewrite pay off - on the wrapper transients it "
         "was 2.5× slower than the persistent baseline; with owner-"
         "tagged in-place mutation it's a 3.4× win. "
-        [:em "(loop ... (conj acc i)) N=100k: 92 ms → 27 ms (-71%); "
-             "matches a hand-written transient builder within run-"
+        [:em "(loop ... (conj acc i)) N=100k: 92 ms  to  27 ms (-71%); "
+             "matches an ordinary transient builder within run-"
              "to-run noise."]]]
 
       [:h2 "Still open"]
@@ -686,11 +686,11 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "pinning, two-tier dispatch, direct-threaded code)."]
        [:li [:strong "Profile-guided opcode rewriting."]
         " Hot sites swap generic opcodes for specialised variants "
-        "after a stable shape is observed — adaptive specialisation "
+        "after a stable shape is observed - adaptive specialisation "
         "without a JIT. Type-feedback fast lanes for arith on "
         "observed int+int sites would extend the literal-arg "
         "fast lanes already shipped, and a runtime "
-        [:code "OP_CALL"] " -> " [:code "OP_CALL_CACHED"]
+        [:code "OP_CALL"] " to " [:code "OP_CALL_CACHED"]
         " rewrite would cover closure-bound heads the compiler "
         "can't statically prove. v0.163.0 consolidated the three "
         "existing IC consumers behind shared resolve helpers and a "
@@ -707,7 +707,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         [:code "OP_LOOP_INT_DEC_INC"]
         " covers a single binding shape today. Real-workload "
         "profiling shows roughly zero loops in the bench matrix or "
-        "test suite hit the fused opcode — the long tail of "
+        "test suite hit the fused opcode - the long tail of "
         "two- and three-binding loops with "
         [:code "pos?"] " / " [:code "<"] " / " [:code "≤"]
         " tests is the next coverage frontier."]
@@ -719,7 +719,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         [:code "OP_GET_KW_MAP"]
         " resolves at runtime could fold to a constant. The opcode is "
         "12% of " [:code "protocol_bench"]
-        " dispatch — small but concentrated."]
+        " dispatch - small but concentrated."]
        [:li [:strong "Fused BigInt arithmetic."]
         " Multi-step BigInt op stays in BigInt form across the "
         "chain, avoiding the re-tag roundtrip per step."]
@@ -736,10 +736,10 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
       [:p "The soundness discipline keeps coming back to one "
        "question: which properties of Clojure are safe to treat as "
        "axioms? Right now the answer is a case-by-case judgement "
-       "call. A separate, much larger project — a formal and "
+       "call. A separate, much larger project - a formal and "
        "executable Clojure language spec plus a meta-analysis engine "
        "written in core.logic or Prolog with full runtime "
-       "introspection — would turn that judgement call into a "
+       "introspection - would turn that judgement call into a "
        "mechanical check. Each candidate optimisation would carry "
        "the axiom it depends on as data; the engine would mechanically "
        "verify the axiom holds for the dialect's surface and the "
