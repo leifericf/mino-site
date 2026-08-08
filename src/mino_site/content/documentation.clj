@@ -120,9 +120,9 @@
          "Every built-in function, special form, and macro. "
          "Organized by category with usage examples."]]]
 
-      [:h2 {:id "internals"} "Internals"]
-      [:p "How the runtime works under the hood. Skim if you are "
-       "tuning, profiling, porting, or wiring up a mino project."]
+      [:h2 {:id "internals"} "Runtime internals"]
+      [:p "How the runtime works under the hood. Read if you are "
+       "tuning, profiling, or porting."]
       [:div.card-grid
        [:a.card {:href "/documentation/bytecode-vm/"}
         [:div.card-title "Bytecode and VM"]
@@ -131,14 +131,6 @@
          "representation, opcode families, inline caches, fused "
          "loops, the soundness discipline, and how mino's VM "
          "compares to Lua, Janet, and BEAM."]]
-
-       [:a.card {:href "/documentation/vendored-first/"}
-        [:div.card-title "Zero dependencies, vendored first"]
-        [:div.card-desc
-         "How mino ships: the single-file amalgamation under "
-         [:code "dist/"] ", no transitive build dependencies, no "
-         "package manager, and the SQLite / Odin / sokol / stb "
-         "spirit of vendor what you use."]]
 
        [:a.card {:href "/documentation/jit/"}
         [:div.card-title "JIT"]
@@ -163,8 +155,11 @@
          [:code "commute"] ", " [:code "ensure"] ", "
          [:code "ref-set"] ", watches, and the C API mirror. "
          "Single-version optimistic locking and how it differs "
-         "from JVM canon."]]
+         "from JVM canon."]]]
 
+      [:h2 {:id "operations"} "Operations"]
+      [:p "Building, shipping, and running mino in production."]
+      [:div.card-grid
        [:a.card {:href "/documentation/performance/"}
         [:div.card-title "Performance"]
         [:div.card-desc
@@ -184,4 +179,12 @@
          "How the module resolver wires up "
          [:code "mino.edn"] " declarations: bundled stdlib, on-disk "
          [:code "lib/"] ", and git-fetched repos via "
-         [:code "mino deps"] "."]]])))
+         [:code "mino deps"] "."]]
+
+       [:a.card {:href "/documentation/vendored-first/"}
+        [:div.card-title "Zero dependencies, vendored first"]
+        [:div.card-desc
+         "How mino ships: the single-file amalgamation under "
+         [:code "dist/"] ", no transitive build dependencies, no "
+         "package manager, and the SQLite / Odin / sokol / stb "
+         "spirit of vendor what you use."]]]))
