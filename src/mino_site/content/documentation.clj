@@ -41,7 +41,7 @@
          "handling, iterators, pipelines, plugins, rules "
          "engine, REPL on socket."]]
 
-       [:a.card {:href "/examples/bindings/"}
+       [:a.card {:href "/documentation/bindings/"}
         [:div.card-title "Language Bindings"]
         [:div.card-desc
          "Worked examples of embedding mino from C, C++, Java, "

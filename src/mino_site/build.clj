@@ -76,7 +76,7 @@
                           :wide true}
          (use-case-page/use-case-index-page)))
 
-     "/examples/bindings/index.html"
+     "/documentation/bindings/index.html"
      (fn [ctx]
        (render/html-page {:title "Language Bindings"
                           :description "Embed mino from C, C++, Java, Zig, Rust, C#, Go, and Swift."
