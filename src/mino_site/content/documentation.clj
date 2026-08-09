@@ -13,7 +13,7 @@
   (str
     (h/html
       [:h1 "Documentation"]
-      [:p "Pick the path that matches what you are doing."]
+      [:p "Browse by role or topic below."]
 
       [:div.role-chips
        [:a.role-chip {:href "#embed"} "Embed mino in a host"]
@@ -21,8 +21,8 @@
        [:a.role-chip {:href "#reference"} "Look something up"]]
 
       [:h2 {:id "embed"} "Embed"]
-      [:p "Drop the runtime into any host language with C FFI: C, "
-       "C++, Rust, Go, Java, .NET, Swift, Zig, and beyond. State "
+      [:p "Link the runtime into any host language with C FFI: C, "
+       "C++, Rust, Go, Java, .NET, Swift, Zig. State "
        "lifecycle, capability registration, and the embedder's "
        "operational surface."]
       [:div.card-grid

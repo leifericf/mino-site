@@ -27,7 +27,7 @@
       [:pre [:code {:data-lang "mino"}
 "(require '[utils.core :as u])
 (u/some-function)"]]
-      [:p "That is it. When you run " [:code "mino file.clj"]
+      [:p "When you run " [:code "mino file.clj"]
        " or start the REPL, the resolver automatically finds "
        "modules in your " [:code ":paths"] " directories and "
        "fetched dependencies."]

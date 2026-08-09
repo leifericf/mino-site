@@ -273,7 +273,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "argv with a dangling tail."]]
 
       [:h2 "Soundness considerations"]
-      [:p "Worth being honest: the recent opcode-fusion and "
+      [:p "The recent opcode-fusion and "
        "compile-time-fold work is the kind of optimisation that is "
        "easy to get subtly wrong. New tests and adversarial fuzzing "
        "give us confidence it is fairly stable, but the hard problem "

@@ -532,7 +532,7 @@
           [:code "mino_set_option(S, MINO_OPT_THREAD_LIMIT, n)"] "; standalone "
           [:code "./mino"] " grants " [:code "cpu_count"] " by "
           "default, so the REPL surface matches canonical Clojure "
-          "out of the box. See "
+          "without configuration. See "
           [:a {:href "/documentation/intentional-divergences/#host-threads"}
            "host-grant-gated host threads"] " for the embed contract "
           "and the multi-tenant pool surface."]]

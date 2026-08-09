@@ -187,7 +187,6 @@
        ;; ----------------------------------------------------------------
 
       [:h2 "What is in scope for future versions"]
-      [:p "One queued item remains on the roadmap:"]
       [:ul
        [:li [:strong "ABI freeze"] " at v1.0. Until then "
         [:code "src/mino.h"] " is labelled evolving and the "

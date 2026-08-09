@@ -21,9 +21,9 @@
        "centers on immutable values and persistent collections; the "
        "embedding API is the product."]
 
-      [:p "mino is Clojure-inspired today and continues to close canon "
-       "gaps over time. Cooperative async runs by default, with "
-       "host-granted threading when needed."]
+      [:p "mino aims to close remaining canon gaps over time. "
+       "Cooperative async channels work without OS threads; "
+       "the host can grant threads per state when needed."]
 
       [:h2 "Where to go next"]
       [:ul

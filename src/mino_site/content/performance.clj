@@ -22,9 +22,9 @@
 
       [:p.banner
        "Numbers below were measured on Apple Silicon (arm64-darwin) "
-       "under normal desktop load. Treat them as directional; "
-       "different hardware will shift absolute numbers but the ratios "
-       "between rows hold. The full bench suite lives in "
+       "under normal desktop load. Different hardware will shift "
+       "absolute numbers; the ratios between rows are the useful "
+       "signal. The full bench suite lives in "
        [:a {:href "https://github.com/leifericf/mino-bench/tree/main/benchmarks"}
         "mino-bench/benchmarks/"]
        " and the in-process / cold-start / footprint harnesses live in "

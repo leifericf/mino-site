@@ -9,9 +9,9 @@
   (str
     (h/html
       [:h1 "Tooling and Editor Integration"]
-      [:p "mino's tooling is three independent, composable pieces. "
-       "Each speaks a standard protocol. Each works standalone. "
-       "Use any combination."]
+      [:p "mino's tooling consists of three independent pieces: "
+       "a tree-sitter grammar, an LSP server, and an nREPL server. "
+       "Each speaks a standard protocol and works standalone."]
       [:table
        [:thead
         [:tr [:th "Tool"] [:th "What"] [:th "Protocol"]]]
@@ -64,7 +64,7 @@
        " repository."]
 
       [:h3 "Structural Editing"]
-      [:p "Paredit and parinfer work out of the box with mino files. "
+      [:p "Paredit and parinfer work without configuration with mino files. "
        "mino uses standard balanced brackets " [:code "()"] ", "
        [:code "[]"] ", and " [:code "{}"]
        ", so every editor's structural editing support applies "
@@ -163,7 +163,7 @@
       [:h3 "CIDER (Emacs)"]
       [:p "Run " [:code "M-x cider-connect-clj"] ", enter "
        [:code "localhost"] " and the port number. Basic eval, "
-       "completion, and inline results work out of the box. "
+       "completion, and inline results work without configuration. "
        "Advanced features that depend on cider-nrepl middleware are "
        "not available."]
 

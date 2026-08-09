@@ -74,19 +74,19 @@ static mino_val *source_next(mino_state *S, mino_val *target,
   (str
     (h/html
       [:div.banner
-       "Rapid proof-of-concept development. Expect breaking changes between releases until v1.0."]
+       "Expect breaking changes between releases until v1.0."]
       [:section.hero
        [:h1.hero-tagline
         "An embeddable Clojure-inspired Lisp."
         [:br.desktop-br] " Written in portable C99."]
        [:p.hero-subtitle
-        "Cooperative async by default, with host-granted threading "
-        "when needed."]
+        "Persistent immutable data, capability-gated host interop, "
+        "and isolated runtimes for embedding inside native applications."]
        [:div.hero-ctas
         [:a.cta-primary {:href "/get-started/"} "Get Started"]
         [:a.cta-secondary {:href "/documentation/"} "Documentation"]]]
       [:section {:style "margin-top: 3rem;"}
-       [:h2 "Small enough to drop in. Fast enough to be useful."]
+       [:h2 "Footprint and startup cost"]
        [:p {:style "margin-bottom: 1rem;"}
         "Three tiers - Floor (the minimum embedder commits to), "
         "Sandbox (canonical Clojure-core surface plus safe bundled "
@@ -144,17 +144,17 @@ static mino_val *source_next(mino_state *S, mino_val *target,
         "opt-in mechanics."]]
       [:section {:style "margin-top: 3rem;"}
        [:div.use-case-grid
-        [:div.use-case
-         [:strong "Drop into any host with C FFI"]
-         [:p "C, C++, Rust, Go, Java, .NET, Swift, Zig, and beyond. "
-          "Link the library, create a runtime, evaluate scripts. "
-          "No external runtime, no daemon. An in-process "
-          "copy-and-patch JIT speeds hot functions on every "
-          "supported host arch and can be switched off per state; "
-          "the parallel " [:code "mino-lean"] " build ships the "
-          "interpreter only when a smaller binary is the priority. "
-          "The host owns the process and calls in when it wants "
-          "the script to run."]]
+         [:div.use-case
+          [:strong "Embeddable in any host with C FFI"]
+          [:p "C, C++, Rust, Go, Java, .NET, Swift, Zig. "
+           "Link the library, create a runtime, evaluate scripts. "
+           "An in-process "
+           "copy-and-patch JIT speeds hot functions on every "
+           "supported host arch and can be switched off per state; "
+           "the parallel " [:code "mino-lean"] " build ships the "
+           "interpreter only when a smaller binary is the priority. "
+           "The host owns the process and calls in when it wants "
+           "the script to run."]]
         [:div.use-case
          [:strong "Isolated runtimes with explicit message-passing"]
          [:p "Each runtime is a failure domain with its own heap and "
@@ -170,12 +170,13 @@ static mino_val *source_next(mino_state *S, mino_val *target,
          [:p "Persistent immutable data structures, lazy sequences, "
           "macros, and a REPL-driven workflow. mino is Clojure-inspired "
           "today and continues to close canon gaps over time."]]]]
-      [:section {:style "margin-top: 4rem;"}
-       [:h2 "Three roles, one runtime"]
-       [:p {:style "margin-bottom: 1rem;"}
-        "The application developer embeds mino. "
-        "The C++ engineer exposes host types. "
-        "The scripter writes logic."]
+       [:section {:style "margin-top: 4rem;"}
+        [:h2 "Three roles, one runtime"]
+        [:p {:style "margin-bottom: 1rem;"}
+         "The embedding workflow has three sides: the application "
+         "developer links the library, the C++ engineer exposes host "
+         "types through the capability registry, and the scripter "
+         "writes processing logic in mino."]
        [:div.step-switcher
         [:div.step-tabs
          [:button.step-tab.active {:data-step "0"} "1. Embed"]
@@ -246,8 +247,7 @@ static mino_val *source_next(mino_state *S, mino_val *target,
           "with structural sharing."]]
         [:a.use-case {:href "/use-cases/event_processing/"}
          [:strong "Event processing"]
-         [:p "Filter, group, and aggregate streams of host data. "
-          "Change the rules without recompiling."]]
+         [:p "Filter, group, and aggregate streams of host data."]]
         [:a.use-case {:href "/use-cases/game_scripting/"}
          [:strong "Game scripting"]
          [:p "Embed a programmable console with sandboxing and "

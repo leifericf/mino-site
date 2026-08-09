@@ -243,7 +243,7 @@
         "The standalone "
         [:code "./mino"] " binary grants " [:code "cpu_count"]
         " by default, so REPL and script users see the canonical "
-        "surface working out of the box. Embedders that want "
+        "surface working without configuration. Embedders that want "
         "sandboxed scripts withhold the grant."]
       [:p "When the limit is " [:code "<= 1"] ", the same forms "
        "throw " [:code ":mino/unsupported"] " with a message "
