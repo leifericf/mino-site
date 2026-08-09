@@ -5,6 +5,7 @@
   Run via: clj -X:build"
   (:require
     [clojure.java.io :as io]
+    [clojure.java.shell :as sh]
     [stasis.core :as stasis]
     [mino-site.render :as render]
     [mino-site.parse.header :as parse.header]
@@ -40,7 +41,9 @@
     [mino-site.content.bindings-page :as bindings-page]
     [mino-site.content.errors :as errors]
     [mino-site.content.dependencies :as dependencies]
-    [mino-site.content.tasks :as tasks]))
+    [mino-site.content.tasks :as tasks]
+    [mino-site.content.search :as search]
+    [mino-site.search.index :as search-index]))
 
 (defn pages
   "Returns a Stasis page map: {path -> (fn [ctx] html-string)}.
@@ -254,6 +257,16 @@
                           :active-page :documentation}
          (tasks/tasks-page)))
 
+     "/search/index.html"
+     (fn [ctx]
+       (render/html-page {:title "Search"
+                          :description "Search mino documentation: pages, C API symbols, and language forms."
+                          :active-page nil}
+         (search/search-page api-data builtin-data)))
+
+     "/search/index.json"
+     (search-index/->json (search-index/build api-data builtin-data))
+
      "/changelog/index.html"
      (fn [ctx]
        (render/html-page {:title "Changelog"
@@ -267,12 +280,24 @@
          (not-found/not-found-page)))})))
 
 
+(defn- compile-cljs!
+  "Compile the CLJS bundle via shadow-cljs. Skips gracefully if the
+  CLJS toolchain is not available so dev builds still work."
+  []
+  (let [{:keys [exit out err]} (sh/sh "clojure" "-M:cljs" "release" "app")]
+    (if (zero? exit)
+      (do (when (seq out) (print out))
+          (println "CLJS bundle compiled."))
+      (do (when (seq err) (binding [*out* *err*] (println err)))
+          (println "Skipping CLJS (toolchain not available). Search will use SSR fallback.")))))
+
 (defn build-site!
   "Entry point for clj -X:build.
-  Exports all pages to out-dir (default: _site)."
+  Compiles CLJS, exports all pages to out-dir, copies static assets."
   [& {:keys [mino-root out-dir]
       :or   {mino-root "mino" out-dir "_site"}}]
   (println "Building mino site into" out-dir "...")
+  (compile-cljs!)
   (stasis/empty-directory! out-dir)
   (stasis/export-pages (pages mino-root) out-dir)
   ;; Copy static assets from resources/public/ into the output directory

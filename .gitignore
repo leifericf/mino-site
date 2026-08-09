@@ -11,6 +11,7 @@ classes/
 .nrepl-port
 .lein-repl-history
 _site/
+.shadow-cljs/
 
 # Local working files
 .local/

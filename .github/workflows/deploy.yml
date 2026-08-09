@@ -31,12 +31,24 @@ jobs:
         with:
           cli: latest
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - uses: actions/cache@v4
         with:
           path: |
             ~/.m2/repository
-            ~/.gitlibs
+            ~/.git.libs
           key: m2-${{ hashFiles('deps.edn') }}
+
+      - name: Cache shadow-cljs
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.shadow-cljs
+            node_modules
+          key: shadowcljs-${{ hashFiles('shadow-cljs.edn', 'deps.edn') }}
 
       - name: Bootstrap mino binary
         # Uses the bootstrap Makefile that ships with mino. It generates

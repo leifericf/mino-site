@@ -696,6 +696,126 @@
                                    :color (:text-muted colors)
                                    :margin-bottom "0.6rem"}]])
 
+;; --- Search ---
+
+(def search-styles
+  [;; Nav trigger
+   [:.nav-search-trigger {:margin-left "auto"}
+    [:a {:display "inline-flex"
+         :align-items "center"
+         :gap "0.5rem"
+         :padding "0.25rem 0.6rem"
+         :font-size "0.8rem"
+         :color (:text-muted colors)
+         :background (:code-bg colors)
+         :border (str "1px solid " (:border colors))
+         :border-radius "6px"
+         :text-decoration "none"}]
+    ["a:hover" {:color (:text colors)
+                :border-color (:text-muted colors)
+                :text-decoration "none"}]]
+   [:.search-hint {:font-family font-mono
+                   :font-size "0.7rem"
+                   :color (:text-muted colors)
+                   :background (:code-bg colors)
+                   :border (str "1px solid " (:border colors))
+                   :border-radius "3px"
+                   :padding "0.05rem 0.3rem"
+                   :line-height "1.4"}]
+   ;; Modal overlay
+   [:.search-overlay {:position "fixed"
+                      :inset 0
+                      :background "rgba(0,0,0,0.35)"
+                      :z-index "9999"
+                      :display "flex"
+                      :justify-content "center"
+                      :align-items "flex-start"
+                      :padding-top "8vh"}]
+   [:.search-modal {:background (:bg colors)
+                    :border (str "1px solid " (:border colors))
+                    :border-radius "8px"
+                    :box-shadow "0 8px 32px rgba(0,0,0,0.18)"
+                    :width "100%"
+                    :max-width "640px"
+                    :max-height "70vh"
+                    :display "flex"
+                    :flex-direction "column"
+                    :overflow "hidden"}]
+   [:.search-modal-header {:display "flex"
+                           :align-items "center"
+                           :gap "0.75rem"
+                           :padding "0.75rem 1rem"
+                           :border-bottom (str "1px solid " (:border colors))}]
+   [:.search-modal-input {:flex "1"
+                          :border "none"
+                          :outline "none"
+                          :font-size "1.05rem"
+                          :font-family font-body
+                          :color (:text colors)
+                          :background "none"}]
+   [:.search-modal-close {:font-family font-mono
+                          :font-size "0.7rem"
+                          :color (:text-muted colors)
+                          :background (:code-bg colors)
+                          :border (str "1px solid " (:border colors))
+                          :border-radius "3px"
+                          :padding "0.15rem 0.4rem"
+                          :cursor "pointer"}]
+   [:.search-modal-results {:overflow-y "auto"
+                            :padding "0.5rem 0"}]
+   [:.search-modal-cat {:margin-bottom "0.5rem"}]
+   [:.search-modal-cat-label {:font-size "0.7rem"
+                              :font-weight "600"
+                              :text-transform "uppercase"
+                              :letter-spacing "0.05em"
+                              :color (:text-muted colors)
+                              :padding "0.3rem 1rem 0.15rem"}]
+   [".search-modal-results ul" {:list-style "none"
+                                :padding 0
+                                :margin 0}]
+   [".search-modal-results li" {:margin 0}]
+   [".search-modal-results li a" {:display "flex"
+                                  :align-items "baseline"
+                                  :flex-wrap "wrap"
+                                  :gap "0.4rem"
+                                  :padding "0.4rem 1rem"
+                                  :text-decoration "none"
+                                  :color (:text colors)
+                                  :font-size "0.9rem"
+                                  :line-height "1.5"}]
+   [".search-modal-results li a:hover" {:background (:bg-subtle colors)}]
+   [".search-modal-results li.active a" {:background (:code-bg colors)}]
+   [:.search-result-name {:font-weight "600"
+                          :color (:heading colors)}]
+   [".search-result-name code" {:font-weight "600"}]
+   [:.search-result-badge {:font-size "0.7rem"
+                           :font-weight "500"
+                           :color (:text-muted colors)
+                           :background (:code-bg colors)
+                           :padding "0.05rem 0.3rem"
+                           :border-radius "3px"
+                           :text-transform "lowercase"}]
+   [:.search-result-desc {:width "100%"
+                          :font-size "0.8rem"
+                          :color (:text-muted colors)
+                          :line-height "1.4"}]
+   [:.search-no-results {:padding "1rem"
+                         :text-align "center"
+                         :color (:text-muted colors)
+                         :font-size "0.9rem"}]
+   ;; SSR fallback
+   [:.search-ssr-filter {:width "100%"
+                         :padding "0.6rem 1rem"
+                         :font-family font-mono
+                         :font-size "0.85rem"
+                         :border (str "1px solid " (:border colors))
+                         :border-radius "6px"
+                         :margin-bottom "1.5rem"}]
+   [".search-ssr-list" {:margin-bottom "2rem"}]
+   [".search-ssr-list li" {:margin-bottom "0.3rem"}]
+   [:.search-ssr-desc {:color (:text-muted colors)
+                       :font-size "0.85rem"}]])
+
 ;; --- Aggregate ---
 
 (defn site-css []
@@ -710,6 +830,7 @@
             card-styles
             sidebar-styles
             toc-styles
+            search-styles
             code-styles
             decl-styles
             table-styles

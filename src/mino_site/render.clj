@@ -73,7 +73,7 @@
                           "gtag('config','G-JV5PT1PXQ1',{anonymize_ip:true});"
                           "}"))]]
        [:body
-        [:div {:class (if wide "container-wide" "container")}
+        [:div.container-wide
          [:nav.nav
           [:a.nav-logo {:href "/"} site-title]
           [:button.nav-toggle {:aria-label "Menu"
@@ -87,7 +87,12 @@
                     external             (assoc :target "_blank"
                                                 :rel "noopener"))
                label
-               (when external " \u2197")]])]]
+               (when external " \u2197")]])
+           [:li.nav-search-trigger
+            [:a {:href "/search/" :data-search-trigger true}
+             "Search"
+             [:kbd.search-hint "/"]]]]]]
+        [:div {:class (if wide "container-wide" "container")}
          [:main (hu/raw-string (apply str (map str body)))]
          [:footer.footer
           [:p (str site-title " is MIT licensed. ")
@@ -98,6 +103,7 @@
            [:a {:href "/about/"} "About"]
            "."]]
          [:script (hu/raw-string highlight/highlight-js)]
+         [:script {:src "/js/app.js" :defer true}]
          [:script (hu/raw-string
             (str
              "if(window.matchMedia&&window.matchMedia('(min-width:1100px)').matches){"
