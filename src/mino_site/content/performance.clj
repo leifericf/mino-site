@@ -44,7 +44,7 @@
       [:h2 "Footprint"
        (src-link "tests/min_embed.c")
        (src-link "tests/min_embed_floor.c")]
-      [:p "Three binary footprints worth knowing about - the Floor "
+      [:p "Three binary footprints worth knowing about: the Floor "
        "tier that an embedder commits to, the Sandbox tier with the "
        "canonical Clojure surface, and the Standalone ceiling that "
        "ships from Homebrew. All linked with "
@@ -72,10 +72,10 @@
                   "macros. No " [:code "core.clj"] " evaluation, no "
                   "regex / bignum / multimethods / protocols / "
                   "transducers, no I/O."]]
-        [:tr [:td "Sandbox (" [:code "install_sandbox"] ")"]
+         [:tr [:td "Sandbox (" [:code "install_sandbox"] ")"]
              [:td "~909 KB"] [:td "~943 KB"] [:td "+34 KB (4%)"]
              [:td "Floor plus regex, bignum, multimethods, protocols, "
-                  "transducers, and the safe bundled libs - every name "
+                  "transducers, and the safe bundled libs: every name "
                   "a Clojure scripter expects. Still no I/O, FS, "
                   "processes, STM, agents, async."]]
         [:tr [:td "Standalone (" [:code "install_all"] " + REPL)"]
@@ -89,10 +89,10 @@
                   " binary an end user receives from Homebrew. The "
                   "no-JIT Standalone column is the " [:code "mino-lean"]
                   " sibling binary."]]]]
-      [:p "JIT adds 34–50 KB across the tiers - under one percent of "
+      [:p "JIT adds 34-50 KB across the tiers: under one percent of "
        "any modern device's disk budget, and well under 1 ms of "
        "additional disk-load time on a cold launch. The JIT-included "
-       "build pays back 1.8–6.5x on compute-bound hot code (see the "
+       "build pays back 1.8-6.5x on compute-bound hot code (see the "
        [:a {:href "/documentation/jit/"} "JIT page"]
        " for the workload table). Embedders running one-shot scripts "
        "on Floor get marginal value from JIT (no hot loops to "
@@ -279,10 +279,10 @@
              [:td "0.23 µs/elt"]]
         [:tr [:td [:code "nth"] " random on 1,000-vec"]
              [:td "5.5 µs"]
-             [:td "-"]]
+             [:td "n/a"]]
         [:tr [:td [:code "(get m k)"] " on 1,000-key map"]
              [:td "5.4 µs"]
-             [:td "-"]]
+             [:td "n/a"]]
         [:tr [:td [:code "(fib 25)"] " recursive (~242k calls)"]
              [:td "6.65 ms"]
              [:td "0.027 µs/call"]]]]
@@ -405,7 +405,7 @@
              [:td "~1.4 ms"]]
         [:tr [:td [:code "loop/recur"] " 10,000 iterations"]
              [:td "~0%"]
-             [:td "-"]]
+             [:td "n/a"]]
         [:tr [:td "Build 1,000-element vector via " [:code "conj"]]
              [:td "~19%"]
              [:td "~1.4 ms"]]
@@ -417,7 +417,7 @@
              [:td "~1.8 ms"]]
         [:tr [:td "map/filter/map/reduce over 50,000 (fused transducers)"]
              [:td "~0%"]
-             [:td "-"]]
+             [:td "n/a"]]
         [:tr [:td "Nested vectors 500x100"]
              [:td "~17%"]
              [:td "~2.0 ms"]]
@@ -431,32 +431,20 @@
        "interactive latency on a general workload; embedders with "
        "throughput-dominated batches or tighter pause budgets can "
        "shift the tradeoff without rebuilding."]
-      [:p "The default nursery size is 8 MiB, raised from 4 MiB "
-       "(which was itself raised from 1 MiB in v0.250.0) after a "
-       "measured pass over "
+      [:p "The default nursery size is 8 MiB. Allocation-heavy "
+       "workloads benefit from the larger young gen because each "
+       "minor cycle sweeps more bytes before promotion pressure "
+       "builds, so total GC wall time falls even though each minor "
+       "pass walks more. The realistic_bench rows where nursery size "
+       "matters most are allocation-heavy pipelines:"
        [:a {:href "https://github.com/leifericf/mino-bench/blob/main/benchmarks/realistic_bench.clj"}
         "realistic_bench"]
-       ". Allocation-heavy workloads (bump-int-map, nested-vec, "
-       "lazy-range realization) gained 1.14-1.42x with no measurable "
-       "regression in worst-case minor-GC pause. The larger nursery "
-       "collects more bytes per cycle so total GC wall time falls "
-       "even though each minor pass sweeps more. Each VM state holds "
-       "more young-gen residency before the first major GC; embedders "
+       " carries the per-row methodology. Each VM state holds more "
+       "young-gen residency before the first major GC; embedders "
        "running many concurrent VM states under tight memory budgets "
        "override via "
        [:code "MINO_GC_NURSERY_BYTES"] " or "
        [:code "mino_gc_set_param(S, MINO_GC_NURSERY_BYTES, n)"] "."]
-      [:p [:strong "realistic_bench (v0.249 vs v0.250):"]]
-      [:table
-       [:thead
-        [:tr [:th "Row"] [:th "1 MiB (v0.249)"] [:th "4 MiB (v0.250)"] [:th "Speedup"]]]
-       [:tbody
-        [:tr [:td "build 5k int-map and sum"]   [:td "12.72 ms"] [:td "11.18 ms"] [:td "1.14x"]]
-        [:tr [:td "bump 5k int-map values"]     [:td "22.92 ms"] [:td "16.12 ms"] [:td "1.42x"]]
-        [:tr [:td "map/filter/map/reduce 50k"]  [:td " 0.77 ms"] [:td " 0.68 ms"] [:td "1.13x"]]
-        [:tr [:td "nested vectors 500×100"]     [:td "23.00 ms"] [:td "16.92 ms"] [:td "1.36x"]]
-        [:tr [:td "realize 10k lazy range"]     [:td " 7.82 ms"] [:td " 5.79 ms"] [:td "1.35x"]]
-        [:tr [:td "fibonacci(25)"]              [:td " 7.83 ms"] [:td " 6.43 ms"] [:td "1.22x"]]]]
 
       [:h2 "Where the time goes"]
       [:p "The cost centers in order of impact:"]
@@ -471,9 +459,9 @@
         [:code "filterv"] " when laziness is not needed; use "
         [:code "loop/recur"] " when iterating without building a "
         "collection."]
-       [:li [:strong "Core library initialization."]
-        " A " [:code "mino_state"] " on the Standard or Standalone "
-        "tier parses and evaluates " [:code "core.clj"]
+        [:li [:strong "Core library initialization."]
+         " A " [:code "mino_state"] " on the Sandbox or Standalone "
+         "tier parses and evaluates " [:code "core.clj"]
         " (~5.2 ms here, smaller on faster hardware). The Floor tier "
         "(" [:code "mino_install_minimal"] ") skips this entirely "
         "and pays only ~0.22 ms. Parsed forms are cached per state, "

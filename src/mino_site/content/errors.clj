@@ -14,7 +14,7 @@
        "human-readable message. The same model serves the REPL, embedded "
        "hosts, and user code."]
 
-      [:h2 "What You See"]
+      [:h2 "What you see"]
       [:p "When an error occurs in the REPL or a script, mino renders a "
        "diagnostic with the error code, message, source file, line, column, "
        "and a snippet of the source with a caret pointer:"]
@@ -33,7 +33,7 @@
   7 | (def y \"unterminated
    |        ^"]]
 
-      [:h2 "Errors Are Data"]
+      [:h2 "Errors are data"]
       [:p "In " [:code "catch"] " handlers, the exception value is always a "
        "map with these keys:"]
       [:table
@@ -87,7 +87,7 @@
     (println (ex-message e)) ;; \"not found\"
     ))"]]
 
-      [:h2 "Helper Functions"]
+      [:h2 "Helper functions"]
       [:table
        [:thead
         [:tr [:th "Function"] [:th "Description"]]]
@@ -103,7 +103,7 @@
         [:tr [:td [:code "(ex-info msg data)"]]
          [:td "Create an exception map for throwing"]]]]
 
-      [:h2 "Error Code Catalog"]
+      [:h2 "Error code catalog"]
       [:p "Every error has a stable code that can be matched programmatically. "
        "Codes are grouped by prefix:"]
       [:table

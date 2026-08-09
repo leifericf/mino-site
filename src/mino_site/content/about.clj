@@ -28,17 +28,15 @@
       [:h2 "Where to go next"]
       [:ul
        [:li [:a {:href "/"} "Homepage"]
-        " - the four pillars and the three-roles walkthrough."]
+        ": the four pillars and the three-roles walkthrough."]
        [:li [:a {:href "/get-started/"} "Get Started"]
-        " - install, build, and run your first script in under a minute."]
+        ": install, build, and run your first script in under a minute."]
        [:li [:a {:href "/documentation/"} "Documentation"]
-        " - C API reference, language reference, embedding cookbook, "
+        ": C API reference, language reference, embedding cookbook, "
         "and the Clojure compatibility matrix."]
        [:li [:a {:href "/documentation/coming-from-clojure/"}
              "Coming from Clojure"]
-        " - what's the same, what differs, and what's missing."]
-       [:li [:a {:href "/changelog/"} "Changelog"]
-        " - release history."]]
+        ": what's the same, what differs, and what's missing."]]
 
       [:h2 "Inspirations"]
       [:p "mino draws from four projects that each got something "
@@ -54,46 +52,46 @@
        "processes communicating by message passing. mino combines "
        "these lineages into an embeddable runtime with persistent "
        "data and capability-gated host interop."]
-      [:p "mino borrows from BEAM twice. The first borrowing is "
-       "isolation: each "
-       [:code "mino_state"] " owns its heap and communicates with "
-       "peers via cross-state channels and values, never shared "
-       "mutable references. The second is "
-       [:a {:href "https://www.erlang.org/doc/system/bit_syntax.html"}
-        "Erlang's bit syntax"]
-       " - binary data as a first-class type with bit-precise "
-       "field access. mino's "
-       [:a {:href "/documentation/bytes/"}
-        [:code "MINO_BYTES"]]
-       " value and the "
-       [:code "bits"] " / " [:code "bits-get"] " / "
-       [:code "let-bits"]
-       " surface bring the same shape to embedded scripts, where "
-       "binary protocols and sensor packets are common."]
+       [:p "mino borrows from BEAM twice. The first borrowing is "
+        "isolation: each "
+        [:code "mino_state"] " owns its heap and communicates with "
+        "peers via cross-state channels and values, never shared "
+        "mutable references. The second is "
+        [:a {:href "https://www.erlang.org/doc/system/bit_syntax.html"}
+         "Erlang's bit syntax"]
+        ": binary data as a first-class type with bit-precise "
+        "field access. mino's "
+        [:a {:href "/documentation/bytes/"}
+         [:code "MINO_BYTES"]]
+        " value and the "
+        [:code "bits"] " / " [:code "bits-get"] " / "
+        [:code "let-bits"]
+        " surface bring the same shape to embedded scripts, where "
+        "binary protocols and sensor packets are common."]
 
       [:h2 "Related projects"]
       [:ul
        [:li [:a {:href "https://jank-lang.org" :target "_blank"
                  :rel "noopener"} "jank"]
-        " - native Clojure dialect with an LLVM-based compiler."]
+        ": native Clojure dialect with an LLVM-based compiler."]
        [:li [:a {:href "https://babashka.org" :target "_blank"
                  :rel "noopener"} "Babashka"]
-        " - fast-starting Clojure scripting runtime on GraalVM."]
+        ": fast-starting Clojure scripting runtime on GraalVM."]
        [:li [:a {:href "https://www.lua.org" :target "_blank"
                  :rel "noopener"} "Lua"]
-        " - embeddable scripting language in C with a mutable data model."]
+        ": embeddable scripting language in C with a mutable data model."]
        [:li [:a {:href "https://fennel-lang.org" :target "_blank"
                  :rel "noopener"} "Fennel"]
-        " - Lisp that compiles to Lua."]
+        ": Lisp that compiles to Lua."]
        [:li [:a {:href "https://janet-lang.org" :target "_blank"
                  :rel "noopener"} "Janet"]
-        " - embeddable Lisp in C with a register-based VM and package manager."]
+        ": embeddable Lisp in C with a register-based VM and package manager."]
        [:li [:a {:href "https://github.com/Zelex/jo_clojure" :target "_blank"
                  :rel "noopener"} "JO Clojure"]
-        " - native C/C++ Clojure-like runtime with persistent data structures."]
+        ": native C/C++ Clojure-like runtime with persistent data structures."]
        [:li [:a {:href "https://github.com/rekola/nanoclj" :target "_blank"
                  :rel "noopener"} "nanoclj"]
-        " - tiny Clojure interpreter in C."]
+        ": tiny Clojure interpreter in C."]
        [:li [:a {:href "https://github.com/mll/clojure-rt" :target "_blank"
                  :rel "noopener"} "clojure-rt"]
-        " - LLVM-based Clojure implementation for deterministic performance."]])))
+        ": LLVM-based Clojure implementation for deterministic performance."]])))

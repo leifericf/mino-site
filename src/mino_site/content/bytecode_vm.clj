@@ -21,12 +21,10 @@
        "instruction stream. Any form the compiler does not recognise "
        "declines back to the tree-walker for that call, so behaviour "
        "is identical across both paths."]
-      [:p "This page is a tour, not a reference. For the per-opcode "
+       [:p "This page is a tour, not a reference. For the per-opcode "
        "detail, fast-lane shapes, fold rules, and benchmark deltas "
-       "behind each landing, the "
-       [:a {:href "/changelog/"} "changelog"]
-       " carries the granular notes; the entries from v0.105.0 "
-       "through v0.145.0 cover the bytecode VM end-to-end."]
+       "behind each landing, see the opcode catalog below and the "
+       "source under " [:code "src/eval/bc/"] "."]
 
       [:h2 "Value representation"]
       [:p "Every mino value flows through the runtime as a "
@@ -95,7 +93,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        " over the op byte inside one C function ("
        [:code "mino_bc_run"] "). The switch lets gcc and clang emit "
        "a jump table on platforms that have it; computed-goto "
-       "dispatch is not used - the readability win of a single "
+       "dispatch is not used: the readability win of a single "
        "branch-and-decode loop wins against a fragile portability "
        "footprint, and the per-op cost is already low enough that the "
        "dispatch is rarely the bottleneck."]
@@ -103,8 +101,8 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        "resolution, closure construction, var redefinition) re-reads "
        "the window pointer from " [:code "S->bc.bc_regs + base"]
        " on the next cycle so a recursive " [:code "mino_bc_run"]
-       " that triggers register-stack growth - and therefore "
-       "reallocation - does not leave the outer frame with a dangling "
+       " that triggers register-stack growth, and therefore "
+       "reallocation, does not leave the outer frame with a dangling "
        "pointer."]
 
       [:h2 "Opcode catalog"]
@@ -139,13 +137,13 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "Immediate-operand variants fold a signed 8-bit literal into "
         "the " [:code "C"] " slot so "
         [:code "(< i 10)"] " avoids loading the literal separately."]
-       [:li [:strong "Fused counted loops."]
-        " Two common " [:code "loop"]
-        " shapes - single-binding and two-binding inc/dec - emit a "
-        "single fused opcode at the recur target. Each iteration is "
-        "one decode plus one or two tagged-int updates and a back-jump. "
-        "Emission is gated on canonical-prim resolution so a user "
-        [:code "(defn dec ...)"] " shadow is honoured."]
+        [:li [:strong "Fused counted loops."]
+         " Two common " [:code "loop"]
+         " shapes (single-binding and two-binding inc/dec) emit a "
+         "single fused opcode at the recur target. Each iteration is "
+         "one decode plus one or two tagged-int updates and a back-jump. "
+         "Emission is gated on canonical-prim resolution so a user "
+         [:code "(defn dec ...)"] " shadow is honoured."]
        [:li [:strong "Collection fast lanes."]
         " " [:code "OP_NTH_VEC"]
         " reads a persistent vector's leaf directly; "
@@ -212,7 +210,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        " and set " [:code "conj"]
        " the property that "
        [:code "(identical? m (assoc m k (get m k)))"]
-       " holds - a real signal callers can rely on, affordable "
+       " holds: a real signal callers can rely on, affordable "
        "because cached hashes keep the equality check O(1) in the "
        "typical no-match case."]
 
@@ -300,10 +298,10 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         " Dead-binding elimination only drops bindings whose RHS the "
         "compiler can see through to a literal, symbol, or "
         "pure-prim call. Anything else fails closed."]
-       [:li [:strong "Capture opt-out."]
-        " Both folds skip let scopes that publish bindings into an "
-        "env for an inner closure - env publishing is itself "
-        "observable."]
+        [:li [:strong "Capture opt-out."]
+         " Both folds skip let scopes that publish bindings into an "
+         "env for an inner closure: env publishing is itself "
+         "observable."]
        [:li [:strong "Overflow handling."]
         " Tagged-int fast lanes decline to the boxed slow lane on "
         "overflow so " [:code "(dec MIN_INT)"]
@@ -325,10 +323,10 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "by layering a copy-and-patch JIT on top of the interpreter "
         "rather than committing to a single execution mode (see CPJIT "
         "below)."]
-       [:li [:strong "Janet."]
-        " Small, embeddable, register-based, ship the bytecode "
-        "interpreter and call it done - matches mino's ethos for the "
-        "core path. mino differs by being a Clojure dialect: "
+        [:li [:strong "Janet."]
+         " Small, embeddable, register-based, ship the bytecode "
+         "interpreter and call it done, which matches mino's ethos for the "
+         "core path. mino differs by being a Clojure dialect: "
         "persistent immutable values are the default, lazy sequences "
         "are first-class, STM and agents are in the core surface, "
         "and a per-state recursive mutex serialises script execution "
@@ -384,11 +382,10 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
         "invalidates and recompiles."]]
 
       [:h2 "The CPJIT layer"]
-      [:p "The CPJIT cycle (v0.178.0 – v0.240.0) added a copy-and-patch "
-       "JIT on top of the bytecode VM. The design avoids every cost "
-       "that previously kept JIT off the table: there is no code-gen "
-       "backend, no runtime assembler, no signal-handler hooks, and "
-       "no per-platform EH wiring."]
+      [:p "The bytecode VM carries a copy-and-patch JIT layer. The "
+       "design avoids every cost that previously kept JIT off the "
+       "table: there is no code-gen backend, no runtime assembler, "
+       "no signal-handler hooks, and no per-platform EH wiring."]
       [:p "Copy-and-patch works by pre-compiling each bytecode "
        "instruction's body as a short C function (a "
        [:em "stencil"] "), then asking the host C compiler to emit "
@@ -427,7 +424,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        [:code "--jit-threshold=N"] "."]
       [:p "An embedder that prefers a smaller binary over peak "
        "throughput can link "
-       [:code "mino-lean"] " instead - the same source compiled "
+       [:code "mino-lean"] " instead, the same source compiled "
        "with the JIT pipeline gated out by "
        [:code "-DMINO_CPJIT=0"] ". CI builds both binaries every "
        "push and asserts byte-identical stdout across "
@@ -448,259 +445,56 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        " Type-feedback specialisation; SSA-style optimisation; "
        "register allocation across stencils; deoptimisation. The "
        "stencil is bytecode-identical to what the interpreter "
-       "runs - just stitched together with the dispatch loop "
+       "runs, just stitched together with the dispatch loop "
        "elided. The soundness model is therefore the same as the "
        "interpreter's: if " [:code "--jit=on"] " and "
        [:code "--jit=off"] " observably diverge, the JIT is the "
        "bug, not the program."]
-
-      [:h2 "Recently picked up"]
-      [:p "Six frontiers from earlier drafts of this page have "
-       "shipped and folded into the steady-state VM. The benchmark "
-       "deltas below are from the cycle's first-pass landings (all "
-       "median-of-five, with the empty-thunk harness floor subtracted)."]
-      [:ul
-       [:li [:strong "Write-path fast lanes."]
-        " " [:code "OP_CONJ_VEC"] " for arity-2 "
-        [:code "(conj v x)"] " and " [:code "OP_ASSOC"]
-        " for the arity-3 " [:code "(assoc coll k v)"]
-        " shape land in v0.152.0. The runtime dispatches by "
-        "collection type (vector or map) and falls back to the "
-        "canonical prim on any miss. "
-        [:em "conj-vec -34%, assoc-vec -56%, assoc-small -32%."]]
-       [:li [:strong "Inlining of small pure prims."]
-        " " [:code "OP_FIRST_VEC"] " / " [:code "OP_COUNT_VEC"]
-        " / " [:code "OP_EMPTY_VEC"]
-        " in v0.153.0 turn the hot single-arg seq prims on a "
-        "vector into a direct field read; misses fall through to "
-        "the canonical prim. "
-        [:em "count-vec -94%, first-vec -93%, empty?-vec ~0 ns."]]
-       [:li [:strong "Record fast paths and keyword-as-fn inlining."]
-        " v0.154.0 extends " [:code "OP_GET_KW_MAP"]
-        " with a record branch (fixed-slot fetch after a declared-"
-        "field lookup), and rewrites the " [:code "(:kw coll)"]
-        " keyword-as-fn shape to the same fast lane the "
-        [:code "(get coll :kw)"] " form already used. "
-        [:em "get-kw-record -93%, kw-fn-record -84%, kw-fn-map -77%."]]
-       [:li [:strong "Inline-cached call sites."]
-        " v0.155.0 fuses the global-symbol head resolution and the "
-        "dispatch into one " [:code "OP_CALL_CACHED"] " opcode that "
-        "re-uses the " [:code "OP_GETGLOBAL_CACHED"]
-        " ic-slot discipline. Dynamic bindings and closure captures "
-        "still shadow even on a hot site; the cached path drops a "
-        "register window slot and one inline-cache lookup per call. "
-        [:em "fib-30 -13%, loop-recur-1M -9%."]]
-       [:li [:strong "Generic get and dissoc fast lanes."]
-        " v0.156.0 opens " [:code "OP_GET_KW_MAP"]
-        " to any hashable key on a map (the keyword guard now only "
-        "fences the record branch), and adds " [:code "OP_DISSOC"]
-        " for the arity-2 " [:code "(dissoc m k)"] " shape. Records, "
-        "sorted-maps, transients, and variadic dissoc keep the "
-        "canonical-prim path. "
-        [:em "get-str-map -81%, dissoc-map -21%."]]
-       [:li [:strong "Transducer fusion for reduce pipelines."]
-        " v0.157.0 recognises a "
-        [:code "(reduce f init (->> src (map ...) (filter ...) "
-                                   "(take ...)))"]
-        " chain at the moment "
-        [:code "prim_reduce"]
-        " runs: the outer LAZY cell's "
-        [:code "c_thunk"]
-        " pointer identifies the stage kind, the chain unwinds by "
-        "walking the thunk pointers, and the bottom source walks "
-        "once through a fused element-by-element loop with the "
-        "stages applied inline. Lazy-seq cells from "
-        [:code "map"] " / " [:code "filter"] " / " [:code "take"]
-        " stop being allocated. The five common numeric predicates "
-        "got argv-ABI siblings in the same commit so a "
-        [:code "(filter odd? ...)"]
-        " stage stays cons-free. "
-        [:em "pipeline-sum -77% (93.5 µs  to  21.3 µs); pipeline alloc "
-             "count -86%."]]
-       [:li [:strong "Protocol-method inline cache."]
-        " v0.158.0 adds " [:code "OP_PROTOCOL_CALL_CACHED"]
-        " (and a tail-position twin) for monomorphic and small-PIC "
-        "protocol dispatch. The slot pins the dispatch atom at "
-        "compile, the hot path derefs it once, pointer-compares the "
-        "deref'd map and the first-arg type discriminator against "
-        "the cached pair, and on a hit invokes the cached impl "
-        "directly via " [:code "apply_callable_argv"]
-        " - no protocol-dispatch trampoline, no map_get on the hot "
-        "path. The miss path performs one "
-        [:code "map_get_val"] " with a "
-        [:code ":default"] " fallback and refills the IC under "
-        "write barriers. "
-        [:em "proto-mono-area -57% (5.03 µs  to  2.14 µs); "
-             "proto-bi-area -50%."]]
-       [:li [:strong "Seq-fusion generalisation."]
-        " v0.159.0 extracts the v0.157.0 walker from "
-        [:code "prim_reduce"]
-        " into a shared " [:code "pipeline_walk"]
-        " and wires it into " [:code "into"] " (vector target), "
-        [:code "mapv"] ", " [:code "filterv"] ", and "
-        [:code "dorun"] ". The same head-shape recognition kicks in "
-        "for every consumer; the lazy cells from "
-        [:code "map"] " / " [:code "filter"] " / " [:code "take"]
-        " stop being allocated regardless of which terminal consumer "
-        "drains the pipeline. "
-        [:em "into-vec-pipeline -70%, mapv-pipeline -65%, "
-             "filterv-pipeline -95%, dorun-pipeline -94%."]]
-       [:li [:strong "Chunked-source walk + canonical-prim stages."]
-        " v0.161.0 adds two combined optimisations to the fused "
-        "walker. When the unwound source is (or forces to) a "
-        [:code "MINO_CHUNKED_CONS"]
-        " the walk iterates the chunk's value array directly "
-        "instead of going through "
-        [:code "seq_iter_val"] " / " [:code "seq_iter_next"]
-        " per element. And when a stage's callable resolves at walk-"
-        "entry to one of the canonical numeric prims ("
-        [:code "inc"] ", " [:code "dec"] ", " [:code "odd?"] ", "
-        [:code "even?"] ", " [:code "pos?"] ", " [:code "neg?"] ", "
-        [:code "zero?"]
-        "), the operation is applied inline on tagged-int elements "
-        "with no " [:code "apply_callable_argv"] " call. "
-        [:em "reduce + map inc (range 1m) -19%; reduce + filter "
-             "odd? (range 1m) -9%."]]
-       [:li [:strong "Hot/cold handler partition."]
-        " v0.162.0 splits the dispatch switch in "
-        [:code "src/eval/bc/vm.c"]
-        " along the op-count profile. The 18 hot ops (the move / "
-        "load-k / cached-get / cached-call / int fast lanes / "
-        "tail-call / return / loop-fused / read-side small-prim / "
-        "assoc family) stay inlined; the long tail (NOP, the "
-        "uncached " [:code "OP_GETGLOBAL"] " / " [:code "OP_CALL"]
-        ", closure build, env push/pop/bind, "
-        [:code "OP_THROW"]
-        " and the dyn / try frames, "
-        [:code "OP_NTH_VEC"] " / "
-        [:code "OP_EMPTY_VEC"] " / " [:code "OP_CONJ_VEC"] " / "
-        [:code "OP_DISSOC"]
-        ") moves to a static " [:code "bc_cold_op"]
-        " helper called from the default arm. The partition leaves "
-        "room to add future hot opcodes without bumping the case "
-        "count back over clang's tipping point that bit "
-        [:code "OP_TAILCALL_CACHED"] " last cycle. "
-        [:em "matrix neutral as a gate; small speedups (5–8%) on "
-             "shapes where the hot ops fit in fewer cache lines "
-             "after the ladder shrinks."]]
-       [:li [:strong "IC consumer consolidation."]
-        " v0.163.0 funnels the three IC-cache consumers ("
-        [:code "OP_GETGLOBAL_CACHED"] ", "
-        [:code "OP_CALL_CACHED"] ", "
-        [:code "OP_PROTOCOL_CALL_CACHED"]
-        ") behind two shared helpers - "
-        [:code "ic_resolve_global"]
-        " carries the dyn / env / cached / resolve cascade and the "
-        "miss-path write-barrier refill; "
-        [:code "ic_resolve_protocol"]
-        " carries the atom-deref / type-disc / cache-check / "
-        "map_get miss-fallback / refill sequence. The IC-slot GC "
-        "walk that used to duplicate across the MINO_FN and "
-        "GC_T_BC_FN walker arms is centralised in one "
-        [:code "gc_mark_bc_ic_slots"]
-        " function. No behavior change; the substantiation pays off "
-        "when a fourth IC consumer lands."]
-       [:li [:strong "Unboxed int-acc reducer fast lane."]
-        " v0.164.0 routes "
-        [:code "(reduce <op> [init] coll)"]
-        " through a shared " [:code "reduce_ctx_t"]
-        " that keeps the accumulator as an unboxed "
-        [:code "long long"]
-        " while the reducer is one of the canonical numeric prims ("
-        [:code "+"] ", " [:code "*"] ", " [:code "-"] ", "
-        [:code "bit-and"] ", " [:code "bit-or"] ", "
-        [:code "bit-xor"]
-        ") and every element so far has been tagged-int with no "
-        "overflow. The first miss boxes the accumulator and falls "
-        "through to the generic "
-        [:code "reduce_step"]
-        " path so the numeric tower stays Clojure-correct. Shared "
-        "across the vec, set, list, and pipeline reducer entry "
-        "points. "
-        [:em "(reduce + vec-100k) -48%; (reduce + set-100k) -49%; "
-             "(reduce + list-100k) -24%; range reduce stays at the "
-             "existing floor."]]
-       [:li [:strong "In-place transient vector mutation."]
-        " v0.165.0 puts each "
-        [:code "(transient ...)"]
-        " on a monotonic 32-bit owner ID, and adds an owner field "
-        "to every vec trie / tail node. "
-        [:code "conj!"] " / " [:code "assoc!"] " / " [:code "pop!"]
-        " on a vector mutate the owner-tagged nodes in place - the "
-        "first edit through a fresh transient clones the touched "
-        "node (and stamps it with the owner); every later edit on "
-        "that node is a single slot write + count bump with no "
-        "allocation. Slot writes route through "
-        [:code "gc_write_barrier"]
-        " so an OLD owner-tagged node that aged across a minor "
-        "during a long batch keeps its remset entry consistent. "
-        [:code "mino_vec_node"]
-        " stayed at 264 bytes; the persistent path's clone size is "
-        "unchanged. "
-        [:em "into-vec-pipeline -74% (589 µs  to  152 µs); "
-             "mapv-pipeline -69%; persistent conj/assoc/pop flat."]]
-       [:li [:strong "Builder-pattern compile-time rewrite."]
-        " v0.166.0 recognises the canonical "
-        [:code "(loop [... acc []] (if <t> (recur ... (conj acc x)) "
-                  "acc))"]
-        " shape (and the "
-        [:code "assoc"] " sister form over " [:code "{}"]
-        ", then/else either way) at compile time, and rewrites it "
-        "to "
-        [:code "(persistent! (loop [... acc (transient [])] ...))"]
-        " with " [:code "conj!"] " / " [:code "assoc!"]
-        " in the recur step. The substrate from the previous release "
-        "makes the rewrite pay off - on the wrapper transients it "
-        "was 2.5× slower than the persistent baseline; with owner-"
-        "tagged in-place mutation it's a 3.4× win. "
-        [:em "(loop ... (conj acc i)) N=100k: 92 ms  to  27 ms (-71%); "
-             "matches an ordinary transient builder within run-"
-             "to-run noise."]]]
 
       [:h2 "Still open"]
       [:p "Hypotheses worth picking up. Each line is a one-liner; "
        "the shape of the work and rough payoff are obvious from the "
        "sketch."]
        [:ul
-       [:li [:strong "Dispatch shape rework."]
-        " Both standard alternatives to the current switch have "
-        "been tried and regressed. Apple clang tail-merges threaded "
-        "dispatch back to switch shape; "
-        [:code "asm goto"]
-        " miscompiles register-held label addresses on Apple clang; "
-        [:code "[[clang::musttopcall]]"]
-        " per-handler dispatch regressed on short bodies. The "
-        "v0.162.0 hot/cold partition lowered the urgency. The "
-        "remaining 1-5% real-world win would need a different "
-        "architecture (shared-locals threaded dispatch, two-tier "
-        "dispatch)."]
-       [:li [:strong "Profile-guided opcode rewriting."]
-        " Hot sites swap generic opcodes for specialised variants "
-        "after a stable shape is observed: adaptive specialisation "
-        "without a JIT. Type-feedback fast lanes for arith on "
-        "observed int+int sites, and a runtime "
-        [:code "OP_CALL"] " to " [:code "OP_CALL_CACHED"]
-        " rewrite for closure-bound heads. v0.163.0 consolidated "
-        "the IC consumers behind shared helpers; the framework is "
-        "ready for a fourth."]
-       [:li [:strong "Recur-shape fusion expansion."]
-        " " [:code "OP_LOOP_INT_DEC"] " / "
-        [:code "OP_LOOP_INT_DEC_INC"]
-        " covers a single binding shape today. Real-workload "
-        "profiling shows roughly zero loops in the bench matrix or "
-        "test suite hit the fused opcode - the long tail of "
-        "two- and three-binding loops with "
-        [:code "pos?"] " / " [:code "<"] " / " [:code "≤"]
-        " tests is the next coverage frontier."]
-       [:li [:strong "OP_GET_KW_MAP static folding."]
-        " Inside a "
-        [:code "defrecord"]
-        " method body the record type is statically known; the field-"
-        "index lookup that "
-        [:code "OP_GET_KW_MAP"]
-        " resolves at runtime could fold to a constant. The opcode is "
-        "12% of " [:code "protocol_bench"]
-        " dispatch - small but concentrated."]
+        [:li [:strong "Dispatch shape rework."]
+         " Both standard alternatives to the current switch have "
+         "been tried and regressed. Apple clang tail-merges threaded "
+         "dispatch back to switch shape; "
+         [:code "asm goto"]
+         " miscompiles register-held label addresses on Apple clang; "
+         [:code "[[clang::musttopcall]]"]
+         " per-handler dispatch regressed on short bodies. The "
+         "current hot/cold partition lowers the urgency. The "
+         "remaining 1-5% real-world win would need a different "
+         "architecture (shared-locals threaded dispatch, two-tier "
+         "dispatch)."]
+        [:li [:strong "Profile-guided opcode rewriting."]
+         " Hot sites swap generic opcodes for specialised variants "
+         "after a stable shape is observed: adaptive specialisation "
+         "without a JIT. Type-feedback fast lanes for arith on "
+         "observed int+int sites, and a runtime "
+         [:code "OP_CALL"] " to " [:code "OP_CALL_CACHED"]
+         " rewrite for closure-bound heads. The IC consumers are "
+         "consolidated behind shared helpers; the framework is "
+         "ready for a fourth."]
+        [:li [:strong "Recur-shape fusion expansion."]
+         " " [:code "OP_LOOP_INT_DEC"] " / "
+         [:code "OP_LOOP_INT_DEC_INC"]
+         " covers a single binding shape today. Real-workload "
+         "profiling shows roughly zero loops in the bench matrix or "
+         "test suite hit the fused opcode. The long tail of "
+         "two- and three-binding loops with "
+         [:code "pos?"] " / " [:code "<"] " / " [:code "≤"]
+         " tests is the next coverage frontier."]
+        [:li [:strong "OP_GET_KW_MAP static folding."]
+         " Inside a "
+         [:code "defrecord"]
+         " method body the record type is statically known; the field-"
+         "index lookup that "
+         [:code "OP_GET_KW_MAP"]
+         " resolves at runtime could fold to a constant. The opcode is "
+         "12% of " [:code "protocol_bench"]
+         " dispatch: small but concentrated."]
        [:li [:strong "Fused BigInt arithmetic."]
         " Multi-step BigInt op stays in BigInt form across the "
         "chain, avoiding the re-tag roundtrip per step."]
@@ -717,10 +511,10 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
       [:p "The soundness discipline keeps coming back to one "
        "question: which properties of Clojure are safe to treat as "
        "axioms? Right now the answer is a case-by-case judgement "
-       "call. A separate, much larger project - a formal and "
+       "call. A separate, much larger project (a formal and "
        "executable Clojure language spec plus a meta-analysis engine "
        "written in core.logic or Prolog with full runtime "
-       "introspection - would turn that judgement call into a "
+       "introspection) would turn that judgement call into a "
        "mechanical check. Each candidate optimisation would carry "
        "the axiom it depends on as data; the engine would mechanically "
        "verify the axiom holds for the dialect's surface and the "

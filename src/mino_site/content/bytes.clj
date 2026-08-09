@@ -47,9 +47,9 @@
        "hex pairs is tolerated by the reader."]
 
       [:h3 "Predicates"]
-      [:ul
+       [:ul
        [:li [:code "(bytes? x)"] " is true for byte-aligned "
-        "values -- the JVM-compatible subset."]
+        "values, the JVM-compatible subset."]
        [:li [:code "(bitstring? x)"] " is true for any "
         "MINO_BYTES, byte-aligned or bit-aligned."]]
       [:p "Bit-aligned values appear once the bit-syntax surface "
@@ -99,20 +99,20 @@
         ";=> #bytes \"4048f5c3\""]]
       [:p "Supported options:"]
       [:ul
-       [:li [:code ":size N"] " - bit count. Default 8 for "
+       [:li [:code ":size N"] ": bit count. Default 8 for "
         [:code ":int"] " / " [:code ":uint"] ", 64 for "
         [:code ":float"] ", "
         [:code "(* 8 (count v))"] " for "
         [:code ":bytes"] "."]
-       [:li [:code ":type T"] " - one of "
+       [:li [:code ":type T"] ": one of "
         [:code ":int"] ", " [:code ":uint"] ", "
         [:code ":float"] " (32 or 64), or "
         [:code ":bytes"] "."]
-       [:li [:code ":endian E"] " - "
+       [:li [:code ":endian E"] ": "
         [:code ":big"] " (default) or " [:code ":little"] ". "
         "Little-endian requires " [:code ":size"]
         " to be a multiple of 8 (matching Erlang)."]
-       [:li [:code ":signed? B"] " - read-side modifier; affects "
+       [:li [:code ":signed? B"] ": read-side modifier; affects "
         [:code "bits-get"] " on this segment."]]
       [:p "When the total bit length is not a multiple of 8, the "
        "result is a bit-aligned bitstring:"]
@@ -136,7 +136,7 @@
         ";=> [43981 10 13 -85]"]]
       [:p "For " [:code ":type :bytes"]
        ", " [:code "bits-get"] " returns a fresh bytes value "
-       "covering the requested range -- a zero-copy-semantics slice."]
+       "covering the requested range, a zero-copy-semantics slice."]
       [:p [:code "subbits"] " is the dedicated slice over a "
        "half-open bit range:"]
       [:pre [:code
@@ -184,10 +184,10 @@
        "Erlang's bit syntax solved this in 2001 and remains its most "
        "distinctive surface feature; mino borrows the shape because "
        "the embedded-runtime niche has the same needs."]
-      [:p "mino's surface is not a drop-in clone -- Clojure's "
+      [:p "mino's surface is not a verbatim Erlang clone. Clojure's "
        "destructure idioms shape the API names "
        "(" [:code "let-bits"] " mirrors the rest of the "
-       [:code "let"] " family) -- but the semantics line up: type "
+       [:code "let"] " family). The semantics line up: type "
        "tag, size, endianness, and sign all work the way an Erlang "
        "programmer expects."]
       [:p "Chess engines are another classic bitboard use case; the "
@@ -203,20 +203,20 @@
       [:p "Host code can construct and inspect bytes values without "
        "going through the script surface:"]
       [:ul
-       [:li [:code "mino_bytes(S, src, n)"] " - copy "
+       [:li [:code "mino_bytes(S, src, n)"] ": copy "
         [:code "n"] " bytes from "
         [:code "src"] " (NULL = zero-fill)."]
        [:li [:code "mino_bytes_from_array(S, src, n)"]
-        " - signed-byte-pointer peer."]
+        ": signed-byte-pointer peer."]
        [:li [:code "mino_is_bytes(v)"] ", "
-        [:code "mino_is_bitstring(v)"] " - tag-aware predicates."]
+        [:code "mino_is_bitstring(v)"] ": tag-aware predicates."]
        [:li [:code "mino_bytes_len(v)"] ", "
         [:code "mino_bytes_bit_len(v)"]
-        " - byte and total-bit counts."]
+        ": byte and total-bit counts."]
        [:li [:code "mino_bytes_data(v)"]
-        " - pointer into the GC-managed buffer."]
+        ": pointer into the GC-managed buffer."]
        [:li [:code "mino_bytes_get(v, i)"]
-        " - read a single byte as 0..255 unsigned int."]]
+        ": read a single byte as 0..255 unsigned int."]]
       [:p "The buffer is GC-managed; the pointer is stable for the "
        "value's lifetime. Cross-state "
        [:code "mino_clone"] " deep-copies the bytes so each "

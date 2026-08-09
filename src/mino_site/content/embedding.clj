@@ -18,7 +18,7 @@
        [:a {:href "/documentation/api/"} "C API Reference"] "."]
 
       [:h2 "Vendoring mino"]
-      [:p "The canonical drop-in form is the single-file "
+      [:p "The canonical vendoring form is the single-file "
        "amalgamation under " [:code "dist/"] ":"]
       [:pre [:code {:data-lang "shell"}
 "# In the mino source tree, regenerate the amalgamation:
@@ -76,9 +76,9 @@ mino_state_free(S);"]]
        [:thead
         [:tr [:th "Preset"] [:th "Call"] [:th "What you get"]]]
        [:tbody
-        [:tr [:td "Minimal"]
+         [:tr [:td "Minimal"]
              [:td [:code "mino_install_minimal(S, env)"]]
-             [:td "Floor only - reader, evaluator, GC, persistent "
+             [:td "Floor only: reader, evaluator, GC, persistent "
                   "collections, numeric ops, foundational macros. No "
                   [:code "core.clj"] " evaluation. Smallest cold "
                   "start."]]
@@ -197,7 +197,7 @@ if (mino_pcall(S, fn, args, env, &out, &ex) != 0) {
       [:p "Each " [:code "_ex"] " call returns 0 on success (writing "
        "the result through " [:code "out"] ") or -1 on a caught throw "
        "/ OOM / parse failure. When " [:code "out_ex"] " is non-NULL "
-       "on error, it receives the raw payload - useful for handlers "
+       "on error, it receives the raw payload, useful for handlers "
        "that want to surface the user's " [:code "ex-info"]
        " unchanged. See " [:code "cookbook/error_handling.c"] " for "
        "the canonical real-nil-vs-caught-throw pattern."]
@@ -257,9 +257,9 @@ mino_unref(S, r);                    /* release the root       */"]]
 /* The integer 42 is now rooted through env -- no ref needed */"]]
 
       [:h2 "Building collections from C"]
-      [:p "When the host produces a value element-by-element - parsing "
+      [:p "When the host produces a value element-by-element (parsing "
        "incremental input, copying a C array, gathering rows out of a "
-       "database row iterator - use a builder. Each builder wraps a "
+       "database row iterator), use a builder. Each builder wraps a "
        "transient and exposes a per-shape add/push/put step plus a "
        [:code "_finish"] " finaliser that returns the persistent "
        "result; the builder itself must not be reused after "
@@ -565,9 +565,9 @@ mino_register_fn(S, env, \"host-inbox-drain\", prim_inbox_drain);"]]
        [:code "MINO_GC_*"] " environment variables."]
 
       [:h2 "Next steps"]
-      [:ul
+       [:ul
        [:li [:a {:href "/documentation/cookbook/"} "Embedding Cookbook"]
-        ": twelve worked examples - start with the five-minute "
+        ": twelve worked examples. Start with the five-minute "
         "hello-world and the handle / record / atom decision tree, "
         "then drill into configuration, rules engines, plugins, "
         "data pipelines, and interactive consoles."]

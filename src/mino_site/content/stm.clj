@@ -119,9 +119,9 @@
        [:li [:code "mino_tx_alter_c(S, r, fn, user, env)"] ", "
         [:code "mino_tx_commute_c(S, r, fn, user, env)"]]
        [:li [:code "mino_tx_ensure(S, r, env)"]]
-       [:li [:code "mino_tx_run(S, body, user, env)"]
-        " -- the host-level "
-        [:code "dosync"] "."]]
+        [:li [:code "mino_tx_run(S, body, user, env)"]
+         ": the host-level "
+         [:code "dosync"] "."]]
       [:p "The C entries share their core implementation with the "
        "Clojure-side primitives via internal "
        [:code "tx_*_core"] " helpers, so the two surfaces cannot "
@@ -178,11 +178,11 @@
        "lock serializes one action at a time across both pools today; "
        "the split is the seam for a future design where SOLO yields "
        "the eval lock during blocking IO."]
-      [:p [:strong "Failure handling."]
-       " Action throws and watch throws are both captured into "
-       [:code "agent-error"] " via "
-       [:code "mino_pcall"] " -- a thrown watch does not abort "
-       "sibling watches or propagate to the caller of "
+       [:p [:strong "Failure handling."]
+        " Action throws and watch throws are both captured into "
+        [:code "agent-error"] " via "
+        [:code "mino_pcall"] ": a thrown watch does not abort "
+        "sibling watches or propagate to the caller of "
        [:code "send"] ", matching JVM canon. With an "
        [:code "error-handler"] " installed, the action throw "
        "routes through the handler and the agent stays clean (no "
@@ -214,15 +214,15 @@
        [:code "mino_restart_agent"] " clears it and resets the "
        "value, with optional clear-actions semantics. Each entry "
        "takes the same " [:code "mino_lock"] " perimeter "
-       [:code "mino_call"] " uses, and the cross-state guard fires "
-       "at the boundary -- passing an agent from another "
+        [:code "mino_call"] " uses, and the cross-state guard fires "
+       "at the boundary. Passing an agent from another "
        [:code "mino_state"] " throws "
        [:code "MST007"] " and returns NULL."]
 
       [:h2 "What still doesn't work"]
       [:ul
        [:li [:code "send-via"]
-        " (custom executor for sends) -- intentionally deferred. "
+        " (custom executor for sends), intentionally deferred. "
         "Use " [:code "send"] " or " [:code "send-off"]
         " through the per-state worker."]
        [:li "Reflection on " [:code "clojure.lang.Ref"] " (or any "

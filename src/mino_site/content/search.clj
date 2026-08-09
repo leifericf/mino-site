@@ -27,7 +27,7 @@
          (for [page (get index "pages")]
            [:li.search-ssr-item
             [:a {:href (get page "uri")} (get page "title")]
-            " - " [:span.search-ssr-desc (get page "desc")]])]
+            ": " [:span.search-ssr-desc (get page "desc")]])]
 
         [:h2 "C API"]
         [:ul.search-ssr-list
@@ -37,7 +37,7 @@
              [:code (get sym "name")]]
             " " [:span.search-result-badge (get sym "type")]
             (when-let [d (get sym "desc")]
-              (str " - " d))])]
+              (str ": " d))])]
 
         [:h2 "Language"]
         [:ul.search-ssr-list
@@ -47,4 +47,4 @@
              [:code (get form "name")]]
             " " [:span.search-result-badge (get form "type")]
             (when-let [d (get form "desc")]
-              (str " - " d))])]))))
+              (str ": " d))])]))))

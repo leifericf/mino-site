@@ -16,7 +16,6 @@
     [mino-site.content.about :as about]
     [mino-site.content.get-started :as get-started]
     [mino-site.content.documentation :as documentation]
-    [mino-site.content.changelog :as changelog]
     [mino-site.content.api :as api]
     [mino-site.content.language :as language]
     [mino-site.content.cookbook-page :as cookbook-page]
@@ -266,12 +265,6 @@
 
      "/search/index.json"
      (search-index/->json (search-index/build api-data builtin-data))
-
-     "/changelog/index.html"
-     (fn [ctx]
-       (render/html-page {:title "Changelog"
-                          :description "Release history and changes for mino."}
-         (changelog/changelog-page mino-root)))
 
      "/404.html"
      (fn [ctx]

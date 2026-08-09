@@ -57,13 +57,13 @@
            :deps [dep-a dep-b]
            :task some.namespace/function-name}"]]
       [:ul
-       [:li [:code ":task"] " (required) " [:raw "&ndash;"]
-        " a qualified symbol naming a zero-argument function. The "
+       [:li [:code ":task"] " (required): "
+        "a qualified symbol naming a zero-argument function. The "
         "namespace is loaded automatically via " [:code "require"] "."]
-       [:li [:code ":doc"] " (optional) " [:raw "&ndash;"]
-        " a short description displayed when listing tasks."]
-       [:li [:code ":deps"] " (optional) " [:raw "&ndash;"]
-        " a vector of task names that must run before this task. "
+       [:li [:code ":doc"] " (optional): "
+        "a short description displayed when listing tasks."]
+       [:li [:code ":deps"] " (optional): "
+        "a vector of task names that must run before this task. "
         "Dependencies are resolved in topological order; each task "
         "runs at most once even in a diamond dependency graph."]]
 
@@ -104,31 +104,31 @@
        "to run, the first build comes from a small bootstrap "
        [:code "Makefile"] " at the repository root:"]
       [:pre [:code {:data-lang "bash"} "make"]]
-      [:p "The Makefile generates the bundled-source headers (core.clj "
-       "plus the clojure.* and mino.* namespaces baked into the "
-       "binary) and compiles every subsystem in one " [:code "cc"]
-       " invocation. It does nothing else - every other build, "
-       "test, and tooling task lives in the task runner. After "
-       "bootstrap, " [:code "./mino task build"] " takes over with "
-       "incremental compilation: editing a header recompiles only "
-       "the translation units that include it."]
+       [:p "The Makefile generates the bundled-source headers (core.clj "
+        "plus the clojure.* and mino.* namespaces baked into the "
+        "binary) and compiles every subsystem in one " [:code "cc"]
+        " invocation. It does nothing else; every other build, "
+        "test, and tooling task lives in the task runner. After "
+        "bootstrap, " [:code "./mino task build"] " takes over with "
+        "incremental compilation: editing a header recompiles only "
+        "the translation units that include it."]
 
       [:h2 "Writing task functions"]
       [:p "Task functions are ordinary mino functions. They can use "
        "any primitive or library available to the mino runtime. "
        "Some primitives commonly used in tasks:"]
       [:ul
-       [:li [:code "sh!"] " " [:raw "&ndash;"]
+       [:li [:code "sh!"] ":"
         " run a shell command, throw on non-zero exit"]
-       [:li [:code "file-mtime"] " " [:raw "&ndash;"]
+       [:li [:code "file-mtime"] ":"
         " file modification time in milliseconds (for incremental builds)"]
-       [:li [:code "file-exists?"] " " [:raw "&ndash;"]
+       [:li [:code "file-exists?"] ":"
         " check whether a file or directory exists"]
-       [:li [:code "spit"] " / " [:code "slurp"] " " [:raw "&ndash;"]
+       [:li [:code "spit"] " / " [:code "slurp"] ":"
         " write and read files"]
-       [:li [:code "str-replace"] " " [:raw "&ndash;"]
+       [:li [:code "str-replace"] ":"
         " single-pass string replacement"]
-       [:li [:code "getenv"] " " [:raw "&ndash;"]
+       [:li [:code "getenv"] ":"
         " read environment variables"]]
       [:p "Tasks print a timing banner automatically. No special "
        "macros or DSL required."]

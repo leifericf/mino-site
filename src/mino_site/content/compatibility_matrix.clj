@@ -29,14 +29,14 @@
 
       [:h2 "Reading the table"]
       [:ul
-       [:li [:strong "Supported"] " - the function or macro behaves "
+       [:li [:strong "Supported"] ": the function or macro behaves "
         "the way Clojure does for the inputs mino accepts."]
-       [:li [:strong "Differs"] " - the name exists and is callable, "
+       [:li [:strong "Differs"] ": the name exists and is callable, "
         "but the behavior diverges deliberately. The note column "
         "explains the divergence and links to "
         [:a {:href "/documentation/intentional-divergences/"}
          "intentional divergences"] " where appropriate."]
-       [:li [:strong "Absent"] " - the name is not provided. "
+       [:li [:strong "Absent"] ": the name is not provided. "
         "Calling it raises a resolution error. The note explains "
         "the replacement (atoms instead of refs, protocols instead "
         "of " [:code "reify"] ", etc.) or links the divergence."]]
@@ -240,7 +240,7 @@
           "the canon API. " [:code "map"] ", " [:code "filter"] ", "
           [:code "take"] ", " [:code "keep"] ", " [:code "keep-indexed"]
           ", and " [:code "map-indexed"] " propagate chunkedness "
-          "end-to-end. Sources auto-chunk since v0.98.3: "
+          "end-to-end. Sources auto-chunk: "
           [:code "(seq vec)"] " emits 32-element chunks reusing the "
           "vector's leaves, and lazy " [:code "range"] " produces a "
           "fresh chunk on each force."]]]]
@@ -487,8 +487,8 @@
               [:code "reset!"] " / " [:code "compare-and-set!"]
               " / " [:code "deref"] " / " [:code "@"]]
          [:td "Supported"] [:td]]
-        [:tr [:td [:code "clojure.core.async"] " - "
-              [:code "chan"] " / " [:code "go"] " / "
+         [:tr [:td [:code "clojure.core.async"] ": "
+               [:code "chan"] " / " [:code "go"] " / "
               [:code "go-loop"] " / " [:code "<!"] " / "
               [:code ">!"] " / " [:code "<!!"] " / "
               [:code ">!!"] " / " [:code "alts!"] " / "
@@ -744,11 +744,11 @@
          [:td "Supported"]
          [:td "Both " [:code ":once"] " and " [:code ":each"]
           " kinds. The " [:code "use-fixtures"] " form is a macro "
-          "so the calling namespace is captured at expansion time -- "
+          "so the calling namespace is captured at expansion time. "
           "mino's " [:code "*ns*"] " is the function's defining "
           "namespace, not a dynamic var."]]
-        [:tr [:td [:code "clojure.test.check"] " - "
-              [:code "quick-check"] " / generators / properties"]
+         [:tr [:td [:code "clojure.test.check"] ": "
+               [:code "quick-check"] " / generators / properties"]
          [:td "Supported"]
          [:td "Minimal port of the test.check API. Generators, "
           "properties, and " [:code "quick-check"] " ship; "
@@ -777,10 +777,10 @@
         [:tr [:td [:code "clojure.core.cache"] " / "
               [:code "clojure.core.memoize"]]
          [:td "Supported"]
-         [:td "Bundled caching strategies and cached function "
-          "factories, loaded on " [:code "require"] ". The "
-          [:code "SoftCache"] " strategy is not provided -- mino "
-          "has no host soft-reference layer to back it."]]
+          [:td "Bundled caching strategies and cached function "
+           "factories, loaded on " [:code "require"] ". The "
+           [:code "SoftCache"] " strategy is not provided; mino "
+           "has no host soft-reference layer to back it."]]
         [:tr [:td [:code "special-symbol?"]]
          [:td "Supported"]
          [:td "Returns " [:code "true"] " for the Clojure-reserved "
@@ -902,8 +902,8 @@
           [:code "inst?"] " detects the marker; "
           [:code "inst-ms"] " decodes epoch millis from the
           component map. mino has no JVM "
-          [:code "Date"] " / " [:code "Timestamp"]
-          " class -- the map IS the representation."]]
+           [:code "Date"] " / " [:code "Timestamp"]
+           " class; the map IS the representation."]]
         [:tr [:td [:code "#uuid \"...\""] " literal / "
               [:code "uuid?"] " / " [:code "random-uuid"] " / "
               [:code "parse-uuid"]]
@@ -916,12 +916,12 @@
         [:tr [:td [:code "*clojure-version*"] " / "
               [:code "(clojure-version)"]]
          [:td "Differs"]
-         [:td "Returns a four-key map and a "
-          [:code "\"M.N.P\""]
-          " string respectively. The version numbers reflect mino,
-          not JVM Clojure -- the Clojure-shape is for code that
-          reads the map's structure; the literal version string
-          differs intentionally."]]]]
+          [:td "Returns a four-key map and a "
+           [:code "\"M.N.P\""]
+           " string respectively. The version numbers reflect mino,"
+           "not JVM Clojure. The Clojure-shape is for code that"
+           "reads the map's structure; the literal version string"
+           "differs intentionally."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Namespaces & host

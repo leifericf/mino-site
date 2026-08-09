@@ -29,7 +29,7 @@
        "supports tree-sitter, LSP, or nREPL can use the corresponding "
        "tool directly."]
 
-      [:h2 {:id "syntax-highlighting"} "Syntax Highlighting"]
+      [:h2 {:id "syntax-highlighting"} "Syntax highlighting"]
       [:p [:a {:href "https://github.com/leifericf/tree-sitter-mino"
                :target "_blank" :rel "noopener"}
            "tree-sitter-mino"]
@@ -63,7 +63,7 @@
             :target "_blank" :rel "noopener"} "tree-sitter-mino"]
        " repository."]
 
-      [:h3 "Structural Editing"]
+      [:h3 "Structural editing"]
       [:p "Paredit and parinfer work without configuration with mino files. "
        "mino uses standard balanced brackets " [:code "()"] ", "
        [:code "[]"] ", and " [:code "{}"]
@@ -100,7 +100,7 @@
       [:pre [:code "git clone --recursive https://github.com/leifericf/mino-lsp.git\ncd mino-lsp\nmake"]]
       [:p "This produces a single " [:code "mino-lsp"] " binary."]
 
-      [:h3 "Editor Setup"]
+      [:h3 "Editor setup"]
 
       [:h4 "Neovim (nvim-lspconfig)"]
       [:pre [:code
@@ -142,7 +142,7 @@
        "current directory on startup and removes it on shutdown. Editors "
        "that support nREPL auto-detect this file."]
 
-      [:h2 "Editor Setup"]
+      [:h2 "Editor setup"]
 
       [:h3 "Conjure (Neovim)"]
       [:p [:a {:href "https://github.com/Olical/conjure" :target "_blank"
@@ -178,7 +178,7 @@
        ". Set the host and port, then connect. Cursive will use "
        "the nREPL connection for evaluation."]
 
-      [:h2 "Supported Operations"]
+      [:h2 "Supported operations"]
       [:p "mino-nrepl implements the following nREPL operations:"]
       [:table
        [:thead
@@ -192,7 +192,7 @@
         [:tr [:td [:code "load-file"]] [:td "Evaluate file contents."]]
         [:tr [:td [:code "ls-sessions"]] [:td "List active sessions."]]]]
 
-      [:h2 "Guide for Tools Developers"]
+      [:h2 "Guide for tools developers"]
       [:p "If you are building editor plugins, developer tools, or "
        "integrations that work with mino, two standard protocols "
        "give you ready-made communication layers. You do not need to "

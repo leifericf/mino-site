@@ -18,7 +18,7 @@
        " from test files. " [:code "tests/test.clj"] " is a compatibility "
        "entry point that delegates to " [:code "clojure.test"] "."]
 
-      [:h2 "Writing Tests"]
+      [:h2 "Writing tests"]
       [:p "A test file is a normal " [:code ".clj"] " file that requires "
        "the framework and defines tests:"]
       [:pre [:code {:data-lang "mino"}
@@ -36,7 +36,7 @@
 (deftest error-handling
   (is (thrown? (throw \"expected error\"))))"]]
 
-      [:h2 "API Reference"]
+      [:h2 "API reference"]
 
       [:h3 [:code "(deftest name & body)"]]
       [:p "Defines and registers a named test. The body contains one or more "
@@ -84,10 +84,10 @@
        [:code "(run-tests-and-exit)"] " to call " [:code "(exit 1)"] " on "
        "any failures or errors, " [:code "(exit 0)"] " on success."]
 
-      [:h2 "Running Tests"]
+      [:h2 "Running tests"]
       [:pre [:code "# Run the test suite\n./mino task test\n\n# Run under GC stress (collects on every allocation)\nMINO_GC_STRESS=1 ./mino tests/run.clj"]]
 
-      [:h2 "Test File Organization"]
+      [:h2 "Test file organization"]
       [:p "By convention, test files live in " [:code "tests/"] " and are "
        "named " [:code "*_test.clj"] ". A runner file loads all test "
        "modules and calls " [:code "run-tests"] ":"]

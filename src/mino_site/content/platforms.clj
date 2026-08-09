@@ -36,7 +36,7 @@
        [:code "zig"] " Linux runner every push and verifies that the "
        "committed CPJIT stencil byte tables for every supported "
        "target (both Darwin, both Linux, x86_64 Windows) regenerate "
-       "byte-for-byte identically - one version-locked "
+       "byte-for-byte identically. One version-locked "
        [:code "zig cc"] " cross-compiles them all, so the check is "
        "reproducible across machines. This is the verification floor "
        "for x86_64 Darwin since GitHub has been retiring Intel Mac "
@@ -113,7 +113,7 @@
        "native build: Zig bundles no macOS SDK, so a Linux host "
        "cannot cross-compile darwin."]
       [:p "The pinned " [:code "zig cc"] " is a hard requirement for "
-       "developing mino - it gates stencil regeneration, cross-builds, "
+       "developing mino: it gates stencil regeneration, cross-builds, "
        "and the reproducible QA lanes (a UBSan + TSan sanitizer run, a "
        "curated strict-warning lens, an advisory clang static-analyzer "
        "report, and a hermetic build that does not depend on the runner "
@@ -128,7 +128,7 @@
        [:code "mino"] " binary auto-detects the host and enables "
        "the JIT; the parallel "
        [:code "mino-lean"] " binary is the same build with the JIT "
-       "pipeline compiled out - useful when a host has no executable "
+       "pipeline compiled out, useful when a host has no executable "
        "memory primitives, or when a smaller binary is more valuable "
        "than peak throughput."]
       [:table

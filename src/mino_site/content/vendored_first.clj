@@ -13,11 +13,11 @@
       [:h1 "Zero dependencies, vendored first"]
 
       [:p.banner
-       "mino's distribution philosophy: drop the runtime into your "
+       "mino's distribution philosophy: vendor the runtime into your "
        "project, own it, no package manager. A C99 compiler plus "
        "libm plus pthreads is the entire build environment; the "
        "bundled Clojure stdlib (clojure.string, clojure.set, "
-       "clojure.math, …) lives in-binary as generated C string "
+       "clojure.math, ...) lives in-binary as generated C string "
        "literals, so there is no on-disk " [:code "lib/"] " path "
        "required at runtime."]
 
@@ -41,7 +41,7 @@
        [:a {:href "https://www.sqlite.org/amalgamation.html"} "SQLite"] ", "
        [:a {:href "https://odin-lang.org"} "Odin"] ", "
        [:a {:href "https://github.com/floooh/sokol"} "sokol"] ", and "
-       [:a {:href "https://github.com/nothings/stb"} "stb"] ": drop "
+       [:a {:href "https://github.com/nothings/stb"} "stb"] ": vendor "
        "the code into your project, own it, no package-manager "
        "surprise. The vendor copy is the source of truth for that "
        "build; it does not float, does not auto-update, does not "
@@ -49,10 +49,10 @@
       [:p "Embedded scripting hosts make a load-bearing trade-off at "
        "integration time: the cost of evaluating, integrating, and "
        "shipping a runtime versus the value the runtime adds. A "
-       "single-file drop-in collapses the first cost to "
+       "single-file amalgamation collapses the first cost to "
        "approximately zero. A build-system dependency, a header "
        "include chain, a runtime DLL chain, a locale-or-encoding "
-       "negotiation – every one of these moves the integration "
+       "negotiation: every one of these moves the integration "
        "cost upward, often enough to defeat the case for "
        "embedding."]
 
@@ -132,20 +132,20 @@
        [:li "The C API is the contract, not the CLI. Lua is the "
         "cousin for \"I am an embedded scripting engine first.\" "
         "An embedder treats " [:code "mino"] " the binary as a "
-        "diagnostic tool - useful for trying things out, never "
+        "diagnostic tool, useful for trying things out, never "
         "in the production critical path."]]
 
       [:h2 {:id "pointers"} "Pointers"]
       [:ul
        [:li [:a {:href "/documentation/embedding/"} "Embedding mino in your C project"]
-        " - the canonical first-five-minutes integration."]
+        ": the canonical first-five-minutes integration."]
        [:li [:a {:href "/documentation/api/"} "C API Reference"]
-        " - every public function, type, and macro in "
+        ": every public function, type, and macro in "
         [:code "mino.h"] "."]
        [:li [:a {:href "/documentation/dependencies/"} "Dependencies"]
-        " - how the bundled stdlib, on-disk " [:code "lib/"] ", "
+        ": how the bundled stdlib, on-disk " [:code "lib/"] ", "
         "and git-fetched repos compose via " [:code "mino deps"] "."]
        [:li [:a {:href "https://github.com/leifericf/mino/releases"} "Release assets"]
-        " - pre-built binaries plus the "
+        ": pre-built binaries plus the "
         [:code "mino-amalgamation-vX.Y.Z.tar.gz"] " bundle for "
         "each tag."]])))

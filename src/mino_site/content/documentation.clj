@@ -182,7 +182,7 @@
          [:code "mino deps"] "."]]
 
        [:a.card {:href "/documentation/vendored-first/"}
-        [:div.card-title "Zero dependencies, vendored first"]
+        [:div.card-title "Zero dependency, vendored first"]
         [:div.card-desc
          "How mino ships: the single-file amalgamation under "
          [:code "dist/"] ", no transitive build dependencies, no "

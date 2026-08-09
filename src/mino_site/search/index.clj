@@ -58,8 +58,6 @@
     "desc" "Single-file amalgamation, no transitive build dependencies."}
    {"title" "Use Cases" "uri" "/use-cases/"
     "desc" "Worked examples sized as small applications."}
-   {"title" "Changelog" "uri" "/changelog/"
-    "desc" "Release history and changes for mino."}
    {"title" "About" "uri" "/about/"
     "desc" "Design philosophy, trade-offs, and related projects."}])
 

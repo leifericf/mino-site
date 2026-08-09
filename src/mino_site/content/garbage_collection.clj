@@ -87,10 +87,10 @@
         "precise root immediately before the sweep so anything still "
         "reachable through any root stays marked; weak intern slots "
         "whose entries are unmarked are tombstoned at this point."]]
-      [:p "Both barriers -- the remembered-set barrier that tracks "
-       "old-to-young edges, and the insertion barrier that captures "
-       "new slot values during major mark -- are always armed. "
-       "Their cost is one dirty-bit check per store in the common case."]
+      [:p "Both barriers are always armed: the remembered-set barrier "
+       "that tracks old-to-young edges, and the insertion barrier "
+       "that captures new slot values during major mark. Their cost "
+       "is one dirty-bit check per store in the common case."]
 
       [:p "Transitions between phases:"]
       [:pre [:code {:data-lang "text"}
@@ -125,9 +125,9 @@
        "then a complete major cycle back-to-back."]
 
       [:h2 "Host-driven collection"]
-      [:p "The host can trigger collection at quiescent points -- between "
-       "REPL turns, after bulk import, or before long-idle periods -- "
-       "through " [:code "mino_gc_collect"] ":"]
+      [:p "The host can trigger collection at quiescent points "
+       "(between REPL turns, after bulk import, or before long-idle "
+       "periods) through " [:code "mino_gc_collect"] ":"]
       [:pre [:code {:data-lang "c"}
 "mino_gc_collect(S, MINO_GC_MINOR);  /* nursery sweep only */
 mino_gc_collect(S, MINO_GC_MAJOR);  /* drain or run a major cycle */
@@ -149,7 +149,7 @@ mino_gc_set_param(S, MINO_GC_STEP_ALLOC_BYTES,     16 * 1024);"]]
         [:tr [:th "Parameter"] [:th "Default"] [:th "Min"] [:th "Max"] [:th "Effect"]]]
        [:tbody
          [:tr [:td [:code "NURSERY_BYTES"]]       [:td "8 MiB"]    [:td "64 KiB"]   [:td "256 MiB"]
-          [:td "Larger = fewer minor cycles, more work per cycle, higher peak pause. Rose from 1 MiB to 4 MiB in v0.250.0, then to 8 MiB after realistic_bench measurement showed allocation-heavy workloads benefiting from the larger young gen."]]
+          [:td "Larger = fewer minor cycles, more work per cycle, higher peak pause. Default rose from 1 MiB to 8 MiB after realistic_bench measurement showed allocation-heavy workloads benefiting from the larger young gen."]]
         [:tr [:td [:code "MAJOR_GROWTH_TENTHS"]] [:td "15 (1.5x)"] [:td "11 (1.1x)"] [:td "40 (4.0x)"]
          [:td "Old-gen growth above baseline before the next major fires."]]
         [:tr [:td [:code "PROMOTION_AGE"]]       [:td "1"]        [:td "1"]        [:td "8"]
@@ -173,14 +173,14 @@ printf(\"live=%zu minor=%zu major=%zu max_pause_ns=%zu\\n\",
        "Full field list:"]
       [:ul
        [:li [:code ":collections-minor"] " / " [:code ":collections-major"]
-        " -- lifetime cycle counters."]
+        ": lifetime cycle counters."]
        [:li [:code ":bytes-live"] " / " [:code ":bytes-young"] " / "
-        [:code ":bytes-old"] " -- current heap breakdown."]
+        [:code ":bytes-old"] ": current heap breakdown."]
        [:li [:code ":bytes-freed"]
-        " -- monotonic lifetime total of bytes reclaimed by the "
+        ": monotonic lifetime total of bytes reclaimed by the "
         "collector."]
        [:li [:code ":bytes-alloc"]
-        " -- bytes currently outstanding on the bump path. "
+        ": bytes currently outstanding on the bump path. "
         "This field is " [:strong "not"] " a monotonic total: minor "
         "GC decrements it by the bytes it sweeps, and major GC "
         "resets it to " [:code ":bytes-live"] ". To recover a true "
@@ -192,44 +192,44 @@ printf(\"live=%zu minor=%zu major=%zu max_pause_ns=%zu\\n\",
         "outstanding bump-path bytes. The perf-gate's allocation "
         "tracker uses this same formula."]
        [:li [:code ":total-gc-ns"] " / " [:code ":max-gc-ns"]
-        " -- cumulative and worst-case collection wall time."]
-       [:li [:code ":nursery-bytes"] " -- configured nursery size, "
+        ": cumulative and worst-case collection wall time."]
+       [:li [:code ":nursery-bytes"] ": configured nursery size, "
         "reflecting any "
         [:code "MINO_GC_NURSERY_BYTES"] " override."]
        [:li [:code ":remset-entries"] " / " [:code ":remset-cap"] " / "
         [:code ":remset-high-water"]
-        " -- current size, current capacity, and peak size of the "
+        ": current size, current capacity, and peak size of the "
         "old-to-young remembered set. High-water helps size workloads "
         "whose burst remset differs from steady state."]
        [:li [:code ":mark-stack-cap"] " / "
         [:code ":mark-stack-high-water"]
-        " -- current capacity and peak depth of the mark stack."]
-       [:li [:code ":phase"] " -- one of "
+        ": current capacity and peak depth of the mark stack."]
+       [:li [:code ":phase"] ": one of "
         [:code ":idle"] ", "
         [:code ":minor"] ", "
         [:code ":major-mark"] ", "
         [:code ":major-sweep"] "."]
        [:li [:code ":threshold"]
-        " -- heuristic threshold controlling the next major trigger."]]
+        ": heuristic threshold controlling the next major trigger."]]
 
       [:h2 "Environment variables"]
       [:p "Four environment variables configure the collector at state "
        "init without touching source:"]
       [:ul
        [:li [:code "MINO_GC_NURSERY_BYTES"]
-         " -- override the 8 MiB default nursery size. Same lower bound "
+         ": override the 8 MiB default nursery size. Same lower bound "
         "as " [:code "mino_gc_set_param"] " (64 KiB). Lower it for "
         "embedders running many concurrent VM states under tight memory budgets."]
        [:li [:code "MINO_GC_STRESS=1"]
-        " -- force a full collection on every allocation. Slow, but "
+        ": force a full collection on every allocation. Slow, but "
         "catches any code path that holds an unrooted pointer across an "
         "allocation boundary. Use during development."]
        [:li [:code "MINO_GC_VERIFY=1"]
-        " -- run a reachability classifier pass during major sweep to "
+        ": run a reachability classifier pass during major sweep to "
         "surface bookkeeping bugs (for example, a remembered-set miss). "
         "Slow; test-suite use only."]
        [:li [:code "MINO_GC_EVT=1"]
-        " -- enable a fixed-size in-process event ring that records "
+        ": enable a fixed-size in-process event ring that records "
         "barrier, remset, promotion, and sweep events. Dumped to stderr "
         "on a verify abort. Zero cost when unset."]]
 

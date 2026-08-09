@@ -57,8 +57,8 @@
        "naming the policy."]
       [:p "Standalone " [:code "./mino"] " grants "
        [:code "cpu_count"] " right after " [:code "mino_install_all"]
-       ", so REPL/script users see the canon surface working out of "
-       "the box. Embedders that want sandboxed scripts withhold the "
+       ", so REPL/script users see the canon surface without "
+       "configuration. Embedders that want sandboxed scripts withhold the "
        "grant; embedders that want canon parity make the same call "
        "the standalone binary does."]
       [:p [:strong "Status."] " The full surface ships: real OS-thread "
@@ -74,14 +74,14 @@
        "The " [:code "(mino-thread-limit)"] " primitive exposes "
        "the current limit so library code can branch on it. "
        "ASan + UBSan + TSan-clean across the test suite."]
-      [:p [:strong "Embed-distinctive value-add."] " "
-       [:code "mino_set_thread_pool"] " lets the host hand mino an "
-       "existing pool (Tokio runtime, libuv worker pool, ASIO io_context, "
-       "custom pthread pool); workers from that pool service "
-       [:code "future"] " spawns. The work item carries the state pointer, "
-       "not the thread, so the same N-worker pool can service an "
-       "unbounded number of isolated " [:code "mino_state"]
-       " runtimes - multi-tenant by construction. "
+       [:p [:strong "Embed-distinctive value-add."] " "
+        [:code "mino_set_thread_pool"] " lets the host hand mino an "
+        "existing pool (Tokio runtime, libuv worker pool, ASIO io_context, "
+        "custom pthread pool); workers from that pool service "
+        [:code "future"] " spawns. The work item carries the state pointer, "
+        "not the thread, so the same N-worker pool can service an "
+        "unbounded number of isolated " [:code "mino_state"]
+        " runtimes, multi-tenant by construction. "
        [:code "mino_set_thread_factory"] " hooks per-worker naming, "
        "affinity, priority for the spawn-per-future path; "
        [:code "mino_set_option(S, MINO_OPT_THREAD_STACK_BYTES, n)"] " tunes RSS for tight "
