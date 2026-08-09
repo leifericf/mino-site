@@ -458,7 +458,7 @@
 
       [:h2 "Error handling"]
       [:p [:code "try"] "/" [:code "catch"] "/" [:code "throw"] " work "
-       "as expected, but mino improves on the JVM approach: "
+       "as expected, but mino differs from the JVM approach: "
        [:code "throw"] " accepts any value, and " [:code "catch"]
        " always receives a structured diagnostic map with stable "
        "keys like " [:code ":mino/kind"] ", " [:code ":mino/code"]

@@ -303,7 +303,7 @@ mino_jit_capability cap = mino_state_jit_capability(S);"]]
        [:code "ok-with-deopt"] " counts so the reader can tell "
        "which blockers side-exit picked up."]
 
-      [:h2 "Where the JIT shines: tight compute"]
+      [:h2 "Where the JIT helps: tight compute"]
       [:p "Loop kernels and recursive compute where the JIT's "
        "stencils cover the inner cycle end-to-end. These are the "
        "workloads the copy-and-patch substrate was designed for: "
@@ -341,7 +341,7 @@ mino_jit_capability cap = mino_state_jit_capability(S);"]]
        "still goes through the interpreter dispatcher for the "
        "recursive branch."]
 
-      [:h2 "Where the JIT does not shine: alloc / GC pressure"]
+      [:h2 "Where the JIT does not help: alloc / GC pressure"]
       [:p "Median of three runs per cell, captured on Apple Silicon "
        "(arm64-darwin) against mino v0.323.0. All numbers in ms/op "
        "except the sub-ms row in µs/op."]

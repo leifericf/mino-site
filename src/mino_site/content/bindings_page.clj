@@ -169,8 +169,7 @@ if let r = mino_eval_string(s, \"(+ 1 2)\", e) {
           "short sketches showing how the call looks in each language."]
 
          [:h3 "Zig"]
-         [:p [:code "@cImport"] " reads mino.h directly. Zero overhead, "
-          "full type safety."]
+         [:p [:code "@cImport"] " reads mino.h at compile time."]
          [:pre [:code {:data-lang "c"} zig-snippet]]
 
          [:h3 "Rust"]
