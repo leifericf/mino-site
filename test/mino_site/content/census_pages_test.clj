@@ -59,3 +59,9 @@
       (is (or (.contains html (str "id=\"" frag "\""))
               (.contains html (str "id='" frag "'")))
           (str "from-clojure page must have anchor for census doc-link #" frag)))))
+
+(deftest anchors-have-substantive-content
+  (let [html (from-clojure/from-clojure-page payload)]
+    (is (not (.contains html "Divergence category:"))
+        "no empty stub headings")))
+

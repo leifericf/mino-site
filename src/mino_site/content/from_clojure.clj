@@ -4,23 +4,28 @@
     [hiccup2.core           :as h]
     [mino-site.parse.census :as census]))
 
+(def ^:private existing-anchor-ids
+  "Fragments that already have an h2 section on this page with a
+  matching id attribute. The anchor generator skips these so it
+  does not create duplicate ids."
+  #{"concurrency" "numeric" "exceptions"})
+
 (defn- divergence-anchors
-  "Generate h2 elements with ids matching every unique doc-link
-  fragment in the census payload. This guarantees every census
-  divergence :doc-link resolves to an anchor on this page."
   [payload]
-  (let [fragments (->> (:divergences payload)
-                       (map :doc-link)
-                       (keep identity)
-                       (map #(last (clojure.string/split % #"#")))
-                       (into (sorted-set)))]
-    (for [frag fragments]
-      [:h2 {:id frag}
-       (str "Divergence category: " frag)
-       [:p [:small
-        [:a {:href "/documentation/intentional-divergences/"
-             :style "font-weight:normal"}
-         "See all intentional divergences"]]]])))
+  (let [by-fragment (->> (:divergences payload)
+                         (filter :doc-link)
+                         (group-by #(last (clojure.string/split (:doc-link %) #"#"))))]
+    (for [[frag divs] (sort-by key by-fragment)
+          :when (not (existing-anchor-ids frag))]
+      [:section {:class "census-anchor"}
+       [:h2 {:id frag} (str "Divergences: " frag)]
+       (for [d divs]
+         [:div.divergence-entry
+          [:h3 (:title d)]
+          [:p (:rationale d)]
+          (when (seq (:affected d))
+            [:p [:strong "Affected: "]
+             (interpose " " (for [v (:affected d)] [:code (str v)]))])])])))
 
 (defn from-clojure-page
   "Generates the Coming from Clojure page HTML body."
@@ -205,7 +210,7 @@
 
       ;; --- Concurrency ---
 
-      [:h2 "Concurrency"]
+      [:h2 {:id "concurrency"} "Concurrency"]
       [:p "mino provides two concurrency models. Cooperative async "
        "runs by default; host-granted threading layers on top."]
 
@@ -428,7 +433,7 @@
 
       ;; --- Numeric tower ---
 
-      [:h2 "Numbers"]
+      [:h2 {:id "numeric"} "Numbers"]
       [:p "mino has the full Clojure numeric tower: 64-bit "
        [:code "Long"] ", 64-bit IEEE 754 " [:code "Double"] ", "
        "arbitrary-precision " [:code "BigInt"] ", exact "
@@ -475,7 +480,7 @@
 
       ;; --- Error handling ---
 
-      [:h2 "Error handling"]
+      [:h2 {:id "exceptions"} "Error handling"]
       [:p [:code "try"] "/" [:code "catch"] "/" [:code "throw"] " work "
        "as expected, but mino differs from the JVM approach: "
        [:code "throw"] " accepts any value, and " [:code "catch"]
