@@ -11,6 +11,20 @@
     (is (string? html))
     (is (seq html))))
 
+(deftest page-contains-editorial-sections
+  (let [html (div/intentional-divergences-page payload)]
+    (is (.contains html "No JVM interop surface")
+        "page must contain the editorial JVM interop section")
+    (is (.contains html "Host-grant-gated host threads")
+        "page must contain the editorial threading section")
+    (is (.contains html "STM uses single-version optimistic locking")
+        "page must contain the editorial STM section")))
+
+(deftest page-contains-census-catalog-heading
+  (let [html (div/intentional-divergences-page payload)]
+    (is (.contains html "Full divergence catalog")
+        "page must contain the census-driven catalog section")))
+
 (deftest page-contains-first-divergence-title
   (let [html (div/intentional-divergences-page payload)
         first-title (-> payload :divergences first :title)]
