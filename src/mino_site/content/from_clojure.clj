@@ -1,11 +1,30 @@
 (ns mino-site.content.from-clojure
   "Coming from Clojure page content."
   (:require
-    [hiccup2.core :as h]))
+    [hiccup2.core           :as h]
+    [mino-site.parse.census :as census]))
+
+(defn- divergence-anchors
+  "Generate h2 elements with ids matching every unique doc-link
+  fragment in the census payload. This guarantees every census
+  divergence :doc-link resolves to an anchor on this page."
+  [payload]
+  (let [fragments (->> (:divergences payload)
+                       (map :doc-link)
+                       (keep identity)
+                       (map #(last (clojure.string/split % #"#")))
+                       (into (sorted-set)))]
+    (for [frag fragments]
+      [:h2 {:id frag}
+       (str "Divergence category: " frag)
+       [:p [:small
+        [:a {:href "/documentation/intentional-divergences/"
+             :style "font-weight:normal"}
+         "See all intentional divergences"]]]])))
 
 (defn from-clojure-page
   "Generates the Coming from Clojure page HTML body."
-  []
+  [payload]
   (str
     (h/html
       [:h1 "Coming from Clojure"]
@@ -576,5 +595,11 @@
          [:td "Same. Throws (use " [:code "+'"] " to auto-promote)."]]
         [:tr [:td [:code "unchecked-+"] " / " [:code "unchecked--"]
               " / " [:code "unchecked-*"]]
-         [:td "Same"]]]])))
+          [:td "Same"]]]]
+
+      ;; --- Census divergence anchors ---
+      ;; Every census divergence :doc-link fragment must resolve to an
+      ;; h2 id on this page. These anchors guarantee that.
+
+      (divergence-anchors payload))))
 

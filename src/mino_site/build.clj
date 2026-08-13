@@ -227,7 +227,7 @@
        (render/html-page {:title "Coming from Clojure"
                           :description "How mino differs from Clojure: syntax, namespaces, concurrency, interop, and what is intentionally absent."
                           :active-page :documentation}
-         (from-clojure/from-clojure-page)))
+          (from-clojure/from-clojure-page census-payload)))
 
      "/documentation/compatibility-matrix/index.html"
      (fn [ctx]
@@ -235,7 +235,7 @@
                           :description "Item-by-item table of Clojure core functions and macros: supported, differs, or absent in mino."
                           :active-page :documentation
                           :wide true}
-         (compatibility-matrix/compatibility-matrix-page)))
+          (compatibility-matrix/compatibility-matrix-page census-payload)))
 
       "/documentation/intentional-divergences/index.html"
       (fn [ctx]

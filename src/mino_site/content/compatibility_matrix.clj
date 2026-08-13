@@ -1,13 +1,44 @@
 (ns mino-site.content.compatibility-matrix
   "Clojure / mino compatibility matrix page content."
   (:require
-    [hiccup2.core :as h]))
+    [hiccup2.core           :as h]
+    [mino-site.parse.census :as census]))
+
+(defn- coverage-section
+  "Render the headline coverage stats from the census payload."
+  [payload]
+  (let [head (get-in payload [:coverage :headline])
+        mc   (get-in payload [:missing :count])
+        ns-list (->> (get-in payload [:coverage :per-namespace])
+                     (sort-by (fn [[_ s]] (- (:clojure-total s))))
+                     (map (fn [[ns-sym s]]
+                            [:tr [:td (str ns-sym)]
+                             [:td (str (:in-both-count s))]
+                             [:td (str (:clojure-total s))]
+                             [:td (census/coverage-percent
+                                    (assoc-in payload [:coverage :headline] s))]])))]
+    [:section
+     [:h2 "Surface coverage"]
+     [:p "Tracked against Clojure "
+      (get-in payload [:meta :clojure-version]) ". "
+      [:strong (census/coverage-percent payload)]
+      " of the Clojure surface is implemented ("
+      (str (:in-both-count head)) " of "
+      (str (:clojure-total head)) " vars). "
+      "Of the " (str (:total mc)) " missing vars, "
+      (str (:jvm-bound mc)) " are intentionally absent (JVM-bound) and "
+      (str (:gap mc)) " are genuine gaps."]
+     [:table
+      [:thead [:tr [:th "Namespace"] [:th "Implemented"]
+               [:th "Total"] [:th "Coverage"]]]
+      [:tbody ns-list]]]))
 
 (defn compatibility-matrix-page
   "Generates the Clojure compatibility matrix HTML body."
-  []
+  [payload]
   (str
     (h/html
+      (coverage-section payload)
       [:h1 "Clojure compatibility matrix"]
       [:p "What Clojure code runs on mino, what runs with small "
        "differences, and what is intentionally absent. The bar for "
