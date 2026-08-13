@@ -43,7 +43,7 @@ jobs:
                   clojure-census/output/mino/site_payload.edn; then
             echo "Payload is up-to-date."
           else
-            echo "::error::Vendored census payload is stale. Run: bb scripts/sync-census-payload.bb"
+            echo "::error::Vendored census payload is stale. Run: ./mino/mino scripts/sync_census_payload.clj"
             diff -u resources/census/site_payload.edn \
                    clojure-census/output/mino/site_payload.edn || true
             exit 1
