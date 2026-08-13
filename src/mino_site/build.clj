@@ -10,6 +10,7 @@
     [mino-site.render :as render]
     [mino-site.parse.header :as parse.header]
     [mino-site.parse.builtins :as parse.builtins]
+    [mino-site.parse.census :as parse.census]
     [mino-site.parse.cookbook :as parse.cookbook]
     [mino-site.parse.smoke :as parse.smoke]
     [mino-site.content.landing :as landing]
@@ -50,8 +51,9 @@
   mino-root is the path to the mino source tree (submodule or local)."
   [mino-root]
   (let [api-data       (parse.header/parse (str mino-root "/src/mino.h")
-                                            {:strict? true})
+                                             {:strict? true})
         builtin-data   (parse.builtins/introspect mino-root "scripts/intro.clj")
+        census-payload (parse.census/load-payload)
         cookbook-data   (parse.cookbook/parse "mino-examples/src")
         smoke-data     (parse.smoke/parse mino-root)
         async-data     (parse.async/parse mino-root)
@@ -235,12 +237,12 @@
                           :wide true}
          (compatibility-matrix/compatibility-matrix-page)))
 
-     "/documentation/intentional-divergences/index.html"
-     (fn [ctx]
-       (render/html-page {:title "Intentional Divergences"
-                          :description "Where mino deliberately differs from Clojure and what it offers in place of each divergence."
-                          :active-page :documentation}
-         (intentional-divergences/intentional-divergences-page)))
+      "/documentation/intentional-divergences/index.html"
+      (fn [ctx]
+        (render/html-page {:title "Intentional Divergences"
+                           :description "Where mino deliberately differs from Clojure and what it offers in place of each divergence."
+                           :active-page :documentation}
+          (intentional-divergences/intentional-divergences-page census-payload)))
 
      "/documentation/dependencies/index.html"
      (fn [ctx]
