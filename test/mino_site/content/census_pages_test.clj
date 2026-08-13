@@ -27,6 +27,19 @@
     (is (.contains html gap-count)
         "matrix must show the genuine-gap count")))
 
+(deftest matrix-renders-surface-audit
+  (let [html (matrix/compatibility-matrix-page payload)]
+    (is (.contains html "Surface audit from census")
+        "matrix must contain the surface audit section")
+    (is (.contains html "jvm-bound")
+        "matrix must list jvm-bound verdicts")))
+
+(deftest matrix-renders-jvm-bound-var
+  (let [html (matrix/compatibility-matrix-page payload)
+        first-jvm-var (-> payload :missing :jvm-bound first :var str)]
+    (is (.contains html first-jvm-var)
+        "matrix must list actual missing var names")))
+
 ;; ===== P0-T6: from-clojure anchors =================================
 
 (deftest from-clojure-renders-html

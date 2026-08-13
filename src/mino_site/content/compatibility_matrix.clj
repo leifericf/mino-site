@@ -33,12 +33,50 @@
                [:th "Total"] [:th "Coverage"]]]
       [:tbody ns-list]]]))
 
+(defn- surface-audit-section
+  "Render the census surface audit: every missing var with its
+  verdict and reason, plus any surface mismatches."
+  [payload]
+  (let [jvm-bound (get-in payload [:missing :jvm-bound])
+        gap       (get-in payload [:missing :gap])
+        mismatch  (:mismatches payload)
+        all-missing (sort-by (juxt :namespace :var)
+                             (concat jvm-bound gap))]
+    [:section
+     [:h2 "Surface audit from census"]
+     [:p "Every Clojure (JVM) var absent from the mino surface, "
+      "with its verdict and reason. This data is generated from the "
+      [:a {:href "https://clojure-census.leifericf.com/dialects/mino/"}
+       "clojure-census"] "."]
+     [:table
+      [:thead [:tr [:th "Namespace"] [:th "Var"] [:th "Verdict"] [:th "Reason"]]]
+      [:tbody
+       (for [m all-missing]
+         [:tr [:td (str (:namespace m))]
+          [:td [:code (str (:var m))]]
+          [:td (str (:verdict m))]
+          [:td (:reason m)]])]]
+     (when (seq mismatch)
+       [:h3 "Surface mismatches"]
+       [:p "Vars present in both surfaces but with different metadata "
+        "(arity, macro, or dynamic flag)."]
+       [:table
+        [:thead [:tr [:th "Namespace"] [:th "Var"] [:th "Difference"]]]
+        [:tbody
+         (for [mm mismatch]
+           [:tr [:td (str (:namespace mm))]
+            [:td [:code (str (:var mm))]]
+            [:td (str (cond (:macro-clojure mm) "macro vs non-macro"
+                            (:arglists-clojure mm) "arity difference"
+                            :else "metadata difference"))]])]])]))
+
 (defn compatibility-matrix-page
   "Generates the Clojure compatibility matrix HTML body."
   [payload]
   (str
     (h/html
       (coverage-section payload)
+      (surface-audit-section payload)
       [:h1 "Clojure compatibility matrix"]
       [:p "What Clojure code runs on mino, what runs with small "
        "differences, and what is intentionally absent. The bar for "
