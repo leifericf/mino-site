@@ -1,0 +1,50 @@
+name: Census drift gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check-payload-fresh:
+    name: Vendored census payload must match census output
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: DeLaGuardo/setup-clojure@13
+        with:
+          cli: latest
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.git.libs
+          key: m2-census-${{ hashFiles('deps.edn') }}
+
+      - name: Checkout clojure-census
+        uses: actions/checkout@v4
+        with:
+          repository: leifericf/clojure-census
+          path: clojure-census
+
+      - name: Generate canonical payload from census
+        working-directory: clojure-census
+        run: clojure -M:run payload mino
+
+      - name: Diff vendored payload against canonical
+        run: |
+          if diff -q resources/census/site_payload.edn \
+                  clojure-census/output/mino/site_payload.edn; then
+            echo "Payload is up-to-date."
+          else
+            echo "::error::Vendored census payload is stale. Run: bb scripts/sync-census-payload.bb"
+            diff -u resources/census/site_payload.edn \
+                   clojure-census/output/mino/site_payload.edn || true
+            exit 1
+          fi
