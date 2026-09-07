@@ -233,24 +233,24 @@ mino_clear_error(S);                     /* reset for next call */"]]
 mino_val *w = mino_int(S, 99);
 /* v might have been collected -- do not use it */"]]
 
-      [:h3 "Retaining values with refs"]
+      [:h3 "Retaining values with roots"]
       [:p "To keep a value alive across multiple mino calls, root it "
-       "with a ref:"]
+       "with a root handle:"]
       [:pre [:code {:data-lang "c"}
-"mino_ref *r = mino_ref_new(S, val);    /* root val               */
+"mino_root *r = mino_root_new(S, val);  /* root val               */
 
 /* ... any number of allocations / evals ... */
 
-mino_val *v = mino_deref(r);       /* get the value back     */
-mino_unref(S, r);                    /* release the root       */"]]
-      [:p "Refs are owned by the state. Forgetting to unref is not a "
-       "leak in the traditional sense (the ref is freed when the state "
-       "is freed), but holding refs longer than needed prevents the "
+mino_val *v = mino_root_get(r);    /* get the value back     */
+mino_unroot(S, r);                   /* release the root       */"]]
+      [:p "Roots are owned by the state. Forgetting to unroot is not a "
+       "leak in the traditional sense (the root is freed when the state "
+       "is freed), but holding roots longer than needed prevents the "
        "collector from reclaiming objects."]
 
       [:h3 "Environments are roots"]
       [:p "Any value bound in a live environment survives collection "
-       "automatically. You do not need to ref values that you have "
+       "automatically. You do not need to root values that you have "
        "bound with " [:code "mino_env_set"] ":"]
       [:pre [:code {:data-lang "c"}
 "mino_env_set(S, env, \"my-val\", mino_int(S, 42));

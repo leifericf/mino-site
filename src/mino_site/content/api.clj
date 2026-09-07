@@ -163,7 +163,7 @@
     [:dd "Values returned by the runtime are borrowed: they stay valid "
      "until the next allocation, which can trigger collection. To keep "
      "a value alive across multiple runtime calls, root it with "
-     [:code "mino_ref_new"] " and release it with " [:code "mino_unref"]
+     [:code "mino_root_new"] " and release it with " [:code "mino_unroot"]
      ". Values bound in a live environment are rooted automatically. "
      "See "
      [:a {:href "/documentation/embedding/"} "Embedding Guide"]

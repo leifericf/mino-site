@@ -52,14 +52,14 @@ A borrowed value is valid until the next allocation that may trigger GC.
 In practice this means: use it or store it before calling another mino
 function that allocates.
 
-**Ref to retain.** To keep a value alive across allocations or GC cycles,
-root it with a ref:
+**Root to retain.** To keep a value alive across allocations or GC cycles,
+root it with a root handle:
 
 ```c
-mino_ref_t *r = mino_ref(S, val);       /* root val               */
+mino_root *r = mino_root_new(S, val);   /* root val               */
 /* ... any number of allocations / evals ... */
-mino_val_t *v = mino_deref(r);          /* get the value back     */
-mino_unref(S, r);                       /* release the root       */
+mino_val *v = mino_root_get(r);         /* get the value back     */
+mino_unroot(S, r);                      /* release the root       */
 ```
 
 Refs are owned by the state. If the host forgets to unref, the ref (and its
@@ -94,7 +94,7 @@ when old-gen grows past a multiplier above the last major's baseline.
 An object survives if it is reachable from any root:
 
 - Registered environments (via `mino_env_new` / `mino_new`)
-- Host refs (via `mino_ref`)
+- Host roots (via `mino_root_new`)
 - The intern tables (symbols and keywords)
 - The module cache
 - The metadata table
@@ -496,9 +496,9 @@ runtime state.
 
 | Function | Description |
 |----------|-------------|
-| `mino_ref(S, val)` | Root a value (survives GC) |
-| `mino_deref(ref)` | Get the rooted value |
-| `mino_unref(S, ref)` | Release the root |
+| `mino_root_new(S, val)` | Root a value (survives GC) |
+| `mino_root_get(root)` | Get the rooted value |
+| `mino_unroot(S, root)` | Release the root |
 
 ### Modules
 
