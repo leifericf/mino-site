@@ -314,5 +314,5 @@
        [:a {:href "https://github.com/leifericf/mino-nrepl"
             :target "_blank" :rel "noopener"}
         "github.com/leifericf/mino-nrepl"]
-       ". It is roughly 1,400 lines of C99 with no dependencies "
+       ". It is roughly 1,300 lines of C99 with no dependencies "
        "beyond mino itself."])))

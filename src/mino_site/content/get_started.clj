@@ -160,7 +160,7 @@ int main(void)
        [:pre
         [:code {:data-lang "mino"}
 "$ mino
-mino 2026.08.08-alpha1
+mino 2026.09.10-alpha5
 Type :help for help, :quit to exit
 mino=> (def greet (fn [name] (str \"hello, \" name \"!\")))
 #'user/greet
@@ -169,6 +169,8 @@ mino=> (greet \"world\")
 mino=> (map greet [\"alice\" \"bob\" \"carol\"])
 (\"hello, alice!\" \"hello, bob!\" \"hello, carol!\")
 mino=> (doc map)
+map
+([f] [f & colls])
 Returns a lazy sequence of applying f to each item in coll. When
    called with multiple collections, maps f across them in parallel.
    When called with no collection, returns a transducer.

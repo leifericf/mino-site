@@ -57,15 +57,18 @@
        "embedding."]
 
       [:h2 {:id "the-vendored-corner"} "The vendored corner"]
-      [:p [:code "src/vendor/imath/"] " is the only external code "
-       "in the runtime tree. " [:code "imath"] " is a small bignum "
-       "library; mino needs arbitrary-precision integers, mino "
-       "vendored " [:code "imath"] ", mino owns the audit surface. "
-       "No plan to add more vendored libraries: every "
-       "new Clojure-side namespace ships as bundled mino source "
-       "in " [:code "lib/clojure/"] " (escaped into a C string "
-       "literal at build time), and every new C primitive is "
-       "written in mino's own style."]
+      [:p [:code "src/vendor/"] " holds all external code in the "
+       "runtime tree: " [:code "imath"] " (arbitrary-precision "
+       "integers), " [:code "bearssl"] " (TLS for the HTTP client), "
+       [:code "miniz"] " (compression and zip), and "
+       [:code "tzdata"] " (time zones). Each entered the same way: "
+       "mino needed the capability, vendored a small focused "
+       "library, and now owns the audit surface. The bar for "
+       "adding another stays high: every new Clojure-side "
+       "namespace ships as bundled mino source in "
+       [:code "lib/clojure/"] " (escaped into a C string literal "
+       "at build time), and every new C primitive is written in "
+       "mino's own style."]
 
       [:h2 {:id "the-amalgamation"} "The amalgamation"]
       [:p [:code "dist/mino.c"] " and " [:code "dist/mino.h"] " are "

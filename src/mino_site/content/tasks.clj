@@ -84,16 +84,18 @@
       [:pre [:code {:data-lang "mino"}
 "{:paths [\"src\" \"lib\"]
  :tasks
- {gen-core-header {:doc  \"Escape src/core.clj into src/core_mino.h\"
-                   :task mino.tasks.builtin/gen-core-header}
-  build           {:doc  \"Compile and link the mino binary\"
-                   :deps [gen-core-header]
-                   :task mino.tasks.builtin/build}
-  clean           {:doc  \"Remove build artifacts\"
-                   :task mino.tasks.builtin/clean}
-  test            {:doc  \"Build and run the test suite\"
-                   :deps [build]
-                   :task mino.tasks.builtin/test-suite}}}"]]
+ {gen-core-header  {:doc  \"Escape src/core.clj into src/core_mino.h\"
+                    :task mino.tasks.builtin/gen-core-header}
+  gen-stdlib-headers {:doc  \"Escape lib/clojure/*.clj into per-ns headers\"
+                      :task mino.tasks.builtin/gen-stdlib-headers}
+  build            {:doc  \"Compile and link the mino binary\"
+                    :deps [gen-core-header gen-stdlib-headers]
+                    :task mino.tasks.builtin/build}
+  clean            {:doc  \"Remove build artifacts\"
+                    :task mino.tasks.builtin/clean}
+  test             {:doc  \"Build and run the test suite\"
+                    :deps [build]
+                    :task mino.tasks.builtin/test-suite}}}"]]
       [:p "The build task implements incremental compilation with "
        "header dependency tracking (via " [:code "-MMD"]
        " compiler flags), matching the behavior of a traditional "

@@ -88,21 +88,14 @@
          [:div.use-case-build
           [:strong "Build and run:"]
           [:pre [:code
-            (str "c++ -std=c++17 -O2 \\\n"
-                 "  -Imino/src -Imino/src/public -Imino/src/runtime "
-                 "-Imino/src/gc -Imino/src/eval \\\n"
-                 "  -Imino/src/collections -Imino/src/prim "
-                 "-Imino/src/async -Imino/src/interop \\\n"
-                 "  -Imino/src/diag -Imino/src/vendor/imath \\\n"
+            (str "# Generate the amalgamation once (from the mino repo root):\n"
+                 "./mino task amalgamate\n"
+                 "\n"
+                 "# Build this example:\n"
+                 "c++ -std=c++17 -O2 -Imino/dist \\\n"
                  "  -o use-cases/" slug " \\\n"
                  "  use-cases/" slug ".cpp \\\n"
-                 "  mino/src/public/*.c mino/src/runtime/*.c "
-                 "mino/src/gc/*.c mino/src/eval/*.c \\\n"
-                 "  mino/src/collections/*.c mino/src/prim/*.c "
-                 "mino/src/async/*.c mino/src/interop/*.c \\\n"
-                 "  mino/src/regex/*.c mino/src/diag/*.c "
-                 "mino/src/vendor/imath/*.c \\\n"
-                  "  -lm -lpthread\n"
+                 "  mino/dist/mino.o -lm -lpthread\n"
                  "./use-cases/" slug)]]]]
 
         ;; Script excerpt

@@ -68,7 +68,7 @@
 
       [:h3 [:code "(testing desc & body)"]]
       [:p "Adds a context string to failure messages. Context strings nest "
-       "and are joined with " [:code " > "] " in the output. Must appear "
+       "and are joined with a space in the output. Must appear "
        "inside a " [:code "deftest"] "."]
       [:pre [:code {:data-lang "mino"}
 "(deftest collections
@@ -104,13 +104,13 @@
 
       [:h2 "Output"]
       [:p "On success:"]
-      [:pre [:code "N tests, M assertions: M passed, 0 failed, 0 errors"]]
+      [:pre [:code "N tests, M assertions: M passed, 0 failed, 0 errors\n{:test N, :pass M, :fail 0, :error 0, :failures []}"]]
       [:p "On failure, each failing assertion is reported with its test "
-       "name, context path, the original form, and a diff:"]
-      [:pre [:code "Failures:\n  in addition\n    arithmetic > basic\n    (= 4 (+ 1 2))\n    expected: 4\n    actual: 3\n\n10 tests, 12 assertions: 11 passed, 1 failed, 0 errors"]]
+       "name, context path, the original form, and expected vs. actual values:"]
+      [:pre [:code "FAIL in () (:)\narithmetic basic\nexpected: (= 4 (+ 1 2))\n  actual: \"expected: 4\\n    actual: 3\"\n\nFailures:\n    expected: (= 4 (+ 1 2))\n    actual: \"expected: 4\\n    actual: 3\"\n\n10 tests, 12 assertions: 11 passed, 1 failed, 0 errors\n{:test 10, :pass 11, :fail 1, :error 0, :failures [{...}]}"]]
 
       [:h2 "Testing in the REPL"]
       [:p "The test framework works in the REPL too. Load it, define a "
        "test, and call " [:code "run-tests"] " interactively:"]
       [:pre [:code {:data-lang "mino"}
-"mino=> (require \"tests/test\")\nmino=> (deftest quick-check (is (= 4 (+ 2 2))))\nmino=> (run-tests)\n1 tests, 1 assertions: 1 passed, 0 failed, 0 errors"]])))
+"mino=> (require \"tests/test\")\nmino=> (deftest quick-check (is (= 4 (+ 2 2))))\nmino=> (run-tests)\n1 tests, 1 assertions: 1 passed, 0 failed, 0 errors\n{:test 1, :pass 1, :fail 0, :error 0, :failures []}"]])))
