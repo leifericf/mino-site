@@ -125,7 +125,7 @@
          [:tr [:td [:code "MBD"]] [:td "Bounds"]
           [:td "Index out of range"]]
          [:tr [:td [:code "MCT"]] [:td "Contract"]
-          [:td "Precondition or invariant violation"]]
+          [:td "Precondition or invariant violation, including integer overflow"]]
          [:tr [:td [:code "MST"]] [:td "State"]
           [:td "Cross-state misuse, transaction-state error, "
            "STM retry exhaustion"]]
@@ -139,11 +139,6 @@
         [:tr [:td [:code "MOM"]] [:td "Out of memory"]
          [:td "Allocator exhausted during a user-visible computation "
           "(e.g. bignum arithmetic)"]]
-        [:tr [:td [:code "MOV"]] [:td "Overflow"]
-         [:td "Integer overflow on " [:code "+"] " / " [:code "-"]
-          " / " [:code "*"] " / " [:code "inc"] " / " [:code "dec"]
-          " when the bignum-promoting variant ("
-          [:code "+'"] " etc.) was not used"]]
         [:tr [:td [:code "MLM"]] [:td "Limit"]
          [:td "Step limit, heap limit, recursion depth exceeded"]]
         [:tr [:td [:code "MUS"]] [:td "User"]

@@ -95,7 +95,9 @@
        [:li [:code "apply"] ", " [:code "partial"] ", " [:code "comp"]
         ", " [:code "complement"]]
        [:li "Regular expressions via " [:code "re-find"] ", "
-        [:code "re-matches"] ", " [:code "re-seq"]]
+        [:code "re-matches"] ", " [:code "re-seq"]
+        " (first argument must be a compiled pattern; use " [:code "#\"...\""]
+        " or " [:code "re-pattern"] ")"]
        [:li "Full test framework: " [:code "deftest"] ", "
         [:code "is"] ", " [:code "testing"]]
        [:li "Callable keywords: " [:code "(:k m)"] " as map lookup"]
@@ -125,7 +127,8 @@
         "pull iterators built from a step function"]
        [:li "Transducers: " [:code "transduce"] ", "
         [:code "into"] " with xform, " [:code "sequence"] ", "
-        [:code "eduction"] ", " [:code "completing"] ", "
+        [:code "eduction"] " (re-runs the transducer stack on each traversal;"
+        " caches nothing), " [:code "completing"] ", "
         [:code "cat"] ", " [:code "halt-when"] ", "
         [:code "ensure-reduced"]]
        [:li "Attribute maps in " [:code "defn"] " and "
@@ -598,9 +601,11 @@
         [:tr [:td "Plain " [:code "+"] " / " [:code "-"] " / "
          [:code "*"] " on long overflow"]
          [:td "Same. Throws (use " [:code "+'"] " to auto-promote)."]]
-        [:tr [:td [:code "unchecked-+"] " / " [:code "unchecked--"]
-              " / " [:code "unchecked-*"]]
-          [:td "Same"]]]]
+        [:tr [:td [:code "unchecked-add"] " / " [:code "unchecked-subtract"]
+              " / " [:code "unchecked-multiply"]]
+          [:td "Same (note: the aliases " [:code "unchecked-+"] " / "
+           [:code "unchecked--"] " / " [:code "unchecked-*"] " are absent;"
+           " use the full names)"]]]]
 
       ;; --- Census divergence anchors ---
       ;; Every census divergence :doc-link fragment must resolve to an
