@@ -207,9 +207,12 @@
          [:td "Supported"] [:td "Including nested destructuring."]]
         [:tr [:td "Namespaced map destructuring "
               [:code "{:keys [::ns/x]}"]]
-         [:td "Supported"]
-         [:td "Auto-resolved keywords resolve at read time, so "
-          "namespaced " [:code ":keys"] " entries work."]]
+         [:td "Differs"]
+         [:td [:code ":keys"] " elements must be symbols today: keyword "
+          "elements (plain or auto-resolved) and the qualified "
+          [:code "{:ns/keys [x]}"] " form are not yet accepted. "
+          "Destructure by symbol, or pull namespaced keys out with "
+          [:code "get"] "."]]
         [:tr [:td [:code "destructure"] " function"]
          [:td "Supported"]
          [:td "Returns the flat " [:code "[name init ...]"]
@@ -284,12 +287,14 @@
           [:code "MINO_BYTES"] " value, not a host-mutable Java "
           [:code "byte[]"] ". "
           [:code "aset"] " on it throws "
-          [:code ":mino/state"]
+          [:code ":eval/state"]
           " (the persistent-value model excludes in-place writes). "
-          "Other Java primitive-array constructors "
+          "Other numeric primitive-array constructors "
           "(" [:code "int-array"] ", " [:code "long-array"] ", "
-          "etc.) stay as " [:code "MINO_HOST_ARRAY"] " for backward "
-          "compat. See "
+          [:code "float-array"] ", " [:code "double-array"] ", "
+          "etc.) are mutable " [:code "MINO_HOST_ARRAY"] " values; "
+          "element values are coerced to the array's declared kind "
+          "at insert, and inserting a non-numeric value throws. See "
           [:a {:href "/documentation/bytes/"}
            "Bytes and Bit Syntax"] "."]]
         [:tr [:td "Bit syntax: " [:code "bits"] " / "
@@ -353,7 +358,15 @@
               " / " [:code "eduction"] " / " [:code "completing"]
               " / " [:code "cat"] " / " [:code "halt-when"]
               " / " [:code "ensure-reduced"]]
-         [:td "Supported"] [:td]]
+         [:td "Supported"]
+         [:td [:code "transduce"] " honors the reducing fn's own "
+          "completion arity and preserves a surviving "
+          [:code "Reduced"] " value through the completion step "
+          "(the contract canonical transducer code depends on). "
+          [:code "eduction"] " is a traversal recipe: every "
+          [:code "seq"] ", " [:code "reduce"] ", or print over it "
+          "re-runs the transducer stack and any side effects from "
+          "the source; it caches nothing."]]
         [:tr [:td [:code "sort"] " / " [:code "sort-by"] " / "
               [:code "frequencies"] " / " [:code "group-by"]]
          [:td "Supported"] [:td]]
@@ -371,11 +384,13 @@
               " / " [:code "distinct?"]]
          [:td "Supported"] [:td]]
         [:tr [:td [:code "clojure.core.reducers"]]
-         [:td "Absent"]
-         [:td "Fork-join reducers are not provided. Transducers "
-          "cover the throughput shape; "
-          [:code "future"] " plus partitioning covers ad-hoc "
-          "parallelism when threading is granted."]]]]
+         [:td "Supported"]
+         [:td "Bundled, loaded on " [:code "require"] ". "
+          [:code "r/map"] ", " [:code "r/filter"] ", "
+          [:code "r/fold"] ", and the full folder/reducer surface "
+          "are provided. " [:code "r/fold"] " folds sequentially "
+          "on non-foldable sources and in parallel over vectors "
+          "when the host grants threads."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Higher-order
@@ -485,15 +500,18 @@
               [:code "bit-shift-right"]]
          [:td "Supported"] [:td "Long-only bit operations."]]
         [:tr [:td [:code "Math/abs"] " / " [:code "Math/sqrt"]
-              " / " [:code "Math/sin"] " etc."]
-         [:td "Absent"]
-         [:td "JVM static-call shape. Of the Java Math surface, only "
-          [:code "abs"] " ships as a plain function in "
-          [:code "clojure.core"] " today. Other transcendental "
-          "functions (" [:code "sqrt"] ", " [:code "sin"] ", etc.) "
-          "are not provided; the embedder can register them by "
-          "wrapping " [:code "<math.h>"] " through the host capability "
-          "registry."]]]]
+              " / " [:code "Math/sin"] " / " [:code "Math/cos"]
+              " / " [:code "Math/tan"] " / " [:code "Math/atan"]
+              " / " [:code "Math/atan2"] " / " [:code "Math/log"]
+              " / " [:code "Math/log10"] " / " [:code "Math/exp"]
+              " / " [:code "Math/pow"] " / " [:code "Math/floor"]
+              " / " [:code "Math/ceil"] " / " [:code "Math/round"]
+              " / " [:code "Math/min"] " / " [:code "Math/max"]
+              " / " [:code "Math/PI"] " / " [:code "Math/E"]]
+         [:td "Supported"]
+         [:td "Shipped in " [:code "clojure.core"] " as plain "
+          "functions using the " [:code "Math/"] " naming "
+          "convention. No import needed."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Characters & strings
@@ -530,13 +548,23 @@
          [:td [:code "split"] " accepts an optional 3rd "
           [:code "limit"] " argument matching canon "
           [:code "String.split(re, limit)"] ": positive caps the "
-          "result, zero or negative keeps trailing empties."]]
+          "result, zero or negative keeps trailing empties. "
+          [:code "escape"] " accepts either a character map or a "
+          "function as the cmap argument; when a function, it is "
+          "called per character and a non-nil return replaces the "
+          "character."]]
         [:tr [:td "Regex: " [:code "re-find"] " / "
               [:code "re-matches"] " / " [:code "re-seq"]
               " / " [:code "re-pattern"] " / "
               [:code "re-matcher"] " / " [:code "re-groups"]]
          [:td "Supported"]
-         [:td [:code "re-find"] " and " [:code "re-matches"]
+         [:td [:code "re-find"] ", " [:code "re-matches"]
+          ", " [:code "re-seq"] ", and " [:code "re-matcher"]
+          " require a compiled pattern as the first argument; "
+          "passing a bare string throws with a message pointing to "
+          [:code "re-pattern"] ". Use " [:code "#\"...\""]
+          " literals or " [:code "(re-pattern str)"] " to compile. "
+          [:code "re-find"] " and " [:code "re-matches"]
           " return " [:code "[whole g1 g2 ...]"] " for grouped "
           "patterns and the matched substring otherwise. "
           [:code "re-matcher"] " returns a stateful iterator that "
@@ -630,7 +658,7 @@
           " (JVM canon)."]]
         [:tr [:td [:code "io!"]]
          [:td "Supported"]
-         [:td "Throws " [:code ":mino/state"] " MST003 when called "
+         [:td "Throws " [:code ":eval/state"] " MST003 when called "
           "inside a transaction; outside, runs body unchanged."]]
         [:tr [:td [:code "in-transaction?"]]
          [:td "Supported"]
@@ -776,7 +804,9 @@
               [:code "satisfies?"] " / " [:code "extend"]
               " / " [:code "extends?"]]
          [:td "Supported"]
-         [:td "Per-method dispatch atoms, late-bound."]]
+         [:td "Per-method dispatch atoms, late-bound. "
+          [:code "satisfies?"] " requires a protocol as its first "
+          "argument; anything else throws."]]
         [:tr [:td [:code "definterface"]]
          [:td "Absent"]
          [:td "Throws an informative error. Use "
@@ -819,20 +849,30 @@
          [:tr [:td [:code "clojure.test.check"] ": "
                [:code "quick-check"] " / generators / properties"]
          [:td "Supported"]
-         [:td "Minimal port of the test.check API. Generators, "
-          "properties, and " [:code "quick-check"] " ship; "
-          "shrinking is deferred. Backs the "
+         [:td "Generators, properties, and " [:code "quick-check"]
+          " ship. Shrinking is deferred. Backs "
           [:code "s/gen"] " and " [:code "s/exercise"]
-          " hooks under " [:code "clojure.spec.alpha"] "."]]
+          " under " [:code "clojure.spec.alpha"] "."]]
         [:tr [:td [:code "clojure.spec.gen.alpha"] " / "
               [:code "clojure.spec.test.alpha"]]
          [:td "Supported"]
          [:td "Bundled, loaded on " [:code "require"] ". "
+          [:code "s/gen"] " generates from "
+          [:code "s/map-of"] ", set literals, bare predicate fns, "
+          "registered keyword refs (" [:code "s/def"] "'d specs), "
+          "and " [:code "s/keys"] " specs. "
+          [:code "s/conform"] " on " [:code "s/map-of"]
+          " returns a map. "
+          [:code "s/explain"] " on " [:code "s/every"]
+          " prints the source predicate form. "
+          "Still absent: shrinking (" [:code "gen/shrink-2"]
+          "), " [:code "stest/stub"] " and the "
+          [:code ":stub"] " / " [:code ":replace"]
+          " instrument options. "
           [:code "clojure.spec.test.alpha"] " provides "
           [:code "instrument"] ", " [:code "unstrument"] ", "
-          [:code "check"] ", and " [:code "summarize-results"]
-          "; the JVM " [:code ":stub"] " / " [:code ":replace"]
-          " instrument options are not provided."]]
+          [:code "check"] ", and "
+          [:code "summarize-results"] "."]]
         [:tr [:td [:code "clojure.test.tap"] " / "
               [:code "clojure.test.junit"]]
          [:td "Supported"]
@@ -937,7 +977,10 @@
          [:td "Supported"]
          [:td "Routed through the " [:code "print-method"]
           " multimethod; user types extend printing with "
-          [:code "(defmethod print-method MyType ...)"] "."]]
+          [:code "(defmethod print-method MyType ...)"] ". "
+          "The " [:code "pr-str"] " family captures any realization "
+          "output inside the returned string; lazy-seq side effects "
+          "do not leak to " [:code "*out*"] "."]]
         [:tr [:td [:code "slurp"] " / " [:code "spit"]]
          [:td "Supported"] [:td]]
         [:tr [:td [:code "read"] " / " [:code "read-string"]
@@ -960,7 +1003,14 @@
           "shapes. User-defined tag dispatch via "
           [:code "*data-readers*"] " is honored; the "
           [:code "*default-data-reader-fn*"] " fallback applies "
-          "for unknown tags."]]
+          "for unknown tags. "
+          [:code "pprint"] " serializes preserved reader "
+          "conditionals back to " [:code "#?(...)"] " syntax and "
+          "dispatches tagged literals (" [:code "#inst"]
+          ", " [:code "#uuid"] ", user-defined) through reader "
+          "syntax. Known gap: " [:code "pprint"] " on a parsed "
+          [:code "#inst"] " value prints the component map; "
+          [:code "pr-str"] " on the same value is correct."]]
         [:tr [:td [:code "#inst \"...\""] " literal / "
               [:code "inst?"] " / " [:code "inst-ms"] " / "
               [:code "clojure.instant"]]
@@ -985,12 +1035,15 @@
         [:tr [:td [:code "*clojure-version*"] " / "
               [:code "(clojure-version)"]]
          [:td "Differs"]
-          [:td "Returns a four-key map and a "
-           [:code "\"M.N.P\""]
-           " string respectively. The version numbers reflect mino,"
-           "not JVM Clojure. The Clojure-shape is for code that"
-           "reads the map's structure; the literal version string"
-           "differs intentionally."]]]]
+          [:td "Returns a four-key map "
+           "(" [:code ":major :minor :incremental :qualifier"] ")"
+           " and a string respectively. Both are derived at runtime "
+           "from " [:code "(mino-version)"] ", which reads "
+           [:code "MINO_VERSION"] " from the C core, so they "
+           "reflect the mino version and cannot drift from the "
+           "version banner. Code that reads the map's structure "
+           "works; the literal version values differ from JVM "
+           "Clojure intentionally."]]]]
 
       ;; ----------------------------------------------------------------
       ;; Namespaces & host
@@ -1027,7 +1080,11 @@
           [:code "*ns*"] " is interned as a dynamic var that "
           "tracks user-visible namespace switches. Namespaces "
           "carry metadata (docstring, attribute map). Privacy is "
-          "enforced on cross-namespace qualified access."]]
+          "enforced on cross-namespace qualified access. "
+          [:code "ns-resolve"] " accepts an optional env map "
+          "(" [:code "[ns env sym]"] "): when the symbol is a key "
+          "in env, the function returns " [:code "nil"] " (the env "
+          "screens the lookup, it does not provide a value)."]]
         [:tr [:td "Java interop "
               [:code "(.method obj)"] " / "
               [:code "(.-field obj)"] " / "
@@ -1047,8 +1104,9 @@
           [:a {:href "/documentation/intentional-divergences/#jvm-interop"}
            "no JVM interop"] "."]]
         [:tr [:td [:code "*warn-on-reflection*"]]
-         [:td "Absent"]
-         [:td "mino has no reflection."]]]]
+         [:td "Differs"]
+         [:td "Bound as a dynamic var, always " [:code "false"]
+          ". mino has no reflection, so setting it has no effect."]]]]
 
       [:p {:style "margin-top:2.5rem;font-size:0.9em;color:#666"}
        "Items marked " [:em "supported"] " round-trip through "
