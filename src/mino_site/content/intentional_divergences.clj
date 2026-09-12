@@ -61,6 +61,13 @@
          "decision, not a missing feature waiting for a contributor. "
          "Each entry names what is different, why, and what mino "
          "offers in its place."]
+        [:p "mino's conformance target is the language: data "
+         "structures, sequences, control flow, and the documented "
+         "library contract. Behavior that exists only because of the "
+         "host platform the reference dialect runs on is divergence by "
+         "principle. mino does not emulate the host layer to close those "
+         "diffs; it documents where the host surface ends and the "
+         "language surface begins."]
         [:p "For an item-by-item rundown of which Clojure functions "
          "and macros are supported, differ, or are absent, see the "
          [:a {:href "/documentation/compatibility-matrix/"}
