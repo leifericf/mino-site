@@ -52,9 +52,9 @@
    "Hickey-test for what compare's contract is: a\n                    three-way ordering function. Sign-normalized\n                    return values are simpler and avoid leaking\n                    representation-specific deltas.",
    :id :compare-sign-normalized}
   {:id :one-integer-tier,
-   :title "Single integer type -- no Long/Integer/Short distinction",
+   :title "No boxed integer sizes -- int64 and bignum tiers only",
    :rationale
-   "mino has no JVM types; one integer representation\n                    suffices. Promotion within the integer tier never\n                    happens because there is only one tier.",
+   "mino has no JVM types; there is no Long/Integer/Short\n                    distinction. mino has two integer tiers: a native\n                    int64 tier (type :int) and an arbitrary-precision\n                    bignum tier (type :bigint). Literals too large for\n                    int64 parse as :bigint directly. Plain arithmetic on\n                    int64 values throws on overflow; use bigint coercion\n                    or N-suffixed literals to operate in the bignum tier.",
    :since "v0.1.0",
    :affected
    [clojure.core/integer? clojure.core/int? clojure.core/long],
@@ -189,11 +189,11 @@
     :description
     "Where reader attaches meta and which ops preserve it."}}
   {:id :pprint-minimal,
-   :title "pprint is minimal -- no cl-format directives",
+   :title "pprint does not round-trip inst values as reader syntax",
    :rationale
-   "mino's clojure.pprint supports pretty-printing\n                    basic forms; cl-format and table directives are\n                    not implemented. Targets the common case.",
+   "mino's clojure.pprint correctly pretty-prints maps,\n                    collections, code, reader conditionals (#?...), and\n                    tagged literals (user-defined, #uuid). cl-format and\n                    print-table are implemented. The remaining gap: #inst\n                    values read to a plain map internally, so pprint\n                    prints the component map rather than #inst reader\n                    syntax; pr-str is unaffected and emits #inst.",
    :since "v0.1.0",
-   :affected [clojure.pprint/cl-format clojure.pprint/print-table],
+   :affected [clojure.pprint/pprint],
    :doc-link "/coming-from-clojure#pprint",
    :category
    {:id :printer,
@@ -201,9 +201,9 @@
     :description
     "pr-str output for various values and dynamic-var states."}}
   {:id :spec-gen-minimal,
-   :title "clojure.spec generators ship as separate primitives",
+   :title "clojure.spec.gen.alpha lacks shrinking and stub/replace",
    :rationale
-   "mino's spec.alpha implements the documented\n                    surface; clojure.spec.gen.alpha is partially\n                    present and may diverge from clojure.test.check\n                    behavior on edge cases.",
+   "s/gen covers map-of, set literals, bare predicate\n                    fns, registered keyword refs (s/def'd specs), and\n                    s/keys. clojure.spec.test.alpha is present with\n                    instrument and enumerate-namespace. What is absent:\n                    gen/shrink-2 (no test.check shrinking integration)\n                    and stest/stub (the :stub/:replace options for\n                    generative testing).",
    :since "v0.1.0",
    :doc-link "/coming-from-clojure#spec",
    :category
@@ -1057,7 +1057,352 @@
     :verdict :gap,
     :reason "Portable name-mangling fn mino does not yet expose"}],
   :count {:jvm-bound 89, :gap 2, :total 91}},
- :mismatches [],
+ :mismatches
+ [{:arglists-clojure ([array idx] [array idx & idxs]),
+   :arglists-dialect ([array idx]),
+   :namespace clojure.core,
+   :var aget}
+  {:arglists-clojure ([] [x] [x & next]),
+   :arglists-dialect ([& xs]),
+   :namespace clojure.core,
+   :var and}
+  {:arglists-clojure ([array idx val] [array idx idx2 & idxv]),
+   :arglists-dialect ([array idx val]),
+   :namespace clojure.core,
+   :var aset}
+  {:arglists-clojure ([m [k & ks] v]),
+   :arglists-dialect ([m ks v]),
+   :namespace clojure.core,
+   :var assoc-in}
+  {:arglists-clojure ([x y] [x y & more]),
+   :arglists-dialect ([x] [x y] [x y & more]),
+   :namespace clojure.core,
+   :var bit-and-not}
+  {:arglists-clojure ([] [x] [x y] [x y & zs]),
+   :arglists-dialect ([& colls]),
+   :namespace clojure.core,
+   :var concat}
+  {:arglists-clojure ([name & sigs]),
+   :arglists-dialect ([& _]),
+   :namespace clojure.core,
+   :var definterface}
+  {:arglists-clojure
+   ([name docstring? attr-map? dispatch-fn & options]),
+   :arglists-dialect ([mm-name & options]),
+   :namespace clojure.core,
+   :var defmulti}
+  {:arglists-clojure
+   ([name doc-string? attr-map? [params*] prepost-map? body]
+    [name
+     doc-string?
+     attr-map?
+     ([params*] prepost-map? body)
+     +
+     attr-map?]),
+   :arglists-dialect ([name & fdecl]),
+   :namespace clojure.core,
+   :var defn}
+  {:arglists-clojure ([name [& fields] & opts+specs]),
+   :arglists-dialect ([name fields & specs]),
+   :namespace clojure.core,
+   :var defrecord}
+  {:arglists-clojure ([name [& fields] & opts+specs]),
+   :arglists-dialect ([name fields & specs]),
+   :namespace clojure.core,
+   :var deftype}
+  {:arglists-clojure ([xform* coll]),
+   :arglists-dialect ([& args]),
+   :namespace clojure.core,
+   :var eduction}
+  {:arglists-clojure ([seq-exprs body-expr]),
+   :arglists-dialect ([bindings & body]),
+   :namespace clojure.core,
+   :var for}
+  {:arglists-clojure ([bindings then] [bindings then else & oldform]),
+   :arglists-dialect ([bindings then & else]),
+   :namespace clojure.core,
+   :var if-let}
+  {:arglists-clojure ([test then] [test then else]),
+   :arglists-dialect ([test then & else]),
+   :namespace clojure.core,
+   :var if-not}
+  {:arglists-clojure ([bindings then] [bindings then else & oldform]),
+   :arglists-dialect ([bindings then & else]),
+   :namespace clojure.core,
+   :var if-some}
+  {:arglists-clojure
+   ([step
+     &
+     {:keys [somef vf kf initk],
+      :or {vf identity, kf identity, somef some?, initk nil}}]),
+   :arglists-dialect
+   ([step
+     &
+     {:keys [somef vf kf initk],
+      :or {vf identity, kf identity, somef some?}}]),
+   :namespace clojure.core,
+   :var iteration}
+  {:arglists-clojure
+   ([f] [f coll] [f c1 c2] [f c1 c2 c3] [f c1 c2 c3 & colls]),
+   :arglists-dialect ([f] [f & colls]),
+   :namespace clojure.core,
+   :var map}
+  {:arglists-clojure ([f] [f & colls]),
+   :arglists-dialect ([f] [f coll] [f c1 c2] [f c1 c2 & colls]),
+   :namespace clojure.core,
+   :var mapcat}
+  {:arglists-clojure ([] [x] [x & next]),
+   :arglists-dialect ([& xs]),
+   :namespace clojure.core,
+   :var or}
+  {:arglists-clojure ([n] [n coll] [n step coll]),
+   :arglists-dialect ([n coll] [n step coll]),
+   :namespace clojure.core,
+   :var partitionv-all}
+  {:arglists-clojure ([f coll] [f coll & colls]),
+   :arglists-dialect ([f coll]),
+   :namespace clojure.core,
+   :var pmap}
+  {:arglists-clojure ([class-and-interfaces args & fs]),
+   :arglists-dialect ([& _]),
+   :namespace clojure.core,
+   :var proxy}
+  {:arglists-clojure
+   ([]
+    [stream]
+    [stream eof-error? eof-value]
+    [stream eof-error? eof-value recursive?]
+    [opts stream]),
+   :arglists-dialect ([] [s] [opts s]),
+   :namespace clojure.core,
+   :var read}
+  {:arglists-clojure
+   ([]
+    [stream]
+    [stream eof-error? eof-value]
+    [stream eof-error? eof-value recursive?]
+    [opts stream]),
+   :arglists-dialect ([s]),
+   :namespace clojure.core,
+   :var read+string}
+  {:arglists-clojure ([sym] [env sym]),
+   :arglists-dialect ([sym]),
+   :namespace clojure.core,
+   :var resolve}
+  {:arglists-clojure ([f & opts]),
+   :arglists-dialect ([f]),
+   :namespace clojure.core,
+   :var slurp}
+  {:arglists-clojure ([expr]),
+   :arglists-dialect ([& body]),
+   :namespace clojure.core,
+   :var time}
+  {:arglists-clojure ([f] [f & args]),
+   :arglists-dialect ([f & args]),
+   :namespace clojure.core,
+   :var trampoline}
+  {:arglists-clojure
+   ([m k f] [m k f x] [m k f x y] [m k f x y z] [m k f x y z & more]),
+   :arglists-dialect ([m k f & args]),
+   :namespace clojure.core,
+   :var update}
+  {:arglists-clojure ([bindings & body]),
+   :arglists-dialect ([[x coll] & body]),
+   :namespace clojure.core,
+   :var when-first}
+  {:arglists-clojure ([binding-map f & args]),
+   :arglists-dialect ([binding-map f]),
+   :namespace clojure.core,
+   :var with-bindings*}
+  {:arglists-clojure ([coll f] [coll f val]),
+   :arglists-dialect ([coll f init]),
+   :namespace clojure.core.protocols,
+   :var coll-reduce}
+  {:arglists-clojure ([n] [n coll]),
+   :arglists-dialect ([n coll]),
+   :namespace clojure.core.reducers,
+   :var drop}
+  {:arglists-clojure ([pred] [pred coll]),
+   :arglists-dialect ([pred coll]),
+   :namespace clojure.core.reducers,
+   :var filter}
+  {:arglists-clojure ([] [coll]),
+   :arglists-dialect ([coll]),
+   :namespace clojure.core.reducers,
+   :var flatten}
+  {:arglists-clojure ([f] [f coll]),
+   :arglists-dialect ([f coll]),
+   :namespace clojure.core.reducers,
+   :var map}
+  {:arglists-clojure ([f] [f coll]),
+   :arglists-dialect ([f coll]),
+   :namespace clojure.core.reducers,
+   :var mapcat}
+  {:arglists-clojure ([pred] [pred coll]),
+   :arglists-dialect ([pred coll]),
+   :namespace clojure.core.reducers,
+   :var remove}
+  {:arglists-clojure ([n] [n coll]),
+   :arglists-dialect ([n coll]),
+   :namespace clojure.core.reducers,
+   :var take}
+  {:arglists-clojure ([pred] [pred coll]),
+   :arglists-dialect ([pred coll]),
+   :namespace clojure.core.reducers,
+   :var take-while}
+  {:arglists-clojure ([] [stream] [opts stream]),
+   :arglists-dialect ([s] [opts s]),
+   :namespace clojure.edn,
+   :var read}
+  {:arglists-clojure ([new-instant cs]),
+   :arglists-dialect ([s]),
+   :namespace clojure.instant,
+   :var parse-timestamp}
+  {:arglists-clojure ([new-instance]),
+   :arglists-dialect
+   ([{:keys
+      [years
+       months
+       days
+       hours
+       minutes
+       seconds
+       nanoseconds
+       offset-hours
+       offset-minutes],
+      :as m}]),
+   :namespace clojure.instant,
+   :var validated}
+  {:arglists-clojure [[options* body]],
+   :arglists-dialect ([& args]),
+   :namespace clojure.pprint,
+   :var pprint-logical-block}
+  {:arglists-clojure ([ks rows] [rows]),
+   :arglists-dialect ([rows] [ks rows]),
+   :namespace clojure.pprint,
+   :var print-table}
+  {:arglists-clojure ([forms preds gfn]),
+   :arglists-dialect ([forms specs]),
+   :namespace clojure.spec.alpha,
+   :var and-spec-impl}
+  {:arglists-clojure ([f] [f unf]),
+   :arglists-dialect ([& args]),
+   :namespace clojure.spec.alpha,
+   :var conformer}
+  {:arglists-clojure
+   ([&
+     {:keys [infinite? NaN? min max],
+      :or {infinite? true, NaN? true},
+      :as m}]),
+   :arglists-dialect ([& opts]),
+   :namespace clojure.spec.alpha,
+   :var double-in}
+  {:arglists-clojure
+   ([pred
+     &
+     {:keys [into kind count max-count min-count distinct gen-max gen],
+      :as opts}]),
+   :arglists-dialect ([pred & opts]),
+   :namespace clojure.spec.alpha,
+   :var every}
+  {:arglists-clojure
+   ([form pred opts]
+    [form
+     pred
+     {conform-into :into,
+      describe-form :clojure.spec.alpha/describe,
+      :keys
+      [kind
+       :clojure.spec.alpha/kind-form
+       count
+       max-count
+       min-count
+       distinct
+       gen-max
+       :clojure.spec.alpha/kfn
+       :clojure.spec.alpha/cpred
+       conform-keys
+       :clojure.spec.alpha/conform-all],
+      :or {gen-max 20},
+      :as opts}
+     gfn]),
+   :arglists-dialect ([form spec opts]),
+   :namespace clojure.spec.alpha,
+   :var every-impl}
+  {:arglists-clojure
+   ([& {:keys [args ret fn gen], :or {ret 'clojure.core/any?}}]),
+   :arglists-dialect ([& opts]),
+   :namespace clojure.spec.alpha,
+   :var fspec}
+  {:arglists-clojure ([& {:keys [req req-un opt opt-un gen]}]),
+   :arglists-dialect ([& opts]),
+   :namespace clojure.spec.alpha,
+   :var keys}
+  {:arglists-clojure
+   ([{:keys
+      [req-un
+       opt-un
+       keys-pred
+       pred-exprs
+       opt-keys
+       req-specs
+       req
+       req-keys
+       opt-specs
+       pred-forms
+       opt
+       gfn],
+      :as argm}]),
+   :arglists-dialect
+   ([{:keys
+      [req
+       opt
+       req-un
+       opt-un
+       req-keys
+       req-specs
+       opt-keys
+       opt-specs
+       keys-pred
+       pred-exprs
+       pred-forms
+       gfn],
+      :as argm}]),
+   :namespace clojure.spec.alpha,
+   :var map-spec-impl}
+  {:arglists-clojure ([form pred gfn]),
+   :arglists-dialect ([form spec]),
+   :namespace clojure.spec.alpha,
+   :var nilable-impl}
+  {:arglists-clojure ([keys forms preds gfn]),
+   :arglists-dialect ([keys forms specs]),
+   :namespace clojure.spec.alpha,
+   :var or-spec-impl}
+  {:arglists-clojure ([form p]),
+   :arglists-dialect ([op form spec]),
+   :namespace clojure.spec.alpha,
+   :var rep-impl}
+  {:arglists-clojure ([form & {:keys [gen]}]),
+   :arglists-dialect ([pred]),
+   :namespace clojure.spec.alpha,
+   :var spec}
+  {:arglists-clojure
+   ([form pred gfn cpred?] [form pred gfn cpred? unc]),
+   :arglists-dialect ([form pred]),
+   :namespace clojure.spec.alpha,
+   :var spec-impl}
+  {:arglists-clojure ([forms preds] [forms preds gfn]),
+   :arglists-dialect ([forms specs]),
+   :namespace clojure.spec.alpha,
+   :var tuple-impl}
+  {:arglists-clojure ([spec x] [spec x form]),
+   :arglists-dialect ([spec x]),
+   :namespace clojure.spec.alpha,
+   :var valid?}
+  {:arglists-clojure ([form] [form msg]),
+   :arglists-dialect ([& args]),
+   :namespace clojure.test,
+   :var is}],
  :categories
  [{:id :ordering,
    :title "Ordering & comparison",
@@ -1101,19 +1446,19 @@
    "Where reader attaches meta and which ops preserve it."}],
  :signals
  {:upstream-suite
-  {:tests 2527,
-   :passes 21945,
+  {:tests 3905,
+   :passes 52466,
    :failures 0,
    :errors 0,
-   :assertions 21945,
+   :assertions 52466,
    :pass-rate 1.0},
   :clojuredocs-probe
-  {:passed 7,
+  {:passed 9,
    :mode "smoke",
    :replay false,
-   :probes 12,
+   :probes 14,
    :corpus
-   {:tested 50, :pass 44, :fail 0, :mino-fail 0, :allowlisted 6},
+   {:tested 50, :pass 45, :fail 0, :mino-fail 0, :allowlisted 5},
    :seed 0,
    :verdicts
    [{:probe "diff-random.summary",
@@ -1122,31 +1467,31 @@
      :passed 100,
      :failed 0,
      :seed 0,
-     :elapsed 6171.957999944687}
+     :elapsed 11935.710651999922}
     {:probe "diff-closure.summary",
      :verdict "pass",
      :tested 20,
      :passed 20,
      :failed 0,
-     :elapsed 940.2449998855591}
+     :elapsed 1953.1646950000431}
     {:probe "diff-arith.summary",
      :verdict "pass",
      :tested 20,
      :passed 20,
      :failed 0,
-     :elapsed 977.5889999866486}
+     :elapsed 1943.8306149999844}
     {:probe "diff-coll.summary",
      :verdict "pass",
      :tested 20,
      :passed 20,
      :failed 0,
-     :elapsed 987.7929999828339}
+     :elapsed 1921.6043960000388}
     {:probe "diff-ctrl.summary",
      :verdict "pass",
      :tested 20,
      :passed 20,
      :failed 0,
-     :elapsed 964.0539999008179}
+     :elapsed 1950.5217589999083}
     {:probe "diff-jit.warmup-parity",
      :verdict "pass",
      :cold "153450",
@@ -1171,19 +1516,37 @@
     {:probe "diff-jit.summary",
      :verdict "pass",
      :n 5,
-     :elapsed 121.26999998092651}
+     :elapsed 212.40175900002941}
     {:seed 0,
      :fail 0,
-     :allowlisted 6,
+     :allowlisted 5,
      :probe "diff-clojuredocs.summary",
      :verdict "pass",
      :mino-fail 0,
-     :pass 44,
-     :elapsed 979.6189999580383,
-     :tested 50}],
-   :total 7,
+     :pass 45,
+     :elapsed 2025.297237000079,
+     :tested 50}
+    {:pending 1,
+     :seed 0,
+     :fail 0,
+     :allowlisted 0,
+     :probe "diff-conformance-edge.summary",
+     :verdict "pass",
+     :mino-fail 0,
+     :pass 179,
+     :elapsed 7741.524848999921,
+     :tested 180}
+    {:probe "diff-jvm-core.summary",
+     :verdict "pass",
+     :tested 60,
+     :pass 54,
+     :fail 0,
+     :mino-fail 0,
+     :allowlisted 6,
+     :elapsed 319.82288999995217}],
+   :total 9,
    :failed 0,
-   :elapsed 11175.325999975204},
+   :elapsed 30047.678214999964},
   :fuzz
   {:targets
    [{:name "fuzz-smoke", :seeds 22, :passed 22, :failed 0}
