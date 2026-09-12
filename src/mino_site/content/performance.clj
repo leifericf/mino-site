@@ -502,17 +502,19 @@
        "link against the mino source. Compile and run with the "
        "same per-subsystem flags the standalone build uses:"]
       [:pre [:code
-"cc -std=c99 -O2 \\
+"cc -std=c99 -O2 -DMINO_CPJIT=1 \\
   -Isrc -Isrc/public -Isrc/runtime -Isrc/gc -Isrc/eval \\
-  -Isrc/values -Isrc/collections -Isrc/prim \\
-  -Isrc/async -Isrc/interop \\
+  -Isrc/values -Isrc/collections -Isrc/names \\
+  -Isrc/async -Isrc/interop -Isrc/state \\
   -Isrc/diag -Isrc/vendor/imath \\
   -o my_bench my_bench.c \\
-  src/public/*.c src/runtime/*.c src/gc/*.c src/eval/*.c \\
+  src/public/*.c src/gc/*.c src/eval/*.c \\
   src/eval/bc/*.c src/eval/bc/jit/*.c \\
-  src/values/*.c src/collections/*.c src/prim/*.c \\
+  src/values/*.c src/collections/*.c src/names/*.c \\
+  src/state/*.c src/read/*.c src/print/*.c \\
   src/async/*.c src/interop/*.c src/regex/*.c \\
   src/diag/*.c src/vendor/imath/*.c \\
+  $(find src/prim -name '*.c') \\
   -lm -lpthread
 ./my_bench"]]
       [:p "For minimum-footprint embed measurements, add "

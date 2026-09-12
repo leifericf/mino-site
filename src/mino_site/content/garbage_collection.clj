@@ -225,9 +225,9 @@ printf(\"live=%zu minor=%zu major=%zu max_pause_ns=%zu\\n\",
         "catches any code path that holds an unrooted pointer across an "
         "allocation boundary. Use during development."]
        [:li [:code "MINO_GC_VERIFY=1"]
-        ": run a reachability classifier pass during major sweep to "
-        "surface bookkeeping bugs (for example, a remembered-set miss). "
-        "Slow; test-suite use only."]
+        ": after each minor collection, verify that the remembered set "
+        "is complete and surface any old-to-young pointer the write "
+        "barrier missed. Slow; test-suite use only."]
        [:li [:code "MINO_GC_EVT=1"]
         ": enable a fixed-size in-process event ring that records "
         "barrier, remset, promotion, and sweep events. Dumped to stderr "

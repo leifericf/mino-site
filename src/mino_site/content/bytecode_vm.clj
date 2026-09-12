@@ -425,8 +425,8 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
       [:p "An embedder that prefers a smaller binary over peak "
        "throughput can link "
        [:code "mino-lean"] " instead, the same source compiled "
-       "with the JIT pipeline gated out by "
-       [:code "-DMINO_CPJIT=0"] ". CI builds both binaries every "
+       "with " [:code "-DMINO_CPJIT=1"] " omitted (leaving "
+       [:code "MINO_CPJIT"] " undefined). CI builds both binaries every "
        "push and asserts byte-identical stdout across "
        [:code "./mino --jit=auto"] ", "
        [:code "--jit=on"] ", "
@@ -443,7 +443,7 @@ AsBx  :  op (8)  | A (8)  | sBx (16, biased by 0x8000)"]]
        "follows."]
       [:p [:strong "What the JIT does not do."]
        " Type-feedback specialisation; SSA-style optimisation; "
-       "register allocation across stencils; deoptimisation. The "
+       "register allocation across stencils. The "
        "stencil is bytecode-identical to what the interpreter "
        "runs, just stitched together with the dispatch loop "
        "elided. The soundness model is therefore the same as the "
