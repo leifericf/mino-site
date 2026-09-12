@@ -207,12 +207,12 @@
          [:td "Supported"] [:td "Including nested destructuring."]]
         [:tr [:td "Namespaced map destructuring "
               [:code "{:keys [::ns/x]}"]]
-         [:td "Differs"]
-         [:td [:code ":keys"] " elements must be symbols today: keyword "
-          "elements (plain or auto-resolved) and the qualified "
-          [:code "{:ns/keys [x]}"] " form are not yet accepted. "
-          "Destructure by symbol, or pull namespaced keys out with "
-          [:code "get"] "."]]
+         [:td "Supported"]
+         [:td [:code ":keys"] " and " [:code ":syms"] " elements may be "
+          "symbols or keywords, plain or namespaced; auto-resolved "
+          "keywords resolve at read time. The qualified group forms "
+          [:code "{:ns/keys [x]}"] " and " [:code "{:ns/syms [x]}"]
+          " bind the bare names from the ns-qualified keys."]]
         [:tr [:td [:code "destructure"] " function"]
          [:td "Supported"]
          [:td "Returns the flat " [:code "[name init ...]"]
@@ -1008,9 +1008,8 @@
           "conditionals back to " [:code "#?(...)"] " syntax and "
           "dispatches tagged literals (" [:code "#inst"]
           ", " [:code "#uuid"] ", user-defined) through reader "
-          "syntax. Known gap: " [:code "pprint"] " on a parsed "
-          [:code "#inst"] " value prints the component map; "
-          [:code "pr-str"] " on the same value is correct."]]
+          "syntax; a parsed " [:code "#inst"] " value pretty-prints "
+          "as its reader literal, matching " [:code "pr-str"] "."]]
         [:tr [:td [:code "#inst \"...\""] " literal / "
               [:code "inst?"] " / " [:code "inst-ms"] " / "
               [:code "clojure.instant"]]

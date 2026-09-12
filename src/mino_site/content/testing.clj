@@ -107,7 +107,7 @@
       [:pre [:code "N tests, M assertions: M passed, 0 failed, 0 errors\n{:test N, :pass M, :fail 0, :error 0, :failures []}"]]
       [:p "On failure, each failing assertion is reported with its test "
        "name, context path, the original form, and expected vs. actual values:"]
-      [:pre [:code "FAIL in () (:)\narithmetic basic\nexpected: (= 4 (+ 1 2))\n  actual: \"expected: 4\\n    actual: 3\"\n\nFailures:\n    expected: (= 4 (+ 1 2))\n    actual: \"expected: 4\\n    actual: 3\"\n\n10 tests, 12 assertions: 11 passed, 1 failed, 0 errors\n{:test 10, :pass 11, :fail 1, :error 0, :failures [{...}]}"]]
+      [:pre [:code "FAIL in () (:)\narithmetic basic\nexpected: (= 4 (+ 1 2))\n  actual: (not (= 4 3))\n\nFailures:\n    expected: (= 4 (+ 1 2))\n    actual: (not (= 4 3))\n\n10 tests, 12 assertions: 11 passed, 1 failed, 0 errors\n{:test 10, :pass 11, :fail 1, :error 0, :failures [{...}]}"]]
 
       [:h2 "Testing in the REPL"]
       [:p "The test framework works in the REPL too. Load it, define a "
